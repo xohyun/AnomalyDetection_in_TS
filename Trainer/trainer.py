@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import tqdm
 from utils import gpu_checking
 
 
@@ -29,7 +30,25 @@ class TrainMaker:
         self.cal = Calculate()
     
     def train(self, shuffle=True):
-        data_loader = for
+        for e in tqdm(range(self.epoch)):
+            epoch_loss = 0
+            self.model.train()
+            
+            for idx, x in enumerate(self.data_loader):
+                self.optimizer.zero_grad()
+                x = x.reshape() # reshape
+                
+                pred = self.model(x.to(device=self.device))
+                loss = self.criterion()
+
+                if (idx+1) % 1000 == 0:
+                    print("1000th")
+                    # print(f"[Epoch{e+1}, Step({idx+1}/{len(self.data_loader.dataset)}), Loss:{:/4f}")
+
+                self.loss.backward()
+                epoch_loss += loss
+                self.optimizer.step()
+
 
 
 
