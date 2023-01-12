@@ -11,8 +11,13 @@ class TrainMaker:
     def __init__(self, args, model, data_loaders, data_info):
         self.args = args
         self.model = model
-        self.data_loader = data_loaders['train']
-        self.data_loader_valid = data_loaders['valid']
+        self.mode = self.args.mode
+
+        if self.mode == "train":
+            self.data_loader = data_loaders['train']
+            self.data_loader_valid = data_loaders['valid']
+        else:
+            self.data_loader_test = data_loaders['test']
   
         self.device =  gpu_checking(args)
 
@@ -24,8 +29,8 @@ class TrainMaker:
         
         # 둘중에 뭐가맞지?
         self.optimizer = getattr(torch.optim, self.args.optimizer)
-        # self.optimizer = self.optimizer(self.model.parameters(), lr=self.lr, weight_decay=self.wd)
-
+        self.optimizer = self.optimizer(self.model.parameters(), lr=self.lr, weight_decay=self.wd)
+        
         self.criterion = self.__set_criterion(self.args.criterion)
         self.scheduler = self.__set_scheduler(args, self.optimizer)
         
@@ -45,40 +50,45 @@ class TrainMaker:
                 pred = self.model(x.to(device=self.device))
                 loss = self.criterion(x, pred)
 
-                if (idx+1) % 1000 == 0:
-                    print("1000th")
+                # if (idx+1) % 1000 == 0:
+                #     print("1000th")
                     # print(f"[Epoch{e+1}, Step({idx+1}/{len(self.data_loader.dataset)}), Loss:{:/4f}")
 
-                self.loss.backward()
+                loss.backward()
                 self.optimizer.step()
                 epoch_loss += loss
             
-            score = self.validation(0.94)
+            # score = self.validation(0.94)
 
             if self.scheduler is not None:
-                self.scheduler.step(score)
+                self.scheduler.step()
 
-            if best_score < score:
-                print(f'Epoch : [{e}] Train loss : [{(epoch_loss/self.epoch)}] Val Score : [{score}])')
-                best_score = score
-                torch.save(self.model.module.state_dict(), f'./model_save/best_model_{1}.pth', _use_new_zipfile_serialization=False)
+            # if best_score < score:
+            #     print(f'Epoch : [{e}] Train loss : [{(epoch_loss/self.epoch)}] Val Score : [{score}])')
+            #     best_score = score
+            #     torch.save(self.model.module.state_dict(), f'./model_save/best_model_{1}.pth', _use_new_zipfile_serialization=False)
   
     
-    def validation(self, thr):
-        cos = nn.CosineSimilarity(dim=1, eps=1e-6)
+    def evaluation(self, test_loader, thr=0.95):
+        cos = nn.CosineSimilarity(dim=0, eps=1e-6)
         self.model.eval()
         pred = []
         true = []
         with torch.no_grad():
-            for x, y in iter(self.val_loader):
+            for idx, (x, y) in enumerate(test_loader):
                 x = x.float().to(self.device)
-
-                _x = self.model(x)
-                diff = cos(x, _x).cpu().tolist()
-                batch_pred = np.where(np.array(diff)<thr, 1,0).tolist()
-                pred += batch_pred
-                true += y.tolist()
-
+                pred = self.model(x.to(device=self.device))
+                diff = cos(x, pred).cpu().tolist()
+                print("))))))", len(diff[0]))
+                batch_pred = np.where(np.array(diff)<thr, 1, 0)
+                
+                print(batch_pred.shape)
+                print("!!!!!!!!!!!!!!!!!")
+                print(y.shape)
+                pred.append(batch_pred)
+                true.append(y)
+                
+                raise
         return f1_score(true, pred, average='macro')
 
 

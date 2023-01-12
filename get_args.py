@@ -20,7 +20,7 @@ class Args:
 
         #---# Dataset #---#
         nab_list = ['ec2', 'ambient'] ############# test
-        parser.add_argument("--dataset", default='NAB', choices=['MSL', 'NAB', 'SMAP', 'SMD', 'WADI'])
+        parser.add_argument("--dataset", default='MSL', choices=['MSL', 'NAB', 'SMAP', 'SMD', 'WADI'])
         parser.add_argument("--choice_data", default=None)
         
         
@@ -34,8 +34,8 @@ class Args:
 
         parser.add_argument("--lr", type=float, default=0.001)
         parser.add_argument("--wd", type=float, default=0.0001)
-        parser.add_argument("--batch_size", type=int, default=64)
-        parser.add_argument("--epoch", type=int, default=100)
+        parser.add_argument("--batch_size", type=int, default=16)
+        parser.add_argument("--epoch", type=int, default=2)
 
         parser.add_argument('--scheduler', '-sch')
         if parser.parse_known_args()[0].scheduler == 'exp':

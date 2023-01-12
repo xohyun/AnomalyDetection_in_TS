@@ -4,16 +4,16 @@ import os
 
 class Dataset_load(Dataset):
     def __init__(self, args):
-        self.mode = args.mode
+        self.args = args
+        self.mode = self.args.mode
 
-        self.seq_len = args.seq_len
-        # self.label_len
-        self.pred_len = args.pred_len
-        self.step_len = args.step_len
+        self.seq_len = self.args.seq_len
+        self.pred_len = self.args.pred_len
+        self.step_len = self.args.step_len
         
-        self.data_path = args.data_path
-        self.dataset = args.dataset
-        self.dataset_choice = args.choice_data
+        self.data_path = self.args.data_path
+        self.dataset = self.args.dataset
+        self.dataset_choice = self.args.choice_data
 
 
         # 여기서부터 확인
@@ -66,21 +66,24 @@ class Dataset_load(Dataset):
     def __read_test_data__(self):
         data_folder = self.data_path + self.dataset
         data_list = os.listdir(data_folder)
-        data_list = [i for i in data_list if any(key in i for key in self.dataset_choice)]
-
+    
+        if self.dataset_choice:
+            data_list = [i for i in data_list if any(key in i for key in self.dataset_choice)]
+        
         label_list = [i for i in data_list if 'label' in i]; label_list.sort()
         test_list = [i for i in data_list if 'test' in i]; test_list.sort()
 
         label_data = []; test_data = []
-        for f in range(len(self.dataset_choice)):
+        for f in range(len(test_list)):
             label_data.append(np.load(os.path.join(data_folder, label_list[f])))
             test_data.append(np.load(os.path.join(data_folder, test_list[f])))
 
+        self.num_features = test_data[0].shape[1]
         self.data_x = self.cut_data(test_data)
         self.data_y = self.cut_data(label_data)
         
-        
-
+        print("~~~~", self.data_x.shape)
+        print("~~~~", self.data_y.shape)
         
     def __getitem__(self, idx):
         seq_begin = idx
@@ -94,11 +97,12 @@ class Dataset_load(Dataset):
         # seq_x_mark = self.data_stamp[s_begin:s_end]
         # seq_y_mark = self.data_stamp[r_begin:r_end]
         # return seq_x, seq_y, seq_x_mark, seq_y_mark
-        if self.mode == 'train':
-            return self.data_x[idx]
-        elif self.mode == 'test':
+  
+        if self.mode == 'test':
             return self.data_x[idx], self.data_y[idx]
-    
+        else:
+            return self.data_x[idx]
+
     def __len__(self):
         return len(self.data_x) - self.seq_len - self.pred_len + 1
     
