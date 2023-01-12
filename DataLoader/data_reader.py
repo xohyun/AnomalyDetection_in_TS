@@ -1,5 +1,3 @@
-import torch
-# from torch.utils.data import Dataset, Dataloader ##이거왜??
 from torch.utils.data import Dataset
 import numpy as np
 import os
@@ -55,6 +53,7 @@ class Dataset_load(Dataset):
         #         train_data.append(load_file)
                 
         self.data_x = self.cut_data(train_data)
+        print(self.data_x.shape)
 
     def __read_test_data__(self):
         data_folder = self.data_path + self.dataset
@@ -72,9 +71,9 @@ class Dataset_load(Dataset):
         self.data_x = self.cut_data(test_data)
         self.data_y = self.cut_data(label_data)
 
-
-    def __getitem__(self, index):
-        seq_begin = index
+        
+    def __getitem__(self, idx):
+        seq_begin = idx
         seq_end = seq_begin + self.seq_len
 
         # r_begin = seq_end - self.label_len
@@ -84,8 +83,11 @@ class Dataset_load(Dataset):
         # seq_y = self.data_y[r_begin:r_end]
         # seq_x_mark = self.data_stamp[s_begin:s_end]
         # seq_y_mark = self.data_stamp[r_begin:r_end]
-
         # return seq_x, seq_y, seq_x_mark, seq_y_mark
+        if self.mode == 'train':
+            return self.data_x[idx]
+        elif self.mode == 'test':
+            return self.data_x[idx], self.data_y[idx]
     
     def __len__(self):
         return len(self.data_x) - self.seq_len - self.pred_len + 1
@@ -98,10 +100,15 @@ class Dataset_load(Dataset):
             for j in range(start_index, end_index, self.step_len):
                 indices = range(j, j+self.seq_len)
                 cut_data.append(list_[i][indices])
-        return cut_data
+        return np.array(cut_data)
 
 if __name__ == "__main__":
+    
+    import sys
+    sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+    
     from get_args import Args
+    
     args_class = Args()
     args = args_class.args
     

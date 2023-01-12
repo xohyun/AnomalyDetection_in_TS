@@ -1,28 +1,33 @@
 from get_args import Args
+from utils import fix_random_seed
+
+import pandas as pd
+from DataLoader import data_provider
+from Trainer import trainer
 
 def main():
     args_class = Args()
     args = args_class.args
-    print("---")
-    print(args.data_path)
+    
+    #---# Fix seed #---#
+    fix_random_seed()
 
+    #---# Save a file #---#
+    df = pd.DataFrame(columns = ['test_subj', 'lr', 'wd', 'epoch', 'acc', 'f1', 'loss']); idx=0
+
+    #---#  DataLoader #---#
+    data_loader = data_provider(args)
+
+    #---# Build model #---#
+    model =  ModelMaker(args_class).model
+
+    #---# Model train #---#
+    trainer = trainer(args, model, data_loader)
+
+    if args.mode == "train":
+        f1_v, acc_v, cm_v, loss_v = trainer.train() # fitting
+    else:
+        f1_v, acc_v, cm_v, loss_v = trainer.evaluation() # fitting
 
 if __name__ == "__main__":
     main()
-    
-    import numpy as np
-    data = [0,1,2,3,4,5,6,7,8,9]
-    data = np.array(data)
-    data_split = []
-    pred_len = 1
-    seq_len = 7
-    step_len = 4
-
-    start_index = 0
-    end_index = len(data) - seq_len + 1
-
-    for j in range(start_index, end_index, step_len):
-        indices = range(j, j+seq_len)
-        data_split.append(data[indices])
-
-    print(len(data_split))

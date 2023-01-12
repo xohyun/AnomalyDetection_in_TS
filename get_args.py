@@ -15,8 +15,8 @@ class Args:
         parser.add_argument("--data_path", default="./TimeSeries-Anomaly-Detection-Dataset/data/")
 
         #---# Dataset #---#
-        nab_list = ['ec2', 'ambient'] #############
-        parser.add_argument("--dataset", default='WADI', choices=['MSL', 'NAB', 'SMAP', 'SMD', 'WADI'])
+        nab_list = ['ec2', 'ambient'] ############# test
+        parser.add_argument("--dataset", default='NAB', choices=['MSL', 'NAB', 'SMAP', 'SMD', 'WADI'])
         parser.add_argument("--choice_data", default=None)
         
         
