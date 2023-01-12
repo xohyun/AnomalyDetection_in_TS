@@ -1,20 +1,22 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import numpy as np
 import tqdm
+from tqdm import tqdm
+from sklearn.metrics import f1_score
 from utils import gpu_checking
 
-
 class TrainMaker:
-    def __init__(self, args, model, data_loader):
+    def __init__(self, args, model, data_loaders, data_info):
         self.args = args
         self.model = model
-        self.data_loader = data_loader
-
-        
+        self.data_loader = data_loaders['train']
+        self.data_loader_valid = data_loaders['valid']
+  
         self.device =  gpu_checking(args)
 
-        self.features = self.data.shape[1]
+        self.features = data_info
         self.epoch = self.args.epoch
         
         self.lr = self.args.lr
@@ -22,12 +24,13 @@ class TrainMaker:
         
         # 둘중에 뭐가맞지?
         self.optimizer = getattr(torch.optim, self.args.optimizer)
-        self.optimizer = self.optimizer(self.model.parameters(), lr=self.lr, weight_decay=self.wd)
+        # self.optimizer = self.optimizer(self.model.parameters(), lr=self.lr, weight_decay=self.wd)
 
         self.criterion = self.__set_criterion(self.args.criterion)
         self.scheduler = self.__set_scheduler(args, self.optimizer)
         
-        self.cal = Calculate()
+        # self.cal = Calculate()
+        
     
     def train(self, shuffle=True):
         for e in tqdm(range(self.epoch)):
@@ -35,21 +38,48 @@ class TrainMaker:
             self.model.train()
             
             for idx, x in enumerate(self.data_loader):
+                x = x.float().to(self.device)
                 self.optimizer.zero_grad()
-                x = x.reshape() # reshape
+                # x = x.reshape() # reshape
                 
                 pred = self.model(x.to(device=self.device))
-                loss = self.criterion()
+                loss = self.criterion(x, pred)
 
                 if (idx+1) % 1000 == 0:
                     print("1000th")
                     # print(f"[Epoch{e+1}, Step({idx+1}/{len(self.data_loader.dataset)}), Loss:{:/4f}")
 
                 self.loss.backward()
-                epoch_loss += loss
                 self.optimizer.step()
+                epoch_loss += loss
+            
+            score = self.validation(0.94)
 
+            if self.scheduler is not None:
+                self.scheduler.step(score)
 
+            if best_score < score:
+                print(f'Epoch : [{e}] Train loss : [{(epoch_loss/self.epoch)}] Val Score : [{score}])')
+                best_score = score
+                torch.save(self.model.module.state_dict(), f'./model_save/best_model_{1}.pth', _use_new_zipfile_serialization=False)
+  
+    
+    def validation(self, thr):
+        cos = nn.CosineSimilarity(dim=1, eps=1e-6)
+        self.model.eval()
+        pred = []
+        true = []
+        with torch.no_grad():
+            for x, y in iter(self.val_loader):
+                x = x.float().to(self.device)
+
+                _x = self.model(x)
+                diff = cos(x, _x).cpu().tolist()
+                batch_pred = np.where(np.array(diff)<thr, 1,0).tolist()
+                pred += batch_pred
+                true += y.tolist()
+
+        return f1_score(true, pred, average='macro')
 
 
     def __set_criterion(self, criterion):

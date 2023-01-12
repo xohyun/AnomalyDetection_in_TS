@@ -20,6 +20,8 @@ def gpu_checking(args) :
 def fix_random_seed(args):
     random.seed(args.seed)
     np.random.seed(args.seed)
+    os.environ['PYTHONHASHSEED'] = str(args.seed)
+
     torch.manual_seed(args.seed)
     # Multi-GPU
     if args.device == "multi":
@@ -27,6 +29,6 @@ def fix_random_seed(args):
     # Single-GPU
     else:
         torch.cuda.manual_seed(args.seed)
-    cudnn.benchmark = False  # If you want to set randomness, cudnn.benchmark = False
+    cudnn.benchmark = True  # If you want to set randomness, cudnn.benchmark = False
     cudnn.deterministic = True  # If you want to set randomness, cudnn.benchmark = True
     print(f"[Control randomness]\nseed: {args.seed}")

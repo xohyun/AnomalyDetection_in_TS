@@ -51,9 +51,17 @@ class Dataset_load(Dataset):
         #         load_file = np.load(os.path.join(data_folder, train_list[f]), allow_pickle=True)
         #         print(type(load_file))
         #         train_data.append(load_file)
-                
+
+        self.num_features = train_data[0].shape[1]
         self.data_x = self.cut_data(train_data)
-        print(self.data_x.shape)
+
+        self.data_x_shuffle = self.data_x.copy()
+        np.random.shuffle(self.data_x_shuffle)
+
+        self.train_data = self.data_x_shuffle[:int(len(self.data_x_shuffle)*0.7)]
+        self.valid_data = self.data_x_shuffle[int(len(self.data_x_shuffle)*0.7):]
+        
+        print(f"train : {self.train_data.shape} / valid : {self.valid_data.shape}")
 
     def __read_test_data__(self):
         data_folder = self.data_path + self.dataset
@@ -70,6 +78,8 @@ class Dataset_load(Dataset):
 
         self.data_x = self.cut_data(test_data)
         self.data_y = self.cut_data(label_data)
+        
+        
 
         
     def __getitem__(self, idx):
