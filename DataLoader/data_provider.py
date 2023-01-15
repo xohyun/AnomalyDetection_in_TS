@@ -36,7 +36,7 @@ def get_dataloader_test(args):
 
     data_loader_test = DataLoader(
         dataset,
-        # batch_size=args.batch_size,
+        batch_size=args.batch_size,
         shuffle=shuffle_flag,
         drop_last=drop_last
     )
