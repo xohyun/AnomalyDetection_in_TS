@@ -2,6 +2,7 @@ from utils import gpu_checking
 import os
 import pickle
 from Model import AE
+from utils import create_folder
 
 class ModelMaker:
     def __init__(self, args, data_info, pretrained=False):
@@ -9,6 +10,7 @@ class ModelMaker:
         print(f"Model setting {self.args.model} ...")
         self.device = gpu_checking(self.args)
         self.num_features = data_info
+        self.save_path = self.args.save_path
         if pretrained:
             self.model = pretrained_model(self.args.save_path)
         else:
@@ -19,8 +21,8 @@ class ModelMaker:
 
         if self.args.model == 'AE':
             model = AE.AutoEncoder(self.num_features).to(self.device)
-
-        write_pickle(os.path.join(self.args.save_path, f"model_{1}.pk"), model)
+        create_folder(self.save_path)
+        write_pickle(os.path.join(self.save_path, f"model_{1}.pk"), model)
         return model
 
 def write_pickle(path, data):
