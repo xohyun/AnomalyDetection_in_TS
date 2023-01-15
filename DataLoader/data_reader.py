@@ -77,7 +77,7 @@ class Dataset_load(Dataset):
         for f in range(len(test_list)):
             label_data.append(np.load(os.path.join(data_folder, label_list[f])))
             test_data.append(np.load(os.path.join(data_folder, test_list[f])))
-
+        
         self.num_features = test_data[0].shape[1]
         self.data_x = self.cut_data(test_data)
         self.data_y = self.cut_data(label_data)

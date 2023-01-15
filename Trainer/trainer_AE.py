@@ -73,29 +73,33 @@ class TrainMaker(base_trainer):
     def evaluation(self, test_loader, thr=0.95):
         cos = nn.CosineSimilarity(dim=1, eps=1e-6)
         self.model.eval()
-        pred = []
-        true = []
+        pred_list = []
+        true_list = []
         with torch.no_grad():
             for idx, (x, y) in enumerate(test_loader):
-                x = x.float().to(self.device)
-                print(f"x shape {x.shape}")
-                
+                x = x.float().to(self.device)    
                 pred = self.model(x.to(device=self.device))
-                print(f"pred shape {pred.shape}")
 
+                x = x.reshape(x.shape[0], -1)
+                pred = pred.reshape(pred.shape[0], -1)
+                y = y.reshape(y.shape[0], -1)
+                y = y.mean(axis=1).numpy()
+                # print(y.shape, "====")
                 diff = cos(x, pred).cpu().tolist()
+
+                # print(diff)
+                batch_pred = np.where(abs(np.array(diff))<0.001, 1, 0)
+                y = np.where(y>0.69, 1, 0)
                 
-                print("))))))", len(diff[0]))
-                batch_pred = np.where(np.array(diff)<thr, 1, 0)
-                
-                print(batch_pred.shape)
-                print("!!!!!!!!!!!!!!!!!")
-                print(y.shape)
-                pred.append(batch_pred)
-                true.append(y)
-                
-                raise
-        return f1_score(true, pred, average='macro')
+                # print(batch_pred.shape)
+
+                pred_list.extend(batch_pred)
+                true_list.extend(y)
+
+        f1 = f1_score(true_list, pred_list, average='macro')
+        print(f"f1 score {f1}")
+
+        return f1
 
 
     def set_criterion(self, criterion):
