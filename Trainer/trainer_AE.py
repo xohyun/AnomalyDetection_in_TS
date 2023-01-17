@@ -5,7 +5,7 @@ import numpy as np
 import tqdm
 from tqdm import tqdm
 from sklearn.metrics import f1_score
-from utils import gpu_checking
+from utils.utils import gpu_checking
 from Trainer.base_trainer import base_trainer
 
 class TrainMaker(base_trainer):
@@ -14,9 +14,10 @@ class TrainMaker(base_trainer):
         self.model = model
         self.mode = self.args.mode
 
-        if self.mode == "train":
+        if self.mode == "train" or self.mode == "all":
             self.data_loader = data_loaders['train']
-            self.data_loader_valid = data_loaders['valid']
+            if self.args.valid_setting:
+                self.data_loader_valid = data_loaders['valid']
         else:
             self.data_loader_test = data_loaders['test']
   
@@ -95,7 +96,7 @@ class TrainMaker(base_trainer):
 
                 pred_list.extend(batch_pred)
                 true_list.extend(y)
-
+        
         f1 = f1_score(true_list, pred_list, average='macro')
         print(f"f1 score {f1}")
 

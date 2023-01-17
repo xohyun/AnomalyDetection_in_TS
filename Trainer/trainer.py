@@ -5,7 +5,7 @@ import numpy as np
 import tqdm
 from tqdm import tqdm
 from sklearn.metrics import f1_score
-from utils import gpu_checking
+from utils.utils import gpu_checking
 
 class TrainMaker:
     def __init__(self, args, model, data_loaders, data_info):

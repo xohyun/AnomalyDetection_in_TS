@@ -28,7 +28,7 @@ class Dataset_load(Dataset):
 
         # self.root_path = root_path
 
-        if self.mode == "train":
+        if self.mode == "train" or self.mode == "all":
             self.__read_train_data__()
         elif self.mode == "test":
             self.__read_test_data__()
@@ -55,13 +55,16 @@ class Dataset_load(Dataset):
         self.num_features = train_data[0].shape[1]
         self.data_x = self.cut_data(train_data)
 
-        self.data_x_shuffle = self.data_x.copy()
-        np.random.shuffle(self.data_x_shuffle)
+        if self.args.valid_setting:
+            self.data_x_shuffle = self.data_x.copy()
+            np.random.shuffle(self.data_x_shuffle)
 
-        self.train_data = self.data_x_shuffle[:int(len(self.data_x_shuffle)*0.7)]
-        self.valid_data = self.data_x_shuffle[int(len(self.data_x_shuffle)*0.7):]
-        
-        print(f"train : {self.train_data.shape} / valid : {self.valid_data.shape}")
+            self.train_data = self.data_x_shuffle[:int(len(self.data_x_shuffle)*0.7)]
+            self.valid_data = self.data_x_shuffle[int(len(self.data_x_shuffle)*0.7):]
+
+            self.data_x = self.train_data
+            print(f"train : {self.train_data.shape} / valid : {self.valid_data.shape}")
+        print(f"train : {self.data_x.shape}")
 
     def __read_test_data__(self):
         data_folder = self.data_path + self.dataset
@@ -82,29 +85,16 @@ class Dataset_load(Dataset):
         self.data_x = self.cut_data(test_data)
         self.data_y = self.cut_data(label_data)
         
-        print("~~~~", self.data_x.shape)
-        print("~~~~", self.data_y.shape)
+        print(f"test data shape : {self.data_x.shape} / label data shape : {self.data_y.shape}")
         
     def __getitem__(self, idx):
-        seq_begin = idx
-        seq_end = seq_begin + self.seq_len
-
-        # r_begin = seq_end - self.label_len
-        # r_end = r_begin + self.label_len + self.pred_len
-
-        # seq_x = self.data_x[s_begin:s_end]
-        # seq_y = self.data_y[r_begin:r_end]
-        # seq_x_mark = self.data_stamp[s_begin:s_end]
-        # seq_y_mark = self.data_stamp[r_begin:r_end]
-        # return seq_x, seq_y, seq_x_mark, seq_y_mark
-  
         if self.mode == 'test':
             return self.data_x[idx], self.data_y[idx]
         else:
             return self.data_x[idx]
 
     def __len__(self):
-        return len(self.data_x) - self.seq_len - self.pred_len + 1
+        return len(self.data_x)
     
     def cut_data(self, list_):
         cut_data = []

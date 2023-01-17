@@ -2,7 +2,7 @@ from abc import *
 import torch.nn as nn
 import torch
 import torch.optim as optim
-from utils import gpu_checking
+from utils.utils import gpu_checking
 from abc import ABC
 
 class base_trainer(ABC):  

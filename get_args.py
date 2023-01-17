@@ -8,8 +8,9 @@ class Args:
         parser = argparse.ArgumentParser()
         
         #---# Mode #---#
-        parser.add_argument("--mode", default="train", choices=["train", "test"])
+        parser.add_argument("--mode", default="all", choices=["train", "test", "all"])
         parser.add_argument("--seed", default=1004, type=int)
+        parser.add_argument("--valid_setting", default=False, choices=[True, False])
 
         #---# device #---#
         parser.add_argument("--device", default=0, help="cpu or gpu number")
@@ -19,8 +20,8 @@ class Args:
         parser.add_argument("--save_path", default="./model_save/")
 
         #---# Dataset #---#
-        nab_list = ['ec2', 'ambient'] ############# test
-        parser.add_argument("--dataset", default='MSL', choices=['MSL', 'NAB', 'SMAP', 'SMD', 'WADI'])
+        nab_list = ['ec2'] ############# test
+        parser.add_argument("--dataset", default='NAB', choices=['MSL', 'NAB', 'SMAP', 'SMD', 'WADI'])
         parser.add_argument("--choice_data", default=None)
         
         

@@ -1,17 +1,20 @@
-from utils import gpu_checking
+from utils.utils import gpu_checking
 import os
 import pickle
-from Model import AE
-from utils import create_folder
+from Model import AE, IF
+from utils.utils import create_folder
 
 class ModelMaker:
-    def __init__(self, args, data_info, pretrained=False):
+    def __init__(self, args, data_info):
         self.args = args
+        self.data_info = data_info
+
         print(f"Model setting {self.args.model} ...")
+        
         self.device = gpu_checking(self.args)
-        self.num_features = data_info
         self.save_path = self.args.save_path
-        if pretrained:
+
+        if self.args.mode == "test":
             self.model = pretrained_model(self.args.save_path)
         else:
             self.model = self.__build_model(self.args)
@@ -20,13 +23,17 @@ class ModelMaker:
         model = ''
 
         if self.args.model == 'AE':
-            model = AE.AutoEncoder(self.num_features).to(self.device)
+            model = AE.AutoEncoder(self.data_info['num_features'],
+                                    self.data_info['seq_len']).to(self.device)
+        elif self.args.model == "IF":
+            model = IF.IF()
         create_folder(self.save_path)
         write_pickle(os.path.join(self.save_path, f"model_{1}.pk"), model)
         return model
 
+
 def write_pickle(path, data):
-    with open(path, 'wb') as f:
+    with open(path, 'wb') as f: 
         pickle.dump(data, f)
 
 def read_pickle(path):
