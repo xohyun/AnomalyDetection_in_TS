@@ -1,0 +1,58 @@
+from get_args import Args
+from utils.utils import fix_random_seed
+
+import pandas as pd
+import numpy as np
+from DataLoader.data_provider import get_dataloader
+
+from sklearn.ensemble import IsolationForest
+from sklearn.metrics import f1_score
+from sklearn.metrics import classification_report
+
+def get_pred_label(model_pred):
+    # IsolationForest 모델 출력 (1:정상, -1:불량(사기)) 이므로 (0:정상, 1:불량(사기))로 Label 변환
+    model_pred = np.where(model_pred == 1, 0, model_pred)
+    model_pred = np.where(model_pred == -1, 1, model_pred)
+    return model_pred
+
+def main():
+    args_class = Args()
+    args = args_class.args
+    
+    #---# Fix seed #---#
+    fix_random_seed(args)
+
+    #---# Save a file #---#
+    df = pd.DataFrame(columns = ['test_subj', 'lr', 'wd', 'epoch', 'acc', 'f1', 'loss']); idx=0
+
+    #---#  DataLoader #---#    
+    dl = get_dataloader(args)
+    data_loaders = dl.data_loaders
+
+    #---# IF model #---#
+    train_x = data_loaders['train'].dataset.data_x_2d
+    
+    model = IsolationForest(n_estimators=125, max_samples=len(train_x), random_state=args.seed, verbose=0) #contamination=val_contamination
+    model.fit()
+
+    print(train_x.shape)
+   
+    args.mode = "test"
+    dl_test = get_dataloader(args)
+    data_loaders_test = dl_test.data_loaders
+    test_x = data_loaders_test['test'].dataset.data_x_2d
+    label =  data_loaders_test['test'].dataset.label_2d # Label
+    label = label.mean(axis=1)
+    label = np.where(label>0.69, 1, 0)
+
+    print(test_x.shape)
+    print(label.shape)
+
+    pred = model.predict(test_x) # model prediction
+    pred = get_pred_label(pred)
+    val_score = f1_score(label, pred, average='macro')
+    print(f'Validation F1 Score : [{val_score}]')
+    # print(classification_report(val_y, val_pred))
+    
+if __name__ == "__main__":
+    main()

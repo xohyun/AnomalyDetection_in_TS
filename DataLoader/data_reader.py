@@ -52,9 +52,10 @@ class Dataset_load(Dataset):
         #         print(type(load_file))
         #         train_data.append(load_file)
 
+        self.data_x_2d = np.concatenate(train_data)
         self.num_features = train_data[0].shape[1]
         self.data_x = self.cut_data(train_data)
-
+        
         if self.args.valid_setting:
             self.data_x_shuffle = self.data_x.copy()
             np.random.shuffle(self.data_x_shuffle)
@@ -81,6 +82,8 @@ class Dataset_load(Dataset):
             label_data.append(np.load(os.path.join(data_folder, label_list[f])))
             test_data.append(np.load(os.path.join(data_folder, test_list[f])))
         
+        self.data_x_2d = np.concatenate(test_data)
+        self.label_2d = np.concatenate(label_data)
         self.num_features = test_data[0].shape[1]
         self.data_x = self.cut_data(test_data)
         self.data_y = self.cut_data(label_data)
