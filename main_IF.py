@@ -30,20 +30,30 @@ def main():
     data_loaders = dl.data_loaders
 
     #---# IF model #---#
-    train_x = data_loaders['train'].dataset.data_x_2d
+    if args.dataset == "NAB":
+        train_x = data_loaders['train'].dataset.data_x.reshape(-1, args.seq_len)
+    else:
+        train_x = data_loaders['train'].dataset.data_x_2d
     
     model = IsolationForest(n_estimators=125, max_samples=len(train_x), random_state=args.seed, verbose=0) #contamination=val_contamination
-    model.fit()
+    model.fit(train_x)
 
     print(train_x.shape)
-   
+
     args.mode = "test"
     dl_test = get_dataloader(args)
     data_loaders_test = dl_test.data_loaders
-    test_x = data_loaders_test['test'].dataset.data_x_2d
-    label =  data_loaders_test['test'].dataset.label_2d # Label
-    label = label.mean(axis=1)
-    label = np.where(label>0.69, 1, 0)
+    if args.dataset == "NAB":
+        test_x = data_loaders_test['test'].dataset.data_x.reshape(-1, args.seq_len)
+        label =  data_loaders_test['test'].dataset.data_y # Label
+    else:
+        test_x = data_loaders_test['test'].dataset.data_x_2d
+        label =  data_loaders_test['test'].dataset.label_2d # Label
+        
+    print("=======", label.shape)
+    if label.ndim != 1:
+        label = label.mean(axis=1)
+        label = np.where(label>0.79, 1, 0)
 
     print(test_x.shape)
     print(label.shape)
@@ -51,7 +61,7 @@ def main():
     pred = model.predict(test_x) # model prediction
     pred = get_pred_label(pred)
     val_score = f1_score(label, pred, average='macro')
-    print(f'Validation F1 Score : [{val_score}]')
+    print(f'F1 Score : [{val_score}]')
     # print(classification_report(val_y, val_pred))
     
 if __name__ == "__main__":

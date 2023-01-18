@@ -21,7 +21,7 @@ class Args:
 
         #---# Dataset #---#
         nab_list = ['ec2'] ############# test
-        parser.add_argument("--dataset", default='MSL', choices=['MSL', 'NAB', 'SMAP', 'SMD', 'WADI'])
+        parser.add_argument("--dataset", default='SMD', choices=['MSL', 'NAB', 'SMAP', 'SMD', 'WADI'])
         parser.add_argument("--choice_data", default=None)
         
         

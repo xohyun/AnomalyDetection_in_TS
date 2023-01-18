@@ -74,12 +74,15 @@ class Dataset_load(Dataset):
         if self.dataset_choice:
             data_list = [i for i in data_list if any(key in i for key in self.dataset_choice)]
         
-        label_list = [i for i in data_list if 'label' in i]; label_list.sort()
+        label_list = [i for i in data_list if ('label' in i and 'interpret' not in i)]; label_list.sort()
         test_list = [i for i in data_list if 'test' in i]; test_list.sort()
 
         label_data = []; test_data = []
         for f in range(len(test_list)):
-            label_data.append(np.load(os.path.join(data_folder, label_list[f])))
+            label_file = np.load(os.path.join(data_folder, label_list[f]))
+            # if len(label_file.shape) == 1:
+            #     label_file = label_file.reshape(-1, 1)
+            label_data.append(label_file)
             test_data.append(np.load(os.path.join(data_folder, test_list[f])))
         
         self.data_x_2d = np.concatenate(test_data)
@@ -101,6 +104,7 @@ class Dataset_load(Dataset):
     
     def cut_data(self, list_):
         cut_data = []
+
         for i in range(len(list_)):
             start_index = 0
             end_index = len(list_[i]) - self.seq_len + 1
