@@ -42,15 +42,15 @@ class Dataset_load(Dataset):
             data_list = [i for i in data_list if any(key in i for key in self.dataset_choice)]
         train_list = [i for i in data_list if 'train' in i]; train_list.sort()
         train_data = []
-
-        for f in range(len(train_list)):
-            train_data.append(np.load(os.path.join(data_folder, train_list[f])))
             
-        # if self.dataset == 'WADI':
-        #     for f in range(len(train_list)):
-        #         load_file = np.load(os.path.join(data_folder, train_list[f]), allow_pickle=True)
-        #         print(type(load_file))
-        #         train_data.append(load_file)
+        if self.dataset == 'WADI':
+            for f in range(len(train_list)):
+                load_file = np.load(os.path.join(data_folder, train_list[f]), allow_pickle=True)
+                load_file = np.delete(load_file, (0,1), axis=1)
+                train_data.append(load_file)
+        else:
+            for f in range(len(train_list)):
+                train_data.append(np.load(os.path.join(data_folder, train_list[f])))
 
         self.data_x_2d = np.concatenate(train_data)
         self.num_features = train_data[0].shape[1]
@@ -78,12 +78,20 @@ class Dataset_load(Dataset):
         test_list = [i for i in data_list if 'test' in i]; test_list.sort()
 
         label_data = []; test_data = []
-        for f in range(len(test_list)):
-            label_file = np.load(os.path.join(data_folder, label_list[f]))
-            # if len(label_file.shape) == 1:
-            #     label_file = label_file.reshape(-1, 1)
-            label_data.append(label_file)
-            test_data.append(np.load(os.path.join(data_folder, test_list[f])))
+        if self.dataset == 'WADI':
+            for f in range(len(test_list)):
+                load_file = np.load(os.path.join(data_folder, test_list[f]), allow_pickle=True)
+                load_file = np.delete(load_file, (0,1), axis=1)
+                label_file = np.load(os.path.join(data_folder, label_list[f]))
+                test_data.append(load_file)
+                label_data.append(label_file)
+        else:
+            for f in range(len(test_list)):
+                label_file = np.load(os.path.join(data_folder, label_list[f]))
+                # if len(label_file.shape) == 1:
+                #     label_file = label_file.reshape(-1, 1)
+                label_data.append(label_file)
+                test_data.append(np.load(os.path.join(data_folder, test_list[f])))
         
         self.data_x_2d = np.concatenate(test_data)
         self.label_2d = np.concatenate(label_data)
@@ -112,15 +120,3 @@ class Dataset_load(Dataset):
                 indices = range(j, j+self.seq_len)
                 cut_data.append(list_[i][indices])
         return np.array(cut_data)
-
-if __name__ == "__main__":
-    
-    import sys
-    sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-    
-    from get_args import Args
-    
-    args_class = Args()
-    args = args_class.args
-    
-    dl = Dataset_load(args)
