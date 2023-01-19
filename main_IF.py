@@ -1,12 +1,12 @@
 from get_args import Args
-from utils.utils import fix_random_seed
+from utils.utils import fix_random_seed, create_folder
 
 import pandas as pd
 import numpy as np
 from DataLoader.data_provider import get_dataloader
 
 from sklearn.ensemble import IsolationForest
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, precision_score, recall_score
 from sklearn.metrics import classification_report
 
 def get_pred_label(model_pred):
@@ -23,8 +23,8 @@ def main():
     fix_random_seed(args)
 
     #---# Save a file #---#
-    df = pd.DataFrame(columns = ['test_subj', 'lr', 'wd', 'epoch', 'acc', 'f1', 'loss']); idx=0
-
+    df = pd.DataFrame(columns = ['dataset', 'f1', 'precision', 'recall']); idx=0
+    create_folder('./csvs')
     #---#  DataLoader #---#    
     dl = get_dataloader(args)
     data_loaders = dl.data_loaders
@@ -38,8 +38,6 @@ def main():
     model = IsolationForest(n_estimators=125, max_samples=len(train_x), random_state=args.seed, verbose=0) #contamination=val_contamination
     model.fit(train_x)
 
-    print(train_x.shape)
-
     args.mode = "test"
     dl_test = get_dataloader(args)
     data_loaders_test = dl_test.data_loaders
@@ -50,19 +48,21 @@ def main():
         test_x = data_loaders_test['test'].dataset.data_x_2d
         label =  data_loaders_test['test'].dataset.label_2d # Label
         
-    print("=======", label.shape)
     if label.ndim != 1:
         label = label.mean(axis=1)
-        label = np.where(label>0.79, 1, 0)
-
-    print(test_x.shape)
-    print(label.shape)
+        # label = np.where(label>0.79, 1, 0)
+        label = np.where(label>0, 1, 0)
 
     pred = model.predict(test_x) # model prediction
     pred = get_pred_label(pred)
-    val_score = f1_score(label, pred, average='macro')
-    print(f'F1 Score : [{val_score}]')
+    f1 = f1_score(label, pred, average='macro')
+    precision = precision_score(label, pred, average='macro')
+    recall = recall_score(label, pred, average='macro')
+
+    print(f'F1 Score : {f1}, Precision : {precision}, Recall : {recall}')
     # print(classification_report(val_y, val_pred))
+    df.loc[idx] = [args.dataset, f1, precision, recall]
+    df.to_csv(f'./csvs/IF_{args.dataset}.csv', header = True, index = False)
     
 if __name__ == "__main__":
     main()
