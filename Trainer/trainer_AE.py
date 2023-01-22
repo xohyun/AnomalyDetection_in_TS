@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 import tqdm
+import wandb
 from tqdm import tqdm
 from sklearn.metrics import f1_score
 from utils.utils import gpu_checking
@@ -60,6 +61,7 @@ class TrainMaker(base_trainer):
                 self.optimizer.step()
                 epoch_loss += loss
             
+            wandb.log({"loss":loss})
             # score = self.validation(0.94)
 
             if self.scheduler is not None:
@@ -85,14 +87,12 @@ class TrainMaker(base_trainer):
                 pred = pred.reshape(pred.shape[0], -1)
                 y = y.reshape(y.shape[0], -1)
                 y = y.mean(axis=1).numpy()
-                # print(y.shape, "====")
+
                 diff = cos(x, pred).cpu().tolist()
 
-                # print(diff)
                 batch_pred = np.where(abs(np.array(diff))<0.001, 1, 0)
-                y = np.where(y>0.69, 1, 0)
-                
-                # print(batch_pred.shape)
+                # y = np.where(y>0.69, 1, 0)
+                y = np.where(y>0, 1, 0)
 
                 pred_list.extend(batch_pred)
                 true_list.extend(y)

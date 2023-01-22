@@ -1,3 +1,4 @@
+import wandb
 from get_args import Args
 from utils.utils import fix_random_seed
 
@@ -10,7 +11,8 @@ from Model.model_maker import ModelMaker
 def main():
     args_class = Args()
     args = args_class.args
-    
+    wandb.config.update(args)
+
     #---# Fix seed #---#
     fix_random_seed(args)
 
@@ -47,4 +49,5 @@ def main():
         f1_v = trainer.evaluation(data_loaders['test'])
 
 if __name__ == "__main__":
+    wandb.init(project='AD-project', name='AE_test')
     main()
