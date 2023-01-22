@@ -1,7 +1,7 @@
 from utils.utils import gpu_checking
 import os
 import pickle
-from Model import AE, IF
+from Model import AE, DAGMM
 from utils.utils import create_folder
 
 class ModelMaker:
@@ -25,6 +25,9 @@ class ModelMaker:
         if self.args.model == 'AE':
             model = AE.AutoEncoder(self.data_info['num_features'],
                                     self.data_info['seq_len']).to(self.device)
+        elif self.args.model == 'DAGMM':
+            model = DAGMM.DAGMM(self.data_info['num_features'],
+                                self.data_info['seq_len']).to(self.device)
         create_folder(self.save_path)
         write_pickle(os.path.join(self.save_path, f"model_{1}.pk"), model)
         return model

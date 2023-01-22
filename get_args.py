@@ -38,7 +38,7 @@ class Args:
         parser.add_argument("--step_len", default=1)
 
         #---# Model #---#
-        parser.add_argument("--model", type=str, default="AE", choices=["AE"])
+        parser.add_argument("--model", type=str, default="DAGMM", choices=["AE", "DAGMM"])
 
         parser.add_argument("--lr", type=float, default=0.001)
         parser.add_argument("--wd", type=float, default=0.0001)

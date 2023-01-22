@@ -1,16 +1,26 @@
 import wandb
 from get_args import Args
 from utils.utils import fix_random_seed
-
 import pandas as pd
 from DataLoader.data_provider import get_dataloader
 # from Trainer.trainer import TrainMaker
-from Trainer.trainer_AE import TrainMaker
+# from Trainer.trainer_AE import TrainMaker
 from Model.model_maker import ModelMaker
+import importlib
 
+def load_module_func(module_name):
+    mod = importlib.import_module(module_name)
+    return mod
+    
 def main():
     args_class = Args()
     args = args_class.args
+    
+    #---# import #---#
+    mod = load_module_func(f"Trainer.trainer_{args.model}")
+
+    #---# Wandb #---#
+    wandb.init(project='AD-project', name='AE_test')
     wandb.config.update(args)
 
     #---# Fix seed #---#
@@ -27,7 +37,7 @@ def main():
     model =  ModelMaker(args, data_info).model
 
     #---# Model train #---#
-    trainer = TrainMaker(args, model, data_loaders, data_info)
+    trainer = mod.TrainMaker(args, model, data_loaders, data_info)
 
     if args.mode == "train":
         f1 = trainer.train() # fitting
@@ -45,9 +55,8 @@ def main():
         data_info, data_loaders = dl_test.data_info, dl_test.data_loaders
 
         model = ModelMaker(args, data_info).model
-        trainer = TrainMaker(args, model, data_loaders, data_info)
+        trainer = mod.TrainMaker(args, model, data_loaders, data_info)
         f1_v = trainer.evaluation(data_loaders['test'])
 
 if __name__ == "__main__":
-    wandb.init(project='AD-project', name='AE_test')
     main()
