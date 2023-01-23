@@ -7,7 +7,7 @@ class DAGMM(nn.Module):
 	def __init__(self, feats, seq_len):
 		super(DAGMM, self).__init__()
 		self.name = 'DAGMM'
-		self.lr = 0.0001
+		
 		self.beta = 0.01
 		self.n_feats = feats
 		self.n_hidden = 16

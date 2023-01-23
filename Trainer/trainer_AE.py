@@ -78,6 +78,7 @@ class TrainMaker(base_trainer):
         self.model.eval()
         pred_list = []
         true_list = []
+        diffs = []
         with torch.no_grad():
             for idx, (x, y) in enumerate(test_loader):
                 x = x.float().to(self.device)    
@@ -89,17 +90,23 @@ class TrainMaker(base_trainer):
                 y = y.mean(axis=1).numpy()
 
                 diff = cos(x, pred).cpu().tolist()
-
-                batch_pred = np.where(abs(np.array(diff))<0.001, 1, 0)
+                
+                # batch_pred = np.where(((np.array(diff)<0) & (np.array(diff)>-0.1)), 1, 0)
+                batch_pred = np.where(abs(np.array(diff))<0.01, 1, 0)
                 # y = np.where(y>0.69, 1, 0)
                 y = np.where(y>0, 1, 0)
 
+                diffs.extend(diff)
                 pred_list.extend(batch_pred)
                 true_list.extend(y)
         
+        import matplotlib.pyplot as plt
+        from sklearn.metrics import confusion_matrix
+        plt.hist(diffs, bins=50, density=True, alpha=0.5, histtype='stepfilled')
+        plt.savefig('cosine_similarity_difference.jpg')
         f1 = f1_score(true_list, pred_list, average='macro')
         print(f"f1 score {f1}")
-
+        print(confusion_matrix(true_list, pred_list))
         return f1
 
 
