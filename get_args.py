@@ -33,12 +33,12 @@ class Args:
         
         
         #---# Dataset setting #---#
-        parser.add_argument("--seq_len", default=10)
-        parser.add_argument("--pred_len", default=1)
-        parser.add_argument("--step_len", default=1)
+        parser.add_argument("--seq_len", default=10, type=int)
+        parser.add_argument("--pred_len", default=1, type=int)
+        parser.add_argument("--step_len", default=1, type=int)
 
         #---# Model #---#
-        parser.add_argument("--model", type=str, default="AE", choices=["AE", "DAGMM"])
+        parser.add_argument("--model", type=str, default="DAGMM", choices=["AE", "DAGMM"])
 
         parser.add_argument("--lr", type=float, default=0.001)
         parser.add_argument("--wd", type=float, default=0.0001)

@@ -105,6 +105,7 @@ class TrainMaker(base_trainer):
         plt.hist(diffs, bins=50, density=True, alpha=0.5, histtype='stepfilled')
         plt.savefig('cosine_similarity_difference.jpg')
         f1 = f1_score(true_list, pred_list, average='macro')
+        wandb.log({"f1":f1})
         print(f"f1 score {f1}")
         print(confusion_matrix(true_list, pred_list))
         return f1

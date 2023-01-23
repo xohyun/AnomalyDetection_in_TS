@@ -20,8 +20,8 @@ def main():
     mod = load_module_func(f"Trainer.trainer_{args.model}")
 
     #---# Wandb #---#
-    wandb.init(project='AD-project', name='AE_test')
-    wandb.config.update(args)
+    # wandb.init(project='AD-project', name='AE_test')
+    # wandb.config.update(args)
 
     #---# Fix seed #---#
     fix_random_seed(args)
