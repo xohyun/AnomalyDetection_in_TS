@@ -29,8 +29,7 @@ class ModelMaker:
             model = DAGMM.DAGMM(self.data_info['num_features'],
                                 self.data_info['seq_len']).to(self.device)
         elif self.args.model == 'OmniAnomaly':
-            model = OmniAnomaly.OmniAnomaly(self.data_info['num_features'],
-                                            self.data_info['seq_len']).to(self.device)
+            model = OmniAnomaly.OmniAnomaly(self.data_info['num_features']).to(self.device)
         create_folder(self.save_path)
         write_pickle(os.path.join(self.save_path, f"model_{1}.pk"), model)
         return model

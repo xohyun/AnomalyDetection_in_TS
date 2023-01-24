@@ -3,14 +3,12 @@ import torch.nn as nn
 
 # OmniAnomaly (KDD 2019)
 class OmniAnomaly(nn.Module):
-    def __init__(self, feats, seq_len):
+    def __init__(self, feats):
         super(OmniAnomaly, self).__init__()
         self.beta = 0.01
         self.n_feats = feats
-        self.seq_len = seq_len
         self.n_hidden = 32
         self.n_latent = 8
-        self.n = self.n_feats * self.seq_len
 
         self.lstm = nn.GRU(self.n_feats, self.n_hidden, 2, batch_first=True)
         
@@ -33,7 +31,6 @@ class OmniAnomaly(nn.Module):
 
         ## Encoder
         x = self.encoder(out) # [batch, seq_len, 16]
-        print(">>>x", x.shape)
         mu, logvar = torch.split(x, [self.n_latent, self.n_latent], dim=-1) # [batch, seq_len, 8]
 
         ## Reparameterization trick
@@ -42,6 +39,5 @@ class OmniAnomaly(nn.Module):
         x = mu + eps*std
 
         ## Decoder
-        x = self.decoder(x)
-        print(">>>?",  x.shape)
+        x = self.decoder(x) # [batch, seq_len, feats]
         return x.reshape(-1), mu.reshape(-1), logvar.reshape(-1), hidden
