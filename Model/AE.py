@@ -12,19 +12,19 @@ class AutoEncoder(nn.Module):
         self.Encoder = nn.Sequential(
             nn.Linear(self.n, self.hidden1),
             nn.BatchNorm1d(self.hidden1),
-            nn.LeakyReLU(),
-            # nn.ReLU(),
+            # nn.LeakyReLU(),
+            nn.ReLU(),
             nn.Linear(self.hidden1, self.hidden2),
             nn.BatchNorm1d(self.hidden2),
-            nn.LeakyReLU(),
-            # nn.ReLU()
+            # nn.LeakyReLU(),
+            nn.ReLU()
         )
         self.Decoder = nn.Sequential(
             nn.Linear(self.hidden2, self.hidden1),
             nn.BatchNorm1d(self.hidden1),
             # nn.LayerNorm(64),
-            nn.LeakyReLU(),
-            # nn.ReLU(),
+            # nn.LeakyReLU(),
+            nn.ReLU(),
             nn.Linear(self.hidden1, self.n)
         )
         
