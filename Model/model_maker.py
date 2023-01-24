@@ -1,7 +1,7 @@
 from utils.utils import gpu_checking
 import os
 import pickle
-from Model import AE, DAGMM, OmniAnomaly
+from Model import AE, DAGMM, OmniAnomaly, USAD
 from utils.utils import create_folder
 
 class ModelMaker:
@@ -30,6 +30,9 @@ class ModelMaker:
                                 self.data_info['seq_len']).to(self.device)
         elif self.args.model == 'OmniAnomaly':
             model = OmniAnomaly.OmniAnomaly(self.data_info['num_features']).to(self.device)
+        elif self.args.model == 'USAD':
+            model = USAD.USAD(self.data_info['num_features'],
+                                self.data_info['seq_len']).to(self.device)
         create_folder(self.save_path)
         write_pickle(os.path.join(self.save_path, f"model_{1}.pk"), model)
         return model

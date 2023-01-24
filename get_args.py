@@ -8,7 +8,7 @@ class Args:
         parser = argparse.ArgumentParser()
         
         #---# Mode #---#
-        parser.add_argument("--mode", default="train", choices=["train", "test", "all"])
+        parser.add_argument("--mode", default="test", choices=["train", "test", "all"])
         parser.add_argument("--seed", default=1004, type=int)
         parser.add_argument("--valid_setting", default=False, choices=[True, False])
 
@@ -38,12 +38,12 @@ class Args:
         parser.add_argument("--step_len", default=1, type=int)
 
         #---# Model #---#
-        parser.add_argument("--model", type=str, default="AE", choices=["AE", "DAGMM", "OmniAnomaly", "USAD"])
+        parser.add_argument("--model", type=str, default="USAD", choices=["AE", "DAGMM", "OmniAnomaly", "USAD"])
 
         parser.add_argument("--lr", type=float, default=0.001)
         parser.add_argument("--wd", type=float, default=0.0001)
         parser.add_argument("--batch_size", type=int, default=16)
-        parser.add_argument("--epoch", type=int, default=2)
+        parser.add_argument("--epoch", type=int, default=1)
 
         parser.add_argument('--scheduler', '-sch')
         if parser.parse_known_args()[0].scheduler == 'exp':
