@@ -56,16 +56,16 @@ class TrainMaker(base_trainer):
                 pred = self.model(x)
                 loss = self.criterion(x, pred)
 
-                mae = mean_absolute_error(x.flatten().detach().numpy(), pred.flatten().detach().numpy())
-                mse = mean_squared_error(x.flatten().detach().numpy(), pred.flatten().detach().numpy())
+                mae = mean_absolute_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
+                mse = mean_squared_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
 
                 # if (idx+1) % 1000 == 0:
                 #     print("1000th")
                     # print(f"[Epoch{e+1}, Step({idx+1}/{len(self.data_loader.dataset)}), Loss:{:/4f}")
 
-                xs.extend(torch.mean(x, axis=(1,2)).detach().numpy().flatten()); preds.extend(torch.mean(pred, axis=(1,2)).detach().numpy().flatten())
+                xs.extend(torch.mean(x, axis=(1,2)).cpu().detach().numpy().flatten()); preds.extend(torch.mean(pred, axis=(1,2)).cpu().detach().numpy().flatten())
                 maes.extend(mae.flatten()); mses.extend(mse.flatten())
-                
+
                 loss.backward()
                 self.optimizer.step()
                 epoch_loss += loss
@@ -76,6 +76,8 @@ class TrainMaker(base_trainer):
                 self.scheduler.step()
             iidx = list(range(len(xs)))
 
+            plt.figure(figsize=(15,8))
+            plt.ylim(0,0.5)
             plt.plot(iidx[:100], xs[:100])
             plt.plot(iidx[:100], preds[:100])
             plt.fill_between(iidx[:100], xs[:100], preds[:100], color='green', alpha=0.5)
@@ -109,11 +111,12 @@ class TrainMaker(base_trainer):
                 
                 pred = self.model(x)
                 
-                mae = mean_absolute_error(x.flatten().detach().numpy(), pred.flatten().detach().numpy())
-                mse = mean_squared_error(x.flatten().detach().numpy(), pred.flatten().detach().numpy())
+                mae = mean_absolute_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
+                mse = mean_squared_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
 
-                xs.extend(torch.mean(x, axis=(1,2)).detach().numpy().flatten()); preds.extend(torch.mean(pred, axis=(1,2)).detach().numpy().flatten())
+                xs.extend(torch.mean(x, axis=(1,2)).cpu().detach().numpy().flatten()); preds.extend(torch.mean(pred, axis=(1,2)).cpu().detach().numpy().flatten())
                 maes.extend(mae.flatten()); mses.extend(mse.flatten())
+
 
                 y = y.reshape(y.shape[0], -1)
                 y = y.mean(axis=1).numpy()
@@ -137,6 +140,8 @@ class TrainMaker(base_trainer):
         f1 = f1_score(true_list, pred_list, average='macro')
         
         plt.cla()
+        plt.figure(figsize=(15,8))
+        plt.ylim(0,0.5)
         iidx = list(range(len(xs)))
         plt.plot(iidx, xs)
         plt.plot(iidx, preds)

@@ -1,6 +1,6 @@
 import wandb
 from get_args import Args
-from utils.utils import fix_random_seed
+from utils.utils import fix_random_seed, create_folder
 import pandas as pd
 from DataLoader.data_provider import get_dataloader
 # from Trainer.trainer import TrainMaker
@@ -15,6 +15,8 @@ def load_module_func(module_name):
 def main():
     args_class = Args()
     args = args_class.args
+    
+    create_folder('Fig')
     
     #---# import #---#
     mod = load_module_func(f"Trainer.trainer_{args.model}")
