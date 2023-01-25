@@ -8,7 +8,7 @@ class Args:
         parser = argparse.ArgumentParser()
         
         #---# Mode #---#
-        parser.add_argument("--mode", default="test", choices=["train", "test", "all"])
+        parser.add_argument("--mode", default="all", choices=["train", "test", "all"])
         parser.add_argument("--seed", default=1004, type=int)
         parser.add_argument("--valid_setting", default=False, choices=[True, False])
 

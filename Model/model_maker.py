@@ -3,6 +3,7 @@ import os
 import pickle
 from Model import AE, DAGMM, OmniAnomaly, USAD
 from utils.utils import create_folder
+import torch
 
 class ModelMaker:
     def __init__(self, args, data_info):
@@ -14,10 +15,10 @@ class ModelMaker:
         self.device = gpu_checking(self.args)
         self.save_path = self.args.save_path
 
+        self.model = self.__build_model(self.args)
         if self.args.mode == "test":
-            self.model = pretrained_model(self.args.save_path, self.args.model)
-        else:
-            self.model = self.__build_model(self.args)
+            # self.model = pretrained_model(self.args.save_path, self.args.model)
+            self.model.load_state_dict(torch.load(f"{self.save_path}model_{self.args.model}.pk"))
         
     def __build_model(self, args):
         model = ''
@@ -34,7 +35,7 @@ class ModelMaker:
             model = USAD.USAD(self.data_info['num_features'],
                                 self.data_info['seq_len']).to(self.device)
         create_folder(self.save_path)
-        write_pickle(os.path.join(self.save_path, f"model_{self.args.model}.pk"), model)
+        # write_pickle(os.path.join(self.save_path, f"model_{self.args.model}.pk"), model)
         return model
 
 

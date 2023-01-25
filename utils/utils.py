@@ -51,3 +51,12 @@ def find_bundle(queue):
         
     packet.append(tmp)
     return packet
+
+def save_checkpoint(self, epoch):
+    create_folder(os.path.join(self.args.save_path, "checkpoints"))
+    torch.save({
+        'epoch': epoch,
+        'model_state_dict': self.model.state_dict(),
+        'optimizer_state_dict': self.optimizer.state_dict(),
+        # 'scheduler_state_dict': self.scheduler.state_dict() if self.scheduler else None
+    }, os.path.join(self.args.save_path, f"checkpoints/{epoch}.tar"))

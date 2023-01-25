@@ -70,6 +70,8 @@ class TrainMaker(base_trainer):
                 self.optimizer.step()
                 epoch_loss += loss
             
+            torch.save(self.model.state_dict(), f'{self.args.save_path}model_{self.args.model}.pk')
+            
             wandb.log({"loss":loss})
             # score = self.validation(0.94)
             if self.scheduler is not None:
@@ -85,11 +87,11 @@ class TrainMaker(base_trainer):
             plt.savefig(f'Fig/train_fill_between_AE_{e}.jpg')
             
             plt.cla()
-            plt.hist(mse, bins=100, density=True, alpha=0.5)
+            plt.hist(mses, bins=100, density=True, alpha=0.5)
             plt.savefig(f'Fig/train_distribution_AE_mse.jpg')
             
             plt.cla()
-            plt.hist(mae, bins=100, density=True, alpha=0.5)
+            plt.hist(maes, bins=100, density=True, alpha=0.5)
             plt.savefig(f'Fig/train_distribution_AE_mae.jpg')
             
 
@@ -136,7 +138,6 @@ class TrainMaker(base_trainer):
                 pred_list.extend(batch_pred)
                 true_list.extend(y)
         
-
         plt.hist(diffs, bins=50, density=True, alpha=0.5, histtype='stepfilled')
         plt.savefig('Fig/cosine_similarity_difference.jpg')
         f1 = f1_score(true_list, pred_list, average='macro')
@@ -165,10 +166,10 @@ class TrainMaker(base_trainer):
 
 
         plt.cla()
-        plt.hist(mse, density=True, bins=100, alpha=0.5)
+        plt.hist(mses, density=True, bins=100, alpha=0.5)
         plt.savefig(f'Fig/test_distribution_AE_mse.jpg')
         plt.cla()
-        plt.hist(mae, density=True, bins=100, alpha=0.5)
+        plt.hist(maes, density=True, bins=100, alpha=0.5)
         plt.savefig(f'Fig/test_distribution_AE_mae.jpg')
     
         print(f"f1 score {f1}")
