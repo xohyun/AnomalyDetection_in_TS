@@ -6,7 +6,7 @@ import tqdm
 import wandb
 from tqdm import tqdm
 from sklearn.metrics import f1_score
-from utils.utils import gpu_checking
+from utils.utils import gpu_checking, find_bundle
 from Trainer.base_trainer import base_trainer
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
@@ -78,15 +78,18 @@ class TrainMaker(base_trainer):
 
             plt.figure(figsize=(15,8))
             plt.ylim(0,0.5)
-            plt.plot(iidx[:100], xs[:100])
-            plt.plot(iidx[:100], preds[:100])
+            plt.plot(iidx[:100], xs[:100], label="original")
+            plt.plot(iidx[:100], preds[:100], label="predict")
             plt.fill_between(iidx[:100], xs[:100], preds[:100], color='green', alpha=0.5)
+            plt.legend()
             plt.savefig(f'Fig/train_fill_between_AE_{e}.jpg')
+            
             plt.cla()
-            plt.hist(mse, density=True, alpha=0.5, histtype='stepfilled')
+            plt.hist(mse, bins=100, density=True, alpha=0.5)
             plt.savefig(f'Fig/train_distribution_AE_mse.jpg')
+            
             plt.cla()
-            plt.hist(mae, density=True, alpha=0.5, histtype='stepfilled')
+            plt.hist(mae, bins=100, density=True, alpha=0.5)
             plt.savefig(f'Fig/train_distribution_AE_mae.jpg')
             
 
@@ -117,7 +120,6 @@ class TrainMaker(base_trainer):
                 xs.extend(torch.mean(x, axis=(1,2)).cpu().detach().numpy().flatten()); preds.extend(torch.mean(pred, axis=(1,2)).cpu().detach().numpy().flatten())
                 maes.extend(mae.flatten()); mses.extend(mse.flatten())
 
-
                 y = y.reshape(y.shape[0], -1)
                 y = y.mean(axis=1).numpy()
 
@@ -143,21 +145,35 @@ class TrainMaker(base_trainer):
         plt.figure(figsize=(15,8))
         plt.ylim(0,0.5)
         iidx = list(range(len(xs)))
-        plt.plot(iidx, xs)
-        plt.plot(iidx, preds)
-        plt.fill_between(iidx, xs, preds, color='green', alpha=0.5)
-        plt.savefig(f'Fig/test_fill_between_AE_.jpg')
+        plt.plot(iidx[:100], xs[:100], label="original")
+        plt.plot(iidx[:100], preds[:100], label="predict")
+        plt.fill_between(iidx[:100], xs[:100], preds[:100], color='green', alpha=0.5)
+        plt.title("Normal")
+        plt.legend()
+        plt.savefig(f'Fig/test_fill_between_AE_Normal.jpg')
+        
         plt.cla()
-        plt.hist(mse, density=True, alpha=0.5, histtype='stepfilled')
+        anomaly_idx = np.where(np.array(true_list) == 1)
+        anomaly_idx_bundle = find_bundle(anomaly_idx[0].tolist())
+        iidx = list(range(len(anomaly_idx_bundle[0])))
+        plt.plot(iidx[:-1], xs[anomaly_idx_bundle[0][0]:anomaly_idx_bundle[0][-1]], label="original")
+        plt.plot(iidx[:-1], preds[anomaly_idx_bundle[0][0]:anomaly_idx_bundle[0][-1]], label="predict")
+        plt.fill_between(iidx[:-1], xs[anomaly_idx_bundle[0][0]:anomaly_idx_bundle[0][-1]], preds[anomaly_idx_bundle[0][0]:anomaly_idx_bundle[0][-1]], color='green', alpha=0.5)
+        plt.title("Abnormal")
+        plt.legend()
+        plt.savefig(f'Fig/test_fill_between_AE_Anomaly.jpg')
+
+
+        plt.cla()
+        plt.hist(mse, density=True, bins=100, alpha=0.5)
         plt.savefig(f'Fig/test_distribution_AE_mse.jpg')
         plt.cla()
-        plt.hist(mae, density=True, alpha=0.5, histtype='stepfilled')
+        plt.hist(mae, density=True, bins=100, alpha=0.5)
         plt.savefig(f'Fig/test_distribution_AE_mae.jpg')
     
         print(f"f1 score {f1}")
         print(confusion_matrix(true_list, pred_list))
         return f1
-
 
     def set_criterion(self, criterion):
         if criterion == "MSE":

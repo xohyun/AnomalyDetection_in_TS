@@ -3,7 +3,6 @@ import random
 import torch
 import torch.backends.cudnn as cudnn
 import numpy as np
-
 def create_folder(directory):
     try:
         if not os.path.exists(directory):
@@ -32,3 +31,23 @@ def fix_random_seed(args):
     cudnn.benchmark = True  # If you want to set randomness, cudnn.benchmark = False
     cudnn.deterministic = True  # If you want to set randomness, cudnn.benchmark = True
     print(f"[Control randomness]\nseed: {args.seed}")
+
+def find_bundle(queue):
+    packet = []
+    tmp = []
+    v = queue.pop(0)
+    tmp.append(v)
+    
+    while(len(queue)>0):
+        vv = queue.pop(0)
+        if v+1 == vv:
+            tmp.append(vv)
+            v = vv
+        else:
+            packet.append(tmp)
+            tmp = []
+            tmp.append(vv)
+            v = vv
+        
+    packet.append(tmp)
+    return packet
