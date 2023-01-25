@@ -88,12 +88,12 @@ class TrainMaker(base_trainer):
             
             plt.cla()
             plt.hist(mses, bins=100, density=True, alpha=0.5)
-            plt.xlim(0,0.3)
+            plt.xlim(0,0.1)
             plt.savefig(f'Fig/train_distribution_AE_mse.jpg')
             
             plt.cla()
             plt.hist(maes, bins=100, density=True, alpha=0.5)
-            plt.xlim(0,0.4)
+            plt.xlim(0,0.2)
             plt.savefig(f'Fig/train_distribution_AE_mae.jpg')
             
 
@@ -121,8 +121,8 @@ class TrainMaker(base_trainer):
                 # mae = mean_absolute_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
                 # mse = mean_squared_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
                 batch = x.shape[0]
-                mae = mean_absolute_error(np.transpose(x.reshape(batch, -1)).cpu().detach().numpy(), np.transpose(pred.reshape(batch, -1)).cpu().detach().numpy(), multioutput='raw_values')
-                mse = mean_squared_error(np.transpose(x.reshape(batch, -1)).cpu().detach().numpy(), np.transpose(pred.reshape(batch, -1)).cpu().detach().numpy(), multioutput='raw_values')
+                mae = mean_absolute_error(np.transpose(x.reshape(batch, -1).cpu().detach().numpy()), np.transpose(pred.reshape(batch, -1).cpu().detach().numpy()), multioutput='raw_values')
+                mse = mean_squared_error(np.transpose(x.reshape(batch, -1).cpu().detach().numpy()), np.transpose(pred.reshape(batch, -1).cpu().detach().numpy()), multioutput='raw_values')
 
                 xs.extend(torch.mean(x, axis=(1,2)).cpu().detach().numpy().flatten()); preds.extend(torch.mean(pred, axis=(1,2)).cpu().detach().numpy().flatten())
                 maes.extend(mae.flatten()); mses.extend(mse.flatten())
@@ -174,12 +174,12 @@ class TrainMaker(base_trainer):
 
         plt.cla()
         plt.hist(mses, density=True, bins=100, alpha=0.5)
-        plt.xlim(0,0.3)
+        plt.xlim(0,0.1)
         plt.savefig(f'Fig/test_distribution_AE_mse.jpg')
 
         plt.cla()
         plt.hist(maes, density=True, bins=100, alpha=0.5)
-        plt.xlim(0,0.4)
+        plt.xlim(0,0.2)
         plt.savefig(f'Fig/test_distribution_AE_mae.jpg')
 
 
