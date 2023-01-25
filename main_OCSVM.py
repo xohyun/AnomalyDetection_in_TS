@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 from DataLoader.data_provider import get_dataloader
 
-from sklearn.ensemble import IsolationForest
+from sklearn import svm
 from sklearn.metrics import f1_score, precision_score, recall_score
 from sklearn.metrics import classification_report
 from sklearn.decomposition import PCA
@@ -53,14 +53,14 @@ def main():
 
 
     #---# Take PCA to reduce feature space dimensionality #---#
-    pca = PCA(n_components=10, whiten=True)
+    pca = PCA(n_components=3, whiten=True)
     pca = pca.fit(train_x)
     print('Explained variance percentage = %0.2f' % sum(pca.explained_variance_ratio_))
     train_x = pca.transform(train_x)
     test_x = pca.transform(test_x)
 
     #---# IF model #---#
-    model = IsolationForest(n_estimators=125, max_samples=len(train_x), random_state=args.seed, verbose=0) #contamination=val_contamination
+    model = svm.OneClassSVM(gamma=0.001, kernel='rbf', nu=0.01)
     model.fit(train_x)
 
     pred = model.predict(test_x) # model prediction

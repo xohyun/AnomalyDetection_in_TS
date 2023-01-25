@@ -8,7 +8,7 @@ class Args:
         parser = argparse.ArgumentParser()
         
         #---# Mode #---#
-        parser.add_argument("--mode", default="test", choices=["train", "test", "all"])
+        parser.add_argument("--mode", default="all", choices=["train", "test", "all"])
         parser.add_argument("--seed", default=1004, type=int)
         parser.add_argument("--valid_setting", default=False, choices=[True, False])
 
@@ -38,7 +38,7 @@ class Args:
         parser.add_argument("--step_len", default=1, type=int)
 
         #---# Model #---#
-        parser.add_argument("--model", type=str, default="USAD", choices=["AE", "DAGMM", "OmniAnomaly", "USAD"])
+        parser.add_argument("--model", type=str, default="AE", choices=["AE", "DAGMM", "OmniAnomaly", "USAD"])
 
         parser.add_argument("--lr", type=float, default=0.001)
         parser.add_argument("--wd", type=float, default=0.0001)

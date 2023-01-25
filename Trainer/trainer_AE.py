@@ -8,6 +8,10 @@ from tqdm import tqdm
 from sklearn.metrics import f1_score
 from utils.utils import gpu_checking
 from Trainer.base_trainer import base_trainer
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
 
 class TrainMaker(base_trainer):
     def __init__(self, args, model, data_loaders, data_info):
@@ -24,7 +28,7 @@ class TrainMaker(base_trainer):
   
         self.device =  gpu_checking(args)
 
-        self.features = data_info
+        self.features = data_info['num_features']
         self.epoch = self.args.epoch
         
         self.lr = self.args.lr
@@ -44,28 +48,39 @@ class TrainMaker(base_trainer):
         for e in tqdm(range(self.epoch)):
             epoch_loss = 0
             self.model.train()
-            
+            xs = []; preds = []; maes = []; mses = []
             for idx, x in enumerate(self.data_loader):
-                x = x.float().to(self.device)
+                x = x.float().to(device = self.device)
                 self.optimizer.zero_grad()
-                # x = x.reshape() # reshape
                 
-                pred = self.model(x.to(device=self.device))
+                pred = self.model(x)
                 loss = self.criterion(x, pred)
+
+                mae = mean_absolute_error(x.flatten().detach().numpy(), pred.flatten().detach().numpy())
+                mse = mean_squared_error(x.flatten().detach().numpy(), pred.flatten().detach().numpy())
 
                 # if (idx+1) % 1000 == 0:
                 #     print("1000th")
                     # print(f"[Epoch{e+1}, Step({idx+1}/{len(self.data_loader.dataset)}), Loss:{:/4f}")
 
+                xs.extend(x.flatten()); preds.append(pred.flatten())
+                maes.extend(mae.flatten()); mses.append(mse.flatten())
+                
                 loss.backward()
                 self.optimizer.step()
                 epoch_loss += loss
             
             wandb.log({"loss":loss})
             # score = self.validation(0.94)
-
             if self.scheduler is not None:
                 self.scheduler.step()
+            
+            plt.fill_between(xs, preds, bins=50, density=True, alpha=0.5, histtype='stepfilled')
+            plt.savefig(f'/Fig/train_fill_between_AE_{e}.jpg')
+            plt.hist(mse, bins=50, density=True, alpha=0.5, histtype='stepfilled')
+            plt.hist(mae, bins=50, density=True, alpha=0.5, histtype='stepfilled')
+            plt.savefig(f'/Fig/train_distribution_AE_{e}.jpg')
+            
 
             # if best_score < score:
             #     print(f'Epoch : [{e}] Train loss : [{(epoch_loss/self.epoch)}] Val Score : [{score}])')
@@ -79,6 +94,8 @@ class TrainMaker(base_trainer):
         pred_list = []
         true_list = []
         diffs = []
+
+        xs = []; preds = []; maes = []; mses = []
         with torch.no_grad():
             for idx, (x, y) in enumerate(test_loader):
                 x = x.float().to(self.device)    
@@ -86,6 +103,13 @@ class TrainMaker(base_trainer):
 
                 x = x.reshape(x.shape[0], -1)
                 pred = pred.reshape(pred.shape[0], -1)
+                
+                mae = mean_absolute_error(x.flatten().detach().numpy(), pred.flatten().detach().numpy())
+                mse = mean_squared_error(x.flatten().detach().numpy(), pred.flatten().detach().numpy())
+
+                xs.append(x); preds.append(pred)
+                maes.append(mae); mses.append(mse)
+
                 y = y.reshape(y.shape[0], -1)
                 y = y.mean(axis=1).numpy()
 
@@ -100,12 +124,17 @@ class TrainMaker(base_trainer):
                 pred_list.extend(batch_pred)
                 true_list.extend(y)
         
-        import matplotlib.pyplot as plt
-        from sklearn.metrics import confusion_matrix
+
         plt.hist(diffs, bins=50, density=True, alpha=0.5, histtype='stepfilled')
-        plt.savefig('cosine_similarity_difference.jpg')
+        plt.savefig('/Fig/cosine_similarity_difference.jpg')
         f1 = f1_score(true_list, pred_list, average='macro')
-        wandb.log({"f1":f1})
+        
+        plt.fill_between(xs.flatten(), preds.flatten(), bins=50, density=True, alpha=0.5, histtype='stepfilled')
+        plt.savefig(f'/Fig/test_fill_between_AE.jpg')
+        plt.hist(mse, bins=50, density=True, alpha=0.5, histtype='stepfilled')
+        plt.hist(mae, bins=50, density=True, alpha=0.5, histtype='stepfilled')
+        plt.savefig(f'/Fig/test_distribution_AE.jpg')
+        
         print(f"f1 score {f1}")
         print(confusion_matrix(true_list, pred_list))
         return f1

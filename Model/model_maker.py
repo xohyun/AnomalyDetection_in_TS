@@ -15,7 +15,7 @@ class ModelMaker:
         self.save_path = self.args.save_path
 
         if self.args.mode == "test":
-            self.model = pretrained_model(self.args.save_path)
+            self.model = pretrained_model(self.args.save_path, self.args.model)
         else:
             self.model = self.__build_model(self.args)
         
@@ -47,10 +47,10 @@ def read_pickle(path):
         data = pickle.load(f)
     return data
 
-def pretrained_model(save_path):
+def pretrained_model(save_path, model):
     try:
         print("[read save model]")
-        model = read_pickle(os.path.join(save_path, f'model_{1}.pk'))
+        model = read_pickle(os.path.join(save_path, f'model_{model}.pk'))
     except FileNotFoundError:
         raise FileNotFoundError
 

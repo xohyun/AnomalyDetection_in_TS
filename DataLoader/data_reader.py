@@ -15,19 +15,6 @@ class Dataset_load(Dataset):
         self.dataset = self.args.dataset
         self.dataset_choice = self.args.choice_data
 
-
-        # 여기서부터 확인
-        # type_map = {'train' : 0, 'val' : 1, 'test' : 2}
-        # self.set_type = type_map[args.mode]
-
-        # self.features = args.features
-        # self.target = target
-        # self.scale = scale
-        # self.timeenc = timeenc
-        # self.freq = freq
-
-        # self.root_path = root_path
-
         if self.mode == "train" or self.mode == "all":
             self.__read_train_data__()
         elif self.mode == "test":
