@@ -182,8 +182,8 @@ class TrainMaker(base_trainer):
         plt.xlim(0,0.2)
         plt.savefig(f'Fig/test_distribution_AE_mae.jpg')
 
-
-        pred_list = np.where(np.array(maes)>0.14, 1, 0)
+        thres = np.percentile(np.array(maes), 99)
+        pred_list = np.where(np.array(maes)>thres, 1, 0)
         f1 = f1_score(true_list, pred_list, average='macro')
         precision = precision_score(true_list, pred_list, average="macro")
         recall = recall_score(true_list, pred_list, average="macro")
