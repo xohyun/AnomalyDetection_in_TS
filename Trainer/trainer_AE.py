@@ -5,7 +5,7 @@ import numpy as np
 import tqdm
 import wandb
 from tqdm import tqdm
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, precision_score, recall_score
 from utils.utils import gpu_checking, find_bundle
 from Trainer.base_trainer import base_trainer
 from sklearn.metrics import mean_absolute_error, mean_squared_error
@@ -185,10 +185,12 @@ class TrainMaker(base_trainer):
 
         pred_list = np.where(np.array(maes)>0.14, 1, 0)
         f1 = f1_score(true_list, pred_list, average='macro')
+        precision = precision_score(true_list, pred_list, average="macro")
+        recall = recall_score(true_list, pred_list, average="macro")
         print(f"f1 score {f1}")
 
         print(confusion_matrix(true_list, pred_list))
-        return f1
+        return f1, precision, recall
 
     def set_criterion(self, criterion):
         if criterion == "MSE":

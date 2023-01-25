@@ -16,20 +16,20 @@ def main():
     args_class = Args()
     args = args_class.args
     
-    create_folder('Fig')
-    
+    create_folder('Fig'); create_folder('csvs')
+
     #---# import #---#
     mod = load_module_func(f"Trainer.trainer_{args.model}")
 
     #---# Wandb #---#
-    wandb.init(project='AD-project', name='AE_test')
+    wandb.init(project='AD-project', name=f'{args.model}_{args.lr}_{args.wd}_{args.seq_len}_{args.step_len}')
     wandb.config.update(args)
 
     #---# Fix seed #---#
     fix_random_seed(args)
 
     #---# Save a file #---#
-    df = pd.DataFrame(columns = ['test_subj', 'lr', 'wd', 'epoch', 'acc', 'f1', 'loss']); idx=0
+    df = pd.DataFrame(columns = ['dataset', 'f1', 'precision', 'recall']); idx=0
 
     #---#  DataLoader #---#    
     dl = get_dataloader(args)
@@ -45,8 +45,8 @@ def main():
         f1 = trainer.train() # fitting
         
     elif args.mode == "test":
-        f1_v = trainer.evaluation(data_loaders['test'])
-        print("end", f1_v)
+        f1, precision, recall = trainer.evaluation(data_loaders['test'])
+        print("end", f1)
 
     elif args.mode == "all":
         args.mode = "train"
@@ -58,7 +58,13 @@ def main():
 
         model = ModelMaker(args, data_info).model
         trainer = mod.TrainMaker(args, model, data_loaders, data_info)
-        f1_v = trainer.evaluation(data_loaders['test'])
+        f1, precision, recall = trainer.evaluation(data_loaders['test'])
+
+        df.loc[idx] = [args.dataset, f1, precision, recall]
+        if args.dataset == 'NAB':
+            df.to_csv(f'./csvs/{args.model}_{args.dataset}_{args.choice_data}.csv', header = True, index = False)
+        else:
+            df.to_csv(f'./csvs/{args.model}_{args.dataset}.csv', header = True, index = False)
 
 if __name__ == "__main__":
     main()
