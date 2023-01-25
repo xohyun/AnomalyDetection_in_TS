@@ -34,7 +34,7 @@ class ModelMaker:
             model = USAD.USAD(self.data_info['num_features'],
                                 self.data_info['seq_len']).to(self.device)
         create_folder(self.save_path)
-        write_pickle(os.path.join(self.save_path, f"model_{1}.pk"), model)
+        write_pickle(os.path.join(self.save_path, f"model_{self.args.model}.pk"), model)
         return model
 
 

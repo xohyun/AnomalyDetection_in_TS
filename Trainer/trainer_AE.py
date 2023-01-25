@@ -63,8 +63,8 @@ class TrainMaker(base_trainer):
                 #     print("1000th")
                     # print(f"[Epoch{e+1}, Step({idx+1}/{len(self.data_loader.dataset)}), Loss:{:/4f}")
 
-                xs.extend(x.flatten()); preds.append(pred.flatten())
-                maes.extend(mae.flatten()); mses.append(mse.flatten())
+                xs.extend(torch.mean(x, axis=(1,2)).detach().numpy().flatten()); preds.extend(torch.mean(pred, axis=(1,2)).detach().numpy().flatten())
+                maes.extend(mae.flatten()); mses.extend(mse.flatten())
                 
                 loss.backward()
                 self.optimizer.step()
@@ -74,12 +74,18 @@ class TrainMaker(base_trainer):
             # score = self.validation(0.94)
             if self.scheduler is not None:
                 self.scheduler.step()
-            
-            plt.fill_between(xs, preds, bins=50, density=True, alpha=0.5, histtype='stepfilled')
-            plt.savefig(f'/Fig/train_fill_between_AE_{e}.jpg')
-            plt.hist(mse, bins=50, density=True, alpha=0.5, histtype='stepfilled')
-            plt.hist(mae, bins=50, density=True, alpha=0.5, histtype='stepfilled')
-            plt.savefig(f'/Fig/train_distribution_AE_{e}.jpg')
+            iidx = list(range(len(xs)))
+
+            plt.plot(iidx[:100], xs[:100])
+            plt.plot(iidx[:100], preds[:100])
+            plt.fill_between(iidx[:100], xs[:100], preds[:100], color='green', alpha=0.5)
+            plt.savefig(f'Fig/train_fill_between_AE_{e}.jpg')
+            plt.cla()
+            plt.hist(mse, density=True, alpha=0.5, histtype='stepfilled')
+            plt.savefig(f'Fig/train_distribution_AE_mse.jpg')
+            plt.cla()
+            plt.hist(mae, density=True, alpha=0.5, histtype='stepfilled')
+            plt.savefig(f'Fig/train_distribution_AE_mae.jpg')
             
 
             # if best_score < score:
@@ -98,21 +104,22 @@ class TrainMaker(base_trainer):
         xs = []; preds = []; maes = []; mses = []
         with torch.no_grad():
             for idx, (x, y) in enumerate(test_loader):
-                x = x.float().to(self.device)    
-                pred = self.model(x.to(device=self.device))
-
-                x = x.reshape(x.shape[0], -1)
-                pred = pred.reshape(pred.shape[0], -1)
+                x = x.float().to(device = self.device)
+                self.optimizer.zero_grad()
+                
+                pred = self.model(x)
                 
                 mae = mean_absolute_error(x.flatten().detach().numpy(), pred.flatten().detach().numpy())
                 mse = mean_squared_error(x.flatten().detach().numpy(), pred.flatten().detach().numpy())
 
-                xs.append(x); preds.append(pred)
-                maes.append(mae); mses.append(mse)
+                xs.extend(torch.mean(x, axis=(1,2)).detach().numpy().flatten()); preds.extend(torch.mean(pred, axis=(1,2)).detach().numpy().flatten())
+                maes.extend(mae.flatten()); mses.extend(mse.flatten())
 
                 y = y.reshape(y.shape[0], -1)
                 y = y.mean(axis=1).numpy()
 
+                x = x.reshape(x.shape[0], -1)
+                pred = pred.reshape(pred.shape[0], -1)
                 diff = cos(x, pred).cpu().tolist()
                 
                 # batch_pred = np.where(((np.array(diff)<0) & (np.array(diff)>-0.1)), 1, 0)
@@ -126,15 +133,22 @@ class TrainMaker(base_trainer):
         
 
         plt.hist(diffs, bins=50, density=True, alpha=0.5, histtype='stepfilled')
-        plt.savefig('/Fig/cosine_similarity_difference.jpg')
+        plt.savefig('Fig/cosine_similarity_difference.jpg')
         f1 = f1_score(true_list, pred_list, average='macro')
         
-        plt.fill_between(xs.flatten(), preds.flatten(), bins=50, density=True, alpha=0.5, histtype='stepfilled')
-        plt.savefig(f'/Fig/test_fill_between_AE.jpg')
-        plt.hist(mse, bins=50, density=True, alpha=0.5, histtype='stepfilled')
-        plt.hist(mae, bins=50, density=True, alpha=0.5, histtype='stepfilled')
-        plt.savefig(f'/Fig/test_distribution_AE.jpg')
-        
+        plt.cla()
+        iidx = list(range(len(xs)))
+        plt.plot(iidx, xs)
+        plt.plot(iidx, preds)
+        plt.fill_between(iidx, xs, preds, color='green', alpha=0.5)
+        plt.savefig(f'Fig/test_fill_between_AE_.jpg')
+        plt.cla()
+        plt.hist(mse, density=True, alpha=0.5, histtype='stepfilled')
+        plt.savefig(f'Fig/test_distribution_AE_mse.jpg')
+        plt.cla()
+        plt.hist(mae, density=True, alpha=0.5, histtype='stepfilled')
+        plt.savefig(f'Fig/test_distribution_AE_mae.jpg')
+    
         print(f"f1 score {f1}")
         print(confusion_matrix(true_list, pred_list))
         return f1
