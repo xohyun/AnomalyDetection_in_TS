@@ -95,7 +95,7 @@ class Dataset_load(Dataset):
             return self.data_x[idx]
 
     def __len__(self):
-        return len(self.data_x)
+        return 100 # len(self.data_x)
     
     def cut_data(self, list_):
         cut_data = []

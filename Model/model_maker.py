@@ -1,7 +1,7 @@
 from utils.utils import gpu_checking
 import os
 import pickle
-from Model import AE, DAGMM, OmniAnomaly, USAD
+from Model import AE, DAGMM, OmniAnomaly, USAD, TadGAN
 from utils.utils import create_folder
 import torch
 
@@ -34,6 +34,15 @@ class ModelMaker:
         elif self.args.model == 'USAD':
             model = USAD.USAD(self.data_info['num_features'],
                                 self.data_info['seq_len']).to(self.device)
+        elif self.args.model == "TadGAN":
+            encoder = TadGAN.Encoder(self.data_info['num_features']*self.data_info['seq_len'])
+            decoder = TadGAN.Decoder(self.data_info['num_features']*self.data_info['seq_len'])
+            critic_x = TadGAN.CriticX(self.data_info['num_features']*self.data_info['seq_len'])
+            critic_z = TadGAN.CriticZ(self.data_info['num_features']*self.data_info['seq_len'])
+            model = {'encoder':encoder,
+                    'decoder':decoder,
+                    'critic_x':critic_x,
+                    'critic_z':critic_z}
         create_folder(self.save_path)
         # write_pickle(os.path.join(self.save_path, f"model_{self.args.model}.pk"), model)
         return model
