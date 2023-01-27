@@ -7,7 +7,8 @@ class AutoEncoder(nn.Module):
         self.seq_len = seq_len
         self.n = self.num_features * self.seq_len
         self.hidden1 = int(self.n / 2)
-        self.hidden2 = int(self.n / 8)
+        self.hidden2 = int(self.n / 4)
+        self.hidden3 = int(self.n / 8)
 
         self.Encoder = nn.Sequential(
             nn.Linear(self.n, self.hidden1),
@@ -17,9 +18,16 @@ class AutoEncoder(nn.Module):
             nn.Linear(self.hidden1, self.hidden2),
             nn.BatchNorm1d(self.hidden2),
             # nn.LeakyReLU(),
+            nn.ReLU(),
+            nn.Linear(self.hidden2, self.hidden3),
+            nn.BatchNorm1d(self.hidden3),
+            # nn.LeakyReLU(),
             nn.ReLU()
         )
         self.Decoder = nn.Sequential(
+            nn.Linear(self.hidden3, self.hidden2),
+            nn.BatchNorm1d(self.hidden2),
+            nn.ReLU(),
             nn.Linear(self.hidden2, self.hidden1),
             nn.BatchNorm1d(self.hidden1),
             # nn.LayerNorm(64),
