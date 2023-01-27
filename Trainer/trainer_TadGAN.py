@@ -49,6 +49,7 @@ class TrainMaker(base_trainer):
         # self.scheduler = self.set_scheduler(args, self.optimizer)
 
     def train(self, n_epochs=2000):
+        logging.basicConfig(level=logging.DEBUG)
         logging.debug('Starting training')
         cx_epoch_loss = list()
         cz_epoch_loss = list()
