@@ -19,7 +19,7 @@ class Encoder(nn.Module):
         self.dense = nn.Linear(in_features=40, out_features=20)
 
     def forward(self, x):
-        batch_size = x.shape[1]
+        batch_size = x.shape[0]
         x = x.reshape(1, batch_size, self.signal_shape).float()
         x, (hn, cn) = self.lstm(x)
         x = self.dense(x)
@@ -45,7 +45,7 @@ class CriticX(nn.Module):
         self.dense2 = nn.Linear(in_features=20, out_features=1)
 
     def forward(self, x):
-        batch_size = x.shape[1]
+        batch_size = x.shape[0]
         x = x.view(1, batch_size, self.signal_shape).float()
         # x = x.view(1, x.shape[1], self.signal_shape).float()
         x = self.dense1(x)

@@ -18,7 +18,13 @@ class ModelMaker:
         self.model = self.__build_model(self.args)
         if self.args.mode == "test":
             # self.model = pretrained_model(self.args.save_path, self.args.model)
-            self.model.load_state_dict(torch.load(f"{self.save_path}model_{self.args.model}.pk"))
+            if self.args.model == "TadGAN":
+                self.model['encoder'].load_state_dict(torch.load(f"{self.save_path}{self.args.model}_encoder.pk"))
+                self.model['decoder'].load_state_dict(torch.load(f"{self.save_path}{self.args.model}_decoder.pk"))
+                self.model['critic_x'].load_state_dict(torch.load(f"{self.save_path}{self.args.model}_critic_x.pk"))
+                self.model['critic_z'].load_state_dict(torch.load(f"{self.save_path}{self.args.model}_critic_z.pk"))
+            else:
+                self.model.load_state_dict(torch.load(f"{self.save_path}model_{self.args.model}.pk"))
         
     def __build_model(self, args):
         model = ''

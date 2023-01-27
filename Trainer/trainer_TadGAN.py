@@ -96,24 +96,25 @@ class TrainMaker(base_trainer):
             logging.debug('Encoder decoder training done in epoch {}'.format(epoch))
             logging.debug('critic x loss {:.3f} critic z loss {:.3f} \nencoder loss {:.3f} decoder loss {:.3f}\n'.format(cx_epoch_loss[-1], cz_epoch_loss[-1], encoder_epoch_loss[-1], decoder_epoch_loss[-1]))
 
-            if epoch % 10 == 0:
-                torch.save(self.encoder.state_dict(), f'{self.args.save_path}_{self.args.model}_encoder')
-                torch.save(self.decoder.state_dict(), f'{self.args.save_path}_{self.args.model}_decoder')
-                torch.save(self.critic_x.state_dict(), f'{self.args.save_path}_{self.args.model}_critic_x')
-                torch.save(self.critic_z.state_dict(), f'{self.args.save_path}_{self.args.model}_critic_z')
+            #---# For save #---#
+            torch.save(self.encoder.state_dict(), f'{self.args.save_path}{self.args.model}_encoder.pk')
+            torch.save(self.decoder.state_dict(), f'{self.args.save_path}{self.args.model}_decoder.pk')
+            torch.save(self.critic_x.state_dict(), f'{self.args.save_path}{self.args.model}_critic_x.pk')
+            torch.save(self.critic_z.state_dict(), f'{self.args.save_path}{self.args.model}_critic_z.pk')
     
     def evaluation(self, test_loader):
         #---# prediction #---#
         preds = []
         critic_score = []
-        for batch, sample in enumerate(test_loader):
-            pred = self.decoder(self.encoder(sample))
-            critic = self.critic_x(sample).detach().numpy() # [1,64,1]
+        for batch, (x, y) in enumerate(test_loader):
+            pred = self.decoder(self.encoder(x))
+            critic = self.critic_x(x).detach().numpy() # [1,64,1]
 
-            preds.append(pred.reshape(64,1000))
-            critic_score.extend(critic.reshape(64))
+            preds.append(pred.reshape(-1, self.seq_len, self.num_featrues))
+            critic_score.extend(critic.reshape(-1))
 
         predictions = torch.cat(preds)
+        print(predictions.shape)
         return predictions
 
     def critic_x_iteration(self, sample):
