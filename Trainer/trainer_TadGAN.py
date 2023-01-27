@@ -48,7 +48,7 @@ class TrainMaker(base_trainer):
         self.criterion = self.set_criterion(self.args.criterion)
         # self.scheduler = self.set_scheduler(args, self.optimizer)
 
-    def train(self, n_epochs=2000):
+    def train(self):
         logging.basicConfig(level=logging.DEBUG)
         logging.debug('Starting training')
         cx_epoch_loss = list()
@@ -56,7 +56,7 @@ class TrainMaker(base_trainer):
         encoder_epoch_loss = list()
         decoder_epoch_loss = list()
 
-        for epoch in range(n_epochs):
+        for epoch in range(self.epoch):
             logging.debug('Epoch {}'.format(epoch))
             n_critics = 5
 
