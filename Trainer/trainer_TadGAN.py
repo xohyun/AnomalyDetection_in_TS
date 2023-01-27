@@ -107,8 +107,9 @@ class TrainMaker(base_trainer):
         preds = []
         critic_score = []
         for batch, (x, y) in enumerate(test_loader):
-            pred = self.decoder(self.encoder(x))
-            critic = self.critic_x(x).detach().numpy() # [1,64,1]
+            x_ = x.view(1, x.shape[0], self.features)
+            pred = self.decoder(self.encoder(x_))
+            critic = self.critic_x(x_).detach().numpy() # [1,64,1]
 
             preds.append(pred.reshape(-1, self.seq_len, self.num_featrues))
             critic_score.extend(critic.reshape(-1))
@@ -120,8 +121,9 @@ class TrainMaker(base_trainer):
     def critic_x_iteration(self, sample):
         self.optim_cx.zero_grad()
         
-        # x = sample['signal'].view(1, batch_size, signal_shape)
-        x = sample.view(1, self.batch_size, self.features)
+        # x = sample['signal'].view(1, batch_size, signal_shape) ## 원래
+        # x = sample.view(1, self.batch_size, self.features)
+        x = sample.view(1, sample.shape[0], self.features)
         valid_x = self.critic_x(x)
         valid_x = torch.squeeze(valid_x)
         critic_score_valid_x = torch.mean(torch.ones(valid_x.shape) * valid_x) # Wasserstein Loss
@@ -184,8 +186,9 @@ class TrainMaker(base_trainer):
 
     def encoder_iteration(self, sample):
         self.optim_enc.zero_grad()
-        # x = sample['signal'].view(1, batch_size, signal_shape)
-        x = sample.view(1, self.batch_size, self.features)
+        # x = sample['signal'].view(1, batch_size, signal_shape) # 원래
+        # x = sample.view(1, self.batch_size, self.features)
+        x = sample.view(1, sample.shape[0], self.features)
         valid_x = self.critic_x(x)
         valid_x = torch.squeeze(valid_x)
         critic_score_valid_x = torch.mean(torch.ones(valid_x.shape) * valid_x) #Wasserstein Loss

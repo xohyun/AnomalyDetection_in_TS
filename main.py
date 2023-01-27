@@ -62,9 +62,11 @@ def main():
 
         df.loc[idx] = [args.dataset, f1, precision, recall]
         if args.dataset == 'NAB':
-            df.to_csv(f'./csvs/{args.model}_{args.dataset}_{args.choice_data}.csv', header = True, index = False)
+            df.to_csv(f'./csvs/{args.model}_{args.dataset}_{args.choice_data}_lr{args.lr} \
+                        _wd{args.wd}_seq{args.seq_len}_step{args.step_len}.csv', header = True, index = False)
         else:
-            df.to_csv(f'./csvs/{args.model}_{args.dataset}.csv', header = True, index = False)
+            df.to_csv(f'./csvs/{args.model}_{args.dataset}_lr{args.lr}_wd{args.wd}_seq{args.seq_len}_step{args.step_len}.csv', 
+                        header = True, index = False)
 
 if __name__ == "__main__":
     main()
