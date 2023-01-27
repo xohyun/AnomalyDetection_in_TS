@@ -41,9 +41,9 @@ class ModelMaker:
             model = USAD.USAD(self.data_info['num_features'],
                                 self.data_info['seq_len']).to(self.device)
         elif self.args.model == "TadGAN":
-            encoder = TadGAN.Encoder(self.data_info['num_features']*self.data_info['seq_len'])
+            encoder = TadGAN.Encoder(self.args.batch_size, self.data_info['num_features']*self.data_info['seq_len'])
             decoder = TadGAN.Decoder(self.data_info['num_features']*self.data_info['seq_len'])
-            critic_x = TadGAN.CriticX(self.data_info['num_features']*self.data_info['seq_len'])
+            critic_x = TadGAN.CriticX(self.batch_size, self.data_info['num_features']*self.data_info['seq_len'])
             critic_z = TadGAN.CriticZ(self.data_info['num_features']*self.data_info['seq_len'])
             model = {'encoder':encoder,
                     'decoder':decoder,
