@@ -22,8 +22,8 @@ def main():
     mod = load_module_func(f"Trainer.trainer_{args.model}")
 
     #---# Wandb #---#
-    wandb.init(project='AD-project', name=f'{args.model}_{args.lr}_{args.wd}_{args.seq_len}_{args.step_len}')
-    wandb.config.update(args)
+    # wandb.init(project='AD-project', name=f'{args.model}_{args.lr}_{args.wd}_{args.seq_len}_{args.step_len}')
+    # wandb.config.update(args)
 
     #---# Fix seed #---#
     fix_random_seed(args)

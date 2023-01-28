@@ -1,7 +1,7 @@
 from utils.utils import gpu_checking
 import os
 import pickle
-from Model import AE, DAGMM, OmniAnomaly, USAD, TadGAN
+from Model import AE, DAGMM, OmniAnomaly, USAD, TadGAN, LSTMAE
 from utils.utils import create_folder
 import torch
 
@@ -40,11 +40,15 @@ class ModelMaker:
         elif self.args.model == 'USAD':
             model = USAD.USAD(self.data_info['num_features'],
                                 self.data_info['seq_len']).to(self.device)
-        elif self.args.model == "TadGAN":
-            encoder = TadGAN.Encoder(self.data_info['num_features']*self.data_info['seq_len'])
-            decoder = TadGAN.Decoder(self.data_info['num_features']*self.data_info['seq_len'])
-            critic_x = TadGAN.CriticX(self.data_info['num_features']*self.data_info['seq_len'])
-            critic_z = TadGAN.CriticZ(self.data_info['num_features']*self.data_info['seq_len'])
+        elif self.args.model == 'LSTMAE':
+            model = LSTMAE.RecurrentAutoencoder(self.data_info['seq_len'],
+                                                self.data_info['num_features'],
+                                                device=self.device).to(self.device)         
+        elif self.args.model == 'TadGAN':
+            encoder = TadGAN.Encoder(self.data_info['num_features']*self.data_info['seq_len']).to(self.device) 
+            decoder = TadGAN.Decoder(self.data_info['num_features']*self.data_info['seq_len']).to(self.device) 
+            critic_x = TadGAN.CriticX(self.data_info['num_features']*self.data_info['seq_len']).to(self.device) 
+            critic_z = TadGAN.CriticZ(self.data_info['num_features']*self.data_info['seq_len']).to(self.device) 
             model = {'encoder':encoder,
                     'decoder':decoder,
                     'critic_x':critic_x,
