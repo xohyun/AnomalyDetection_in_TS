@@ -72,9 +72,6 @@ class RecurrentAutoencoder(nn.Module):
         super(RecurrentAutoencoder, self).__init__()
         self.encoder = Encoder(seq_len, n_features, embedding_dim).to(device)
         self.decoder = Decoder(seq_len, embedding_dim, n_features).to(device)
-        # 추가
-        self.seq_len = int(seq_len)
-        self.n_features = n_features
 
     def forward(self, x):
         x = self.encoder(x)

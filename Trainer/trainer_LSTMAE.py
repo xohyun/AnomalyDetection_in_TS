@@ -71,6 +71,7 @@ class TrainMaker(base_trainer):
                 self.optimizer.step()
                 losses.append(loss.item())
                 epoch_loss += loss
+
             
             torch.save(self.model.state_dict(), f'{self.args.save_path}model_{self.args.model}.pk')
             

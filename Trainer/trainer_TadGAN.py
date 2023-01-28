@@ -71,7 +71,7 @@ class TrainMaker(base_trainer):
                 cz_loss = list()
 
                 for batch, sample in enumerate(self.data_loader):
-                    loss = self.critic_x_iteration(sample..to(device = self.device))
+                    loss = self.critic_x_iteration(sample.to(device = self.device))
                     cx_loss.append(loss)
 
                     loss = self.critic_z_iteration(sample.to(device = self.device))
@@ -163,16 +163,16 @@ class TrainMaker(base_trainer):
         x = sample.view(1, sample.shape[0], self.features).to(device = self.device)
         valid_x = self.critic_x(x)
         valid_x = torch.squeeze(valid_x)
-        critic_score_valid_x = torch.mean(torch.ones(valid_x.shape) * valid_x) # Wasserstein Loss
+        critic_score_valid_x = torch.mean(torch.ones(valid_x.shape).to(device = self.device) * valid_x) # Wasserstein Loss
 
         #The sampled z are the anomalous points - points deviating from actual distribution of z (obtained through encoding x)
         z = torch.empty(1, self.batch_size, self.latent_space_dim).uniform_(0, 1)
-        x_ = self.decoder(z)
+        x_ = self.decoder(z.to(device = self.device))
         fake_x = self.critic_x(x_)
         fake_x = torch.squeeze(fake_x)
-        critic_score_fake_x = torch.mean(torch.ones(fake_x.shape) * fake_x)  #Wasserstein Loss
+        critic_score_fake_x = torch.mean(torch.ones(fake_x.shape).to(device = self.device) * fake_x)  #Wasserstein Loss
 
-        alpha = torch.rand(x.shape)
+        alpha = torch.rand(x.shape).to(device = self.device)
         ix = Variable(alpha * x + (1 - alpha) * x_) #Random Weighted Average
         ix.requires_grad_(True)
         v_ix = self.critic_x(ix)
@@ -198,16 +198,16 @@ class TrainMaker(base_trainer):
         z = self.encoder(x)
         valid_z = self.critic_z(z)
         valid_z = torch.squeeze(valid_z)
-        critic_score_valid_z = torch.mean(torch.ones(valid_z.shape) * valid_z)
+        critic_score_valid_z = torch.mean(torch.ones(valid_z.shape).to(device = self.device) * valid_z)
 
-        z_ = torch.empty(1, self.batch_size, self.latent_space_dim).uniform_(0, 1)
+        z_ = torch.empty(1, self.batch_size, self.latent_space_dim).uniform_(0, 1).to(device = self.device)
         fake_z = self.critic_z(z_)
         fake_z = torch.squeeze(fake_z)
-        critic_score_fake_z = torch.mean(torch.ones(fake_z.shape) * fake_z) #Wasserstein Loss
+        critic_score_fake_z = torch.mean(torch.ones(fake_z.shape).to(device = self.device) * fake_z) #Wasserstein Loss
 
         wl = critic_score_fake_z - critic_score_valid_z
 
-        alpha = torch.rand(z.shape)
+        alpha = torch.rand(z.shape).to(device = self.device)
         iz = Variable(alpha * z + (1 - alpha) * z_) #Random Weighted Average
         iz.requires_grad_(True)
         v_iz = self.critic_z(iz)
@@ -228,13 +228,13 @@ class TrainMaker(base_trainer):
         x = sample.view(1, sample.shape[0], self.features).to(device = self.device)
         valid_x = self.critic_x(x)
         valid_x = torch.squeeze(valid_x)
-        critic_score_valid_x = torch.mean(torch.ones(valid_x.shape) * valid_x) #Wasserstein Loss
+        critic_score_valid_x = torch.mean(torch.ones(valid_x.shape).to(device = self.device) * valid_x) #Wasserstein Loss
 
-        z = torch.empty(1, self.batch_size, self.latent_space_dim).uniform_(0, 1)
+        z = torch.empty(1, self.batch_size, self.latent_space_dim).uniform_(0, 1).to(device = self.device)
         x_ = self.decoder(z)
         fake_x = self.critic_x(x_)
         fake_x = torch.squeeze(fake_x)
-        critic_score_fake_x = torch.mean(torch.ones(fake_x.shape) * fake_x)
+        critic_score_fake_x = torch.mean(torch.ones(fake_x.shape).to(device = self.device) * fake_x)
 
         enc_z = self.encoder(x)
         gen_x = self.decoder(enc_z)
@@ -254,12 +254,12 @@ class TrainMaker(base_trainer):
         z = self.encoder(x)
         valid_z = self.critic_z(z)
         valid_z = torch.squeeze(valid_z)
-        critic_score_valid_z = torch.mean(torch.ones(valid_z.shape) * valid_z)
+        critic_score_valid_z = torch.mean(torch.ones(valid_z.shape).to(device = self.device) * valid_z)
 
-        z_ = torch.empty(1, self.batch_size, self.latent_space_dim).uniform_(0, 1)
+        z_ = torch.empty(1, self.batch_size, self.latent_space_dim).uniform_(0, 1).to(device = self.device)
         fake_z = self.critic_z(z_)
         fake_z = torch.squeeze(fake_z)
-        critic_score_fake_z = torch.mean(torch.ones(fake_z.shape) * fake_z)
+        critic_score_fake_z = torch.mean(torch.ones(fake_z.shape).to(device = self.device) * fake_z)
 
         enc_z = self.encoder(x)
         gen_x = self.decoder(enc_z)
