@@ -8,6 +8,7 @@ from utils.utils import gpu_checking
 from Trainer.base_trainer import base_trainer
 from sklearn.metrics import f1_score, precision_score, recall_score
 import numpy as np
+import wandb
 
 class TrainMaker(base_trainer):
     def __init__(self, args, model, data_loaders, data_info):
@@ -91,6 +92,10 @@ class TrainMaker(base_trainer):
                 encoder_loss.append(enc_loss)
                 decoder_loss.append(dec_loss)
 
+            wandb.log({"cx_nc_loss":torch.mean(torch.tensor(cx_nc_loss)),
+                        "cz_nc_loss":torch.mean(torch.tensor(cz_nc_loss)),
+                        "encoder_loss":torch.mean(torch.tensor(encoder_loss)),
+                        "decoder_loss":torch.mean(torch.tensor(decoder_loss))})
             cx_epoch_loss.append(torch.mean(torch.tensor(cx_nc_loss)))
             cz_epoch_loss.append(torch.mean(torch.tensor(cz_nc_loss)))
             encoder_epoch_loss.append(torch.mean(torch.tensor(encoder_loss)))
