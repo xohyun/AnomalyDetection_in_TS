@@ -71,10 +71,10 @@ class TrainMaker(base_trainer):
                 cz_loss = list()
 
                 for batch, sample in enumerate(self.data_loader):
-                    loss = self.critic_x_iteration(sample)
+                    loss = self.critic_x_iteration(sample..to(device = self.device))
                     cx_loss.append(loss)
 
-                    loss = self.critic_z_iteration(sample)
+                    loss = self.critic_z_iteration(sample.to(device = self.device))
                     cz_loss.append(loss)
 
                 cx_nc_loss.append(torch.mean(torch.tensor(cx_loss)))
@@ -87,8 +87,8 @@ class TrainMaker(base_trainer):
             decoder_loss = list()
 
             for batch, sample in enumerate(self.data_loader):
-                enc_loss = self.encoder_iteration(sample)
-                dec_loss = self.decoder_iteration(sample)
+                enc_loss = self.encoder_iteration(sample.to(device = self.device))
+                dec_loss = self.decoder_iteration(sample.to(device = self.device))
                 encoder_loss.append(enc_loss)
                 decoder_loss.append(dec_loss)
 
