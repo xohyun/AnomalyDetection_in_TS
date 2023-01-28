@@ -160,7 +160,7 @@ class TrainMaker(base_trainer):
         
         # x = sample['signal'].view(1, batch_size, signal_shape) ## 원래
         # x = sample.view(1, self.batch_size, self.features)
-        x = sample.view(1, sample.shape[0], self.features)
+        x = sample.view(1, sample.shape[0], self.features).to(device = self.device)
         valid_x = self.critic_x(x)
         valid_x = torch.squeeze(valid_x)
         critic_score_valid_x = torch.mean(torch.ones(valid_x.shape) * valid_x) # Wasserstein Loss
@@ -194,7 +194,7 @@ class TrainMaker(base_trainer):
         self.optim_cz.zero_grad()
 
         # x = sample['signal'].view(1, batch_size, signal_shape)
-        x = sample.view(1, self.batch_size, self.features)
+        x = sample.view(1, self.batch_size, self.features).to(device = self.device)
         z = self.encoder(x)
         valid_z = self.critic_z(z)
         valid_z = torch.squeeze(valid_z)
@@ -225,7 +225,7 @@ class TrainMaker(base_trainer):
         self.optim_enc.zero_grad()
         # x = sample['signal'].view(1, batch_size, signal_shape) # 원래
         # x = sample.view(1, self.batch_size, self.features)
-        x = sample.view(1, sample.shape[0], self.features)
+        x = sample.view(1, sample.shape[0], self.features).to(device = self.device)
         valid_x = self.critic_x(x)
         valid_x = torch.squeeze(valid_x)
         critic_score_valid_x = torch.mean(torch.ones(valid_x.shape) * valid_x) #Wasserstein Loss
@@ -250,7 +250,7 @@ class TrainMaker(base_trainer):
         self.optim_dec.zero_grad()
 
         # x = sample['signal'].view(1, batch_size, signal_shape)
-        x = sample.view(1, self.batch_size, self.features)
+        x = sample.view(1, self.batch_size, self.features).to(device = self.device)
         z = self.encoder(x)
         valid_z = self.critic_z(z)
         valid_z = torch.squeeze(valid_z)
