@@ -29,7 +29,7 @@ def main():
     fix_random_seed(args)
 
     #---# Save a file #---#
-    df = pd.DataFrame(columns = ['dataset', 'f1', 'precision', 'recall', 'seq_len', 'step_len', 'lr', 'wd']); idx=0
+    df = pd.DataFrame(columns = ['dataset', 'f1', 'precision', 'recall', 'seq_len', 'step_len', 'lr', 'wd', 'batch', 'epoch']); idx=0
 
     #---#  DataLoader #---#    
     dl = get_dataloader(args)
@@ -60,12 +60,11 @@ def main():
         trainer = mod.TrainMaker(args, model, data_loaders, data_info)
         f1, precision, recall = trainer.evaluation(data_loaders['test'])
 
-        df.loc[idx] = [args.dataset, f1, precision, recall, args.seq_len, args.step_len, args.lr, args.wd]
+        df.loc[idx] = [args.dataset, f1, precision, recall, args.seq_len, args.step_len, args.lr, args.wd, args.batch_size, args.epoch]
         if args.dataset == 'NAB':
-            df.to_csv(f'./csvs/{args.model}_{args.dataset}_{args.choice_data}_lr{args.lr} \
-                        _wd{args.wd}_seq{args.seq_len}_step{args.step_len}.csv', header = True, index = False)
+            df.to_csv(f'./csvs/{args.model}_{args.dataset}_{args.choice_data}_lr{args.lr}_wd{args.wd}_seq{args.seq_len}_step{args.step_len}_batch{args.batch_size}_epoch{args.epoch}.csv', header = True, index = False)
         else:
-            df.to_csv(f'./csvs/{args.model}_{args.dataset}_lr{args.lr}_wd{args.wd}_seq{args.seq_len}_step{args.step_len}.csv', 
+            df.to_csv(f'./csvs/{args.model}_{args.dataset}_lr{args.lr}_wd{args.wd}_seq{args.seq_len}_step{args.step_len}_batch{args.batch_size}_epoch{args.epoch}.csv', 
                         header = True, index = False)
 
 if __name__ == "__main__":
