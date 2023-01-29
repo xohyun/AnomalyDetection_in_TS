@@ -117,6 +117,7 @@ class TrainMaker(base_trainer):
                 self.optimizer.zero_grad()
                 
                 pred = self.model(x)
+                x_hat_list.append(pred)
                 
                 # mae = mean_absolute_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
                 # mse = mean_squared_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())

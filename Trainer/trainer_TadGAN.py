@@ -118,9 +118,9 @@ class TrainMaker(base_trainer):
         true_list = []
         for batch, (x, y) in enumerate(test_loader):
             xs.append(x)
-            x_ = x.view(1, x.shape[0], self.features)
+            x_ = x.view(1, x.shape[0], self.features).to(device = self.device)
             pred = self.decoder(self.encoder(x_))
-            critic = self.critic_x(x_).detach().numpy() # [1,64,1]
+            critic = self.critic_x(x_).cpu().detach().numpy() # [1,64,1]
 
             preds.append(pred.reshape(-1, self.seq_len, self.num_featrues))
             critic_score.extend(critic.reshape(-1))
