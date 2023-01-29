@@ -18,6 +18,9 @@ class Args:
         #---# Path #---#
         parser.add_argument("--data_path", default="./TimeSeries-Anomaly-Detection-Dataset/data/")
         parser.add_argument("--save_path", default="./model_save/")
+        parser.add_argument("--csv_path", default='csvs')
+        # parser.add_argument("--csv_path", default="/content/drive/MyDrive/score/")
+        parser.add_argument("--fig_path", default='Fig')
 
         #---# Dataset #---#
         parser.add_argument("--dataset", default='SMD', choices=['MSL', 'NAB', 'SMAP', 'SMD', 'WADI'])
