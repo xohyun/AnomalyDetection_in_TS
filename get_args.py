@@ -40,6 +40,9 @@ class Args:
         parser.add_argument("--pred_len", default=1, type=int)
         parser.add_argument("--step_len", default=1, type=int)
 
+        #---# Decomposition #---#
+        parser.add_argument("--ma_window", type=int, default=500)
+
         #---# Model #---#
         parser.add_argument("--model", type=str, default="LSTMAE", 
                              choices=["AE", "DAGMM", "TadGAN", "OmniAnomaly", "USAD", "LSTMAE"])

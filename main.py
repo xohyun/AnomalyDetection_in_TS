@@ -3,8 +3,6 @@ from get_args import Args
 from utils.utils import fix_random_seed, create_folder
 import pandas as pd
 from DataLoader.data_provider import get_dataloader
-# from Trainer.trainer import TrainMaker
-# from Trainer.trainer_AE import TrainMaker
 from Model.model_maker import ModelMaker
 import importlib
 
@@ -22,8 +20,8 @@ def main():
     mod = load_module_func(f"Trainer.trainer_{args.model}")
 
     #---# Wandb #---#
-    wandb.init(project='AD-project', name=f'{args.model}_{args.lr}_{args.wd}_{args.seq_len}_{args.step_len}')
-    wandb.config.update(args)
+    # wandb.init(project='AD-project', name=f'{args.model}_{args.lr}_{args.wd}_{args.seq_len}_{args.step_len}')
+    # wandb.config.update(args)
 
     #---# Fix seed #---#
     fix_random_seed(args)
@@ -34,10 +32,10 @@ def main():
     #---#  DataLoader #---#    
     dl = get_dataloader(args)
     data_info, data_loaders = dl.data_info, dl.data_loaders
-
+    
     #---# Build model #---#
     model =  ModelMaker(args, data_info).model
-
+    raise
     #---# Model train #---#
     trainer = mod.TrainMaker(args, model, data_loaders, data_info)
 
