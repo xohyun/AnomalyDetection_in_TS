@@ -28,9 +28,6 @@ class Encoder(nn.Module):
         x, (_, _) = self.rnn1(x)
         # print(f'ENCODER output rnn1 dim: {x.shape}')
         x, (hidden_n, _) = self.rnn2(x)
-        # print(f'ENCODER output rnn2 dim: {x.shape}')
-        # print(f'ENCODER hidden_n rnn2 dim: {hidden_n.shape}')
-        # print(f'ENCODER hidden_n wants to be reshaped to : {(batch_size, self.embedding_dim)}')
         return hidden_n.reshape((batch_size, self.embedding_dim))
         # return hidden_n.reshape((self.n_features, self.embedding_dim)) #원래
   
@@ -55,14 +52,10 @@ class Decoder(nn.Module):
 
     def forward(self, x):
         batch_size = x.shape[0]
-        # print(f'DECODER input dim: {x.shape}')
         # x = x.repeat(self.seq_len, self.n_features) # todo testare se funziona con più feature
         x = x.repeat(self.seq_len, 1)
-        # print(f'DECODER repeat dim: {x.shape}')
         x = x.reshape((batch_size, self.seq_len, self.input_dim))
-        # print(f'DECODER reshaped dim: {x.shape}')
         x, (hidden_n, cell_n) = self.rnn1(x)
-        # print(f'DECODER output rnn1 dim:/ {x.shape}')
         x, (hidden_n, cell_n) = self.rnn2(x)
         x = x.reshape((batch_size, self.seq_len, self.hidden_dim))
         return self.output_layer(x)

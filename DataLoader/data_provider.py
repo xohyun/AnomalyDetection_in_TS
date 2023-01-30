@@ -17,7 +17,7 @@ class get_dataloader():
         self.data_loaders = data_loaders
 
     def __call__(self, args):
-        return self.data_info, self.data_loaders    
+        return self.data_info, self.data_loaders
 
     def __get_dataloader_train(self, args):
         shuffle_flag = True
