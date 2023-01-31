@@ -23,6 +23,9 @@ class ModelMaker:
                 self.model['decoder'].load_state_dict(torch.load(f"{self.save_path}{self.args.model}_decoder.pk"))
                 self.model['critic_x'].load_state_dict(torch.load(f"{self.save_path}{self.args.model}_critic_x.pk"))
                 self.model['critic_z'].load_state_dict(torch.load(f"{self.save_path}{self.args.model}_critic_z.pk"))
+            elif self.args.model == 'AE_decom':
+                self.model['trend_model'].load_state_dict(torch.load(f"{self.save_path}_trend.pk"))
+                self.model['seasonal_model'].load_state_dict(torch.load(f"{self.save_path}_seasonal.pk"))
             else:
                 self.model.load_state_dict(torch.load(f"{self.save_path}model_{self.args.model}.pk"))
         
@@ -53,6 +56,13 @@ class ModelMaker:
                     'decoder':decoder,
                     'critic_x':critic_x,
                     'critic_z':critic_z}
+        elif self.args.model == 'AE_decom':
+            trend_model = AE.AutoEncoder(self.data_info['num_features'],
+                                        self.data_info['seq_len']).to(self.device)
+            seasonal_model = AE.AutoEncoder(self.data_info['num_features'],
+                                            self.data_info['seq_len']).to(self.device)
+            model = {'trend_model':trend_model, 
+                    'seasonal_model':seasonal_model}
         create_folder(self.save_path)
         # write_pickle(os.path.join(self.save_path, f"model_{self.args.model}.pk"), model)
         return model

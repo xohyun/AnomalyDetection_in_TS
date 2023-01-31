@@ -35,7 +35,7 @@ def main():
     
     #---# Build model #---#
     model =  ModelMaker(args, data_info).model
-    raise
+    
     #---# Model train #---#
     trainer = mod.TrainMaker(args, model, data_loaders, data_info)
 

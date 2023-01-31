@@ -44,15 +44,16 @@ class Args:
         parser.add_argument("--ma_window", type=int, default=500)
 
         #---# Model #---#
-        parser.add_argument("--model", type=str, default="LSTMAE", 
-                             choices=["AE", "DAGMM", "TadGAN", "OmniAnomaly", "USAD", "LSTMAE"])
+        parser.add_argument("--model", type=str, default="AE_decom", 
+                             choices=["AE", "DAGMM", "TadGAN", "OmniAnomaly", "USAD", "LSTMAE",
+                                    "AE_decom"])
 
         parser.add_argument("--lr", type=float, default=0.001)
         parser.add_argument("--wd", type=float, default=0.0001)
         parser.add_argument("--batch_size", type=int, default=16)
         parser.add_argument("--epoch", type=int, default=1)
 
-        parser.add_argument('--scheduler', '-sch')
+        parser.add_argument('--scheduler', '-sch', default=None)
         if parser.parse_known_args()[0].scheduler == 'exp':
             parser.add_argument('--gamma', type=float, required=True)
         elif parser.parse_known_args()[0].scheduler == 'step':
