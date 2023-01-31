@@ -74,7 +74,7 @@ class Dataset_load(Dataset):
         label_list = [i for i in data_list if ('label' in i and 'interpret' not in i)]; label_list.sort()
         test_list = [i for i in data_list if 'test' in i]; test_list.sort()
 
-        label_data = []; test_data = []
+        label_data = []; test_data = []; trend_data = []; seasonal_data = []
         if self.dataset == 'WADI':
             for f in range(len(test_list)):
                 load_file = np.load(os.path.join(data_folder, test_list[f]), allow_pickle=True)
@@ -84,23 +84,31 @@ class Dataset_load(Dataset):
                 label_data.append(label_file)
         else:
             for f in range(len(test_list)):
+                load_file = np.load(os.path.join(data_folder, test_list[f]))
+                trend, seasonal = self.decomposition(load_file, self.args.ma_window)
+                test_data.append(load_file)
+                trend_data.append(trend)
+                seasonal_data.append(seasonal)
+
                 label_file = np.load(os.path.join(data_folder, label_list[f]))
                 # if len(label_file.shape) == 1:
                 #     label_file = label_file.reshape(-1, 1)
                 label_data.append(label_file)
-                test_data.append(np.load(os.path.join(data_folder, test_list[f])))
+                
         
         self.data_x_2d = np.concatenate(test_data)
         self.label_2d = np.concatenate(label_data)
         self.num_features = test_data[0].shape[1]
         self.data_x = self.cut_data(test_data)
         self.data_y = self.cut_data(label_data)
+        self.trend_x = self.cut_data(trend_data)
+        self.seasonal_x = self.cut_data(seasonal_data)
         
         print(f"test data shape : {self.data_x.shape} / label data shape : {self.data_y.shape}")
         
     def __getitem__(self, idx):
         if self.mode == 'test':
-            return self.data_x[idx], self.data_y[idx]
+            return self.data_x[idx], self.data_y[idx],  self.trend_x[idx], self.seasonal_x[idx]
         else:
             return self.data_x[idx], self.trend_x[idx], self.seasonal_x[idx]
 

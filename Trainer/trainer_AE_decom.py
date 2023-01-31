@@ -43,7 +43,7 @@ class TrainMaker(base_trainer):
         # self.optimizer = self.optimizer(self.model.parameters(), lr=self.lr, weight_decay=self.wd)
         
         self.criterion = self.set_criterion(self.args.criterion)
-        # self.scheduler = self.set_scheduler(args, self.optimizer)
+        self.scheduler = self.set_scheduler(args, self.optimizer1)
          
     def train(self, shuffle=True):
         for e in tqdm(range(self.epoch)):
@@ -78,7 +78,7 @@ class TrainMaker(base_trainer):
             
             # torch.save(self.model.state_dict(), f'{self.args.save_path}model_{self.args.model}.pk')
             torch.save(self.trend_model.state_dict(), f'{self.args.save_path}_trend.pk')
-            torch.save(self.seasoanl_model.state_dict(), f'{self.args.save_path}_seasonal.pk')
+            torch.save(self.seasonal_model.state_dict(), f'{self.args.save_path}_seasonal.pk')
             
             wandb.log({"loss":loss})
             # score = self.validation(0.94)
@@ -113,7 +113,7 @@ class TrainMaker(base_trainer):
     
     def evaluation(self, test_loader, thr=0.95):
         cos = nn.CosineSimilarity(dim=1, eps=1e-6)
-        self.model.eval()
+        self.trend_model.eval(); self.seasonal_model.eval()
         pred_list = []
         true_list = []
         diffs = []
@@ -121,13 +121,12 @@ class TrainMaker(base_trainer):
         xs = []; preds = []; maes = []; mses = []; x_list = []; x_hat_list = []
         trends = []; seasonals = []
         pred_trends = []; pred_seasonals = []
+        y_list = []
         with torch.no_grad():
-            for idx, (x, trend, seasonal) in enumerate(test_loader):
+            for idx, (x, y, trend, seasonal) in enumerate(test_loader):
                 x = x.float().to(device = self.device)
                 trend = trend.float().to(device=self.device)
                 seasonal = seasonal.float().to(device=self.device)
-
-                self.optimizer.zero_grad()
                 
                 pred_trend = self.trend_model(trend)
                 pred_seasonal = self.seasonal_model(seasonal)
@@ -140,38 +139,41 @@ class TrainMaker(base_trainer):
                 # mae = mean_absolute_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
                 # mse = mean_squared_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
                 batch = x.shape[0]
-                mae = mean_absolute_error(np.transpose(x.reshape(batch, -1).cpu().detach().numpy()), np.transpose(pred.reshape(batch, -1).cpu().detach().numpy()), multioutput='raw_values')
-                mse = mean_squared_error(np.transpose(x.reshape(batch, -1).cpu().detach().numpy()), np.transpose(pred.reshape(batch, -1).cpu().detach().numpy()), multioutput='raw_values')
+                # mae = mean_absolute_error(np.transpose(x.reshape(batch, -1).cpu().detach().numpy()), np.transpose(pred.reshape(batch, -1).cpu().detach().numpy()), multioutput='raw_values')
+                # mse = mean_squared_error(np.transpose(x.reshape(batch, -1).cpu().detach().numpy()), np.transpose(pred.reshape(batch, -1).cpu().detach().numpy()), multioutput='raw_values')
 
                 x_list.append(x)
-                xs.extend(torch.mean(x, axis=(1,2)).cpu().detach().numpy().flatten()); preds.extend(torch.mean(pred, axis=(1,2)).cpu().detach().numpy().flatten())
-                maes.extend(mae.flatten()); mses.extend(mse.flatten())
+                y_list.append(y)
+                xs.extend(torch.mean(x, axis=(1,2)).cpu().detach().numpy().flatten()); # preds.extend(torch.mean(pred, axis=(1,2)).cpu().detach().numpy().flatten())
+                # maes.extend(mae.flatten()); mses.extend(mse.flatten())
 
                 y = y.reshape(y.shape[0], -1)
                 y = y.mean(axis=1).numpy()
 
                 x = x.reshape(x.shape[0], -1)
-                pred = pred.reshape(pred.shape[0], -1)
-                diff = cos(x, pred).cpu().tolist()
+                # pred = pred.reshape(pred.shape[0], -1)
+                # diff = cos(x, pred).cpu().tolist()
                 
                 # batch_pred = np.where(((np.array(diff)<0) & (np.array(diff)>-0.1)), 1, 0)
-                batch_pred = np.where(np.array(diff)<0.7, 1, 0)
+                # batch_pred = np.where(np.array(diff)<0.7, 1, 0)
                 # y = np.where(y>0.69, 1, 0)
-                y = np.where(y>0, 1, 0)
+                # y = np.where(y>0, 1, 0)
 
-                diffs.extend(diff)
-                pred_list.extend(batch_pred)
-                true_list.extend(y)
+                # diffs.extend(diff)
+                # pred_list.extend(batch_pred)
+                # true_list.extend(y)
         
-        x_real = torch.cat(x_list)
-        x_hat = torch.cat(x_hat_list)
-        x_real = x_real.cpu().detach().numpy()
-        x_hat = x_hat.cpu().detach().numpy()
+        # x_real = torch.cat(x_list)
+        # x_hat = torch.cat(x_hat_list)
+        # x_real = x_real.cpu().detach().numpy()
+        # x_hat = x_hat.cpu().detach().numpy()
 
-        np.save(f"{self.args.fig_path}trends.npy", trends)
-        np.save(f"{self.args.fig_path}seasonals.npy", seasonals)
-        np.save(f"{self.args.fig_path}pred_trends.npy", pred_trends)
-        np.save(f"{self.args.fig_path}pred_seasonals.npy", pred_seasonals)
+        np.save(f"{self.args.fig_path}xs.npy", torch.cat(x_list).cpu().detach().numpy())
+        np.save(f"{self.args.fig_path}ys.npy", torch.cat(y_list).cpu().detach().numpy())
+        np.save(f"{self.args.fig_path}trends.npy", torch.cat(trends).cpu().detach().numpy())
+        np.save(f"{self.args.fig_path}seasonals.npy", torch.cat(seasonals).cpu().detach().numpy())
+        np.save(f"{self.args.fig_path}pred_trends.npy", torch.cat(pred_trends).cpu().detach().numpy())
+        np.save(f"{self.args.fig_path}pred_seasonals.npy", torch.cat(pred_seasonals).cpu().detach().numpy())
 
         ####
         errors, predictions_vs = reconstruction_errors(x_real, x_hat, score_window=self.args.seq_len, step_size=1) #score_window=config.window_size

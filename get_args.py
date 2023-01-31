@@ -53,7 +53,7 @@ class Args:
         parser.add_argument("--batch_size", type=int, default=16)
         parser.add_argument("--epoch", type=int, default=1)
 
-        parser.add_argument('--scheduler', '-sch', default=None)
+        parser.add_argument('--scheduler', '-sch')
         if parser.parse_known_args()[0].scheduler == 'exp':
             parser.add_argument('--gamma', type=float, required=True)
         elif parser.parse_known_args()[0].scheduler == 'step':
