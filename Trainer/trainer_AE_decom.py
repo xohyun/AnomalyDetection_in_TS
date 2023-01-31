@@ -119,13 +119,23 @@ class TrainMaker(base_trainer):
         diffs = []
 
         xs = []; preds = []; maes = []; mses = []; x_list = []; x_hat_list = []
+        trends = []; seasonals = []
+        pred_trends = []; pred_seasonals = []
         with torch.no_grad():
-            for idx, (x, y) in enumerate(test_loader):
+            for idx, (x, trend, seasonal) in enumerate(test_loader):
                 x = x.float().to(device = self.device)
+                trend = trend.float().to(device=self.device)
+                seasonal = seasonal.float().to(device=self.device)
+
                 self.optimizer.zero_grad()
                 
-                pred = self.model(x)
-                x_hat_list.append(pred)
+                pred_trend = self.trend_model(trend)
+                pred_seasonal = self.seasonal_model(seasonal)
+
+                trends.append(trend)
+                seasonals.append(seasonal)
+                pred_trends.append(pred_trend)
+                pred_seasonals.append(pred_seasonal)
                 
                 # mae = mean_absolute_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
                 # mse = mean_squared_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
@@ -158,6 +168,12 @@ class TrainMaker(base_trainer):
         x_real = x_real.cpu().detach().numpy()
         x_hat = x_hat.cpu().detach().numpy()
 
+        np.save(f"{self.args.fig_path}trends.npy", trends)
+        np.save(f"{self.args.fig_path}seasonals.npy", seasonals)
+        np.save(f"{self.args.fig_path}pred_trends.npy", pred_trends)
+        np.save(f"{self.args.fig_path}pred_seasonals.npy", pred_seasonals)
+
+        ####
         errors, predictions_vs = reconstruction_errors(x_real, x_hat, score_window=self.args.seq_len, step_size=1) #score_window=config.window_size
         error_range = find_anomalies(errors, index=range(len(errors)), anomaly_padding=5)
         pred_list = np.zeros(len(true_list))
@@ -173,6 +189,8 @@ class TrainMaker(base_trainer):
 
         print(f"f1 {f1} / precision {precision} / recall {recall}")
         
+        
+
         # plt.cla()
         # plt.hist(diffs, bins=50, density=True, alpha=0.5) # histtype='stepfilled'
         # plt.title("Cosine similarity")
