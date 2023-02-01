@@ -16,7 +16,6 @@ class moving_avg(nn.Module):
 
     def forward(self, x): # [1, batch, seq_len*feature_num]
         # padding on the both ends of time series
-        print(">>>>>>>>>>>", x.shape)
 
         if self.kernel_size%2 != 0: ##  even must be modify
           front = x[:, 0:1, :].repeat(1, (self.kernel_size - 1) // 2, 1)
@@ -73,7 +72,7 @@ class AutoEncoder(nn.Module):
         self.seq_len = seq_len
         self.n = self.num_features * self.seq_len
         self.hidden1 = int(self.n / 2)
-        self.hidden2 = int(self.n / 4)
+        self.hidden2 = int(self.n / 8)
 
         self.Encoder = nn.Sequential(
             nn.Linear(self.n, self.hidden1),
@@ -94,16 +93,19 @@ class AutoEncoder(nn.Module):
             nn.Linear(self.hidden1, self.n)
         )
     def forward(self, x):
+        batch = x.shape[0]
+        x = x.reshape(batch, -1)
         x = self.Encoder(x)
         x = self.Decoder(x)
-        
+        x = x.reshape(batch, self.seq_len, -1)
         return x
 
 class Model(nn.Module):
-    def __init__(self, configs, num_features):
+    def __init__(self, configs, num_features, device):
         super(Model, self).__init__()
         self.seq_len = configs.seq_len
         self.pred_len = configs.pred_len
+        self.device = device
 
         # Decomp
         self.kernel_size = configs.moving_avg_list
@@ -113,8 +115,6 @@ class Model(nn.Module):
             self.decomposition = series_decomp(self.kernel_size)
 
         self.channels = num_features # configs.enc_in
-        self.label_len = 3 # configs.label_len
-
         self.conv1d = configs.conv1d
 
         self.RIN = configs.RIN
@@ -123,8 +123,8 @@ class Model(nn.Module):
         self.batch_size = configs.batch_size
 
         ### AE model ###
-        self.AE_trend = AutoEncoder(self.channels, self.seq_len)
-        self.AE_seasonal = AutoEncoder(self.channels, self.seq_len)
+        self.AE_trend = AutoEncoder(self.channels, self.seq_len).to(device=self.device)
+        self.AE_seasonal = AutoEncoder(self.channels, self.seq_len).to(device=self.device)
 
         ### RIN Parameters ###
         if self.RIN:
@@ -138,7 +138,6 @@ class Model(nn.Module):
     def forward(self, x):
         # x: [Batch, Input length, Channel]
         batch = x.shape[0]
-        x = x.reshape(batch, -1)
 
         if self.RIN:
             print('/// RIN ACTIVATED ///\r', end='')
@@ -147,8 +146,9 @@ class Model(nn.Module):
             stdev = torch.sqrt(torch.var(x, dim=1, keepdim=True, unbiased=False) + 1e-5)
             x /= stdev
             x = x * self.affine_weight + self.affine_bias
-
+        
         seasonal_init, trend_init = self.decomposition(x)
+        
         seasonal_init = seasonal_init.squeeze()
         trend_init = trend_init.squeeze()
 
@@ -156,18 +156,15 @@ class Model(nn.Module):
         seasonal_output = self.AE_seasonal(seasonal_init)
         
         if self.combination:
-          x = (seasonal_output*(self.alpha)) + (trend_output*(1-self.alpha))     
+            x = (seasonal_output*(self.alpha)) + (trend_output*(1-self.alpha))     
         else:
-          x = seasonal_output + trend_output
+            x = seasonal_output + trend_output
         
         if self.RIN:
             x = x - self.affine_bias
             x = x / (self.affine_weight + 1e-10)
-            # stdev = stdev[:,:,-1:]
-            # means = means[:,:,-1:]
             x = x * stdev
             x = x + means
 
         x = x.reshape(batch, self.seq_len, -1)
         return x 
-

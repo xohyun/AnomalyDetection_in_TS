@@ -57,7 +57,7 @@ class ModelMaker:
                     'critic_x':critic_x,
                     'critic_z':critic_z}
         elif self.args.model == 'AE_decom':
-            model = AE_decom.Model(self.args, self.data_info['num_features']).to(self.device)
+            model = AE_decom.Model(self.args, self.data_info['num_features'], self.device).to(self.device)
             # trend_model = AE.AutoEncoder(self.data_info['num_features'],
             #                             self.data_info['seq_len']).to(self.device)
             # seasonal_model = AE.AutoEncoder(self.data_info['num_features'],
