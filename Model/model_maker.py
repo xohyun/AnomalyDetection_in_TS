@@ -1,7 +1,7 @@
 from utils.utils import gpu_checking
 import os
 import pickle
-from Model import AE, DAGMM, OmniAnomaly, USAD, TadGAN, LSTMAE
+from Model import AE, DAGMM, OmniAnomaly, USAD, TadGAN, LSTMAE, AE_decom
 from utils.utils import create_folder
 import torch
 
@@ -57,13 +57,16 @@ class ModelMaker:
                     'critic_x':critic_x,
                     'critic_z':critic_z}
         elif self.args.model == 'AE_decom':
-            trend_model = AE.AutoEncoder(self.data_info['num_features'],
-                                        self.data_info['seq_len']).to(self.device)
-            seasonal_model = AE.AutoEncoder(self.data_info['num_features'],
-                                            self.data_info['seq_len']).to(self.device)
-            model = {'trend_model':trend_model, 
-                    'seasonal_model':seasonal_model}
+            model = AE_decom.Model(self.args, self.data_info['num_features']).to(self.device)
+            # trend_model = AE.AutoEncoder(self.data_info['num_features'],
+            #                             self.data_info['seq_len']).to(self.device)
+            # seasonal_model = AE.AutoEncoder(self.data_info['num_features'],
+            #                                 self.data_info['seq_len']).to(self.device)
+            # model = {'trend_model':trend_model, 
+            #         'seasonal_model':seasonal_model}
+        
         create_folder(self.save_path)
+
         # write_pickle(os.path.join(self.save_path, f"model_{self.args.model}.pk"), model)
         return model
 

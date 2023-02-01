@@ -43,6 +43,13 @@ class Args:
         #---# Decomposition #---#
         parser.add_argument("--ma_window", type=int, default=500)
 
+
+        #---# RIN #---#
+        parser.add_argument("--RIN", type=bool, default=True)
+        parser.add_argument("--combination", type=bool, default=False)
+        parser.add_argument("--moving_avg_list", type=list, default=[5,10,15])
+        parser.add_argument("--conv1d", type=bool, default=True)
+
         #---# Model #---#
         parser.add_argument("--model", type=str, default="AE_decom", 
                              choices=["AE", "DAGMM", "TadGAN", "OmniAnomaly", "USAD", "LSTMAE",
