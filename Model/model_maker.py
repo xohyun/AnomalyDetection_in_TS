@@ -23,9 +23,9 @@ class ModelMaker:
                 self.model['decoder'].load_state_dict(torch.load(f"{self.save_path}{self.args.model}_decoder.pk"))
                 self.model['critic_x'].load_state_dict(torch.load(f"{self.save_path}{self.args.model}_critic_x.pk"))
                 self.model['critic_z'].load_state_dict(torch.load(f"{self.save_path}{self.args.model}_critic_z.pk"))
-            elif self.args.model == 'AE_decom':
-                self.model['trend_model'].load_state_dict(torch.load(f"{self.save_path}_trend.pk"))
-                self.model['seasonal_model'].load_state_dict(torch.load(f"{self.save_path}_seasonal.pk"))
+            # elif self.args.model == 'AE_decom':
+            #     self.model['trend_model'].load_state_dict(torch.load(f"{self.save_path}_trend.pk"))
+            #     self.model['seasonal_model'].load_state_dict(torch.load(f"{self.save_path}_seasonal.pk"))
             else:
                 self.model.load_state_dict(torch.load(f"{self.save_path}model_{self.args.model}.pk"))
         

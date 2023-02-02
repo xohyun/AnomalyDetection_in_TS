@@ -49,6 +49,7 @@ class TrainMaker(base_trainer):
             epoch_loss = 0
             self.model.train()
             xs = []; preds = []; maes = []; mses = []
+            
             for idx, x in enumerate(self.data_loader):
                 x = x.float().to(device = self.device)
                 self.optimizer.zero_grad()
@@ -56,53 +57,47 @@ class TrainMaker(base_trainer):
                 pred = self.model(x)
                 loss = self.criterion(x, pred)
 
-                mae = mean_absolute_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
-                mse = mean_squared_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
+                # mae = mean_absolute_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
+                # mse = mean_squared_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
 
-                # if (idx+1) % 1000 == 0:
-                #     print("1000th")
-                    # print(f"[Epoch{e+1}, Step({idx+1}/{len(self.data_loader.dataset)}), Loss:{:/4f}")
-
+            
                 xs.extend(torch.mean(x, axis=(1,2)).cpu().detach().numpy().flatten()); preds.extend(torch.mean(pred, axis=(1,2)).cpu().detach().numpy().flatten())
-                maes.extend(mae.flatten()); mses.extend(mse.flatten())
+                # maes.extend(mae.flatten()); mses.extend(mse.flatten())
+                interval = 300
+                if (idx+1) % interval == 0: print(f'[Epoch{e+1}] Loss:{loss}')
 
                 loss.backward()
                 self.optimizer.step()
                 epoch_loss += loss
             
             torch.save(self.model.state_dict(), f'{self.args.save_path}model_{self.args.model}.pk')
-            
-            wandb.log({"loss":loss})
+            print(f"{e}epoch / loss {loss}")
+
+            # wandb.log({"loss":loss})
             # score = self.validation(0.94)
             if self.scheduler is not None:
                 self.scheduler.step()
-            iidx = list(range(len(xs)))
+            # iidx = list(range(len(xs)))
 
-            plt.figure(figsize=(15,8))
-            plt.ylim(0,0.5)
-            plt.plot(iidx[:100], xs[:100], label="original")
-            plt.plot(iidx[:100], preds[:100], label="predict")
-            plt.fill_between(iidx[:100], xs[:100], preds[:100], color='green', alpha=0.5)
-            plt.legend()
-            plt.savefig(f'Fig/train_fill_between_AE_{e}.jpg')
+            # plt.figure(figsize=(15,8))
+            # plt.ylim(0,0.5)
+            # plt.plot(iidx[:100], xs[:100], label="original")
+            # plt.plot(iidx[:100], preds[:100], label="predict")
+            # plt.fill_between(iidx[:100], xs[:100], preds[:100], color='green', alpha=0.5)
+            # plt.legend()
+            # plt.savefig(f'Fig/train_fill_between_AE_{e}.jpg')
             
-            plt.cla()
-            plt.hist(mses, bins=100, density=True, alpha=0.5)
-            plt.xlim(0,0.1)
-            plt.savefig(f'Fig/train_distribution_AE_mse.jpg')
+            # plt.cla()
+            # plt.hist(mses, bins=100, density=True, alpha=0.5)
+            # plt.xlim(0,0.1)
+            # plt.savefig(f'Fig/train_distribution_AE_mse.jpg')
             
-            plt.cla()
-            plt.hist(maes, bins=100, density=True, alpha=0.5)
-            plt.xlim(0,0.2)
-            plt.savefig(f'Fig/train_distribution_AE_mae.jpg')
+            # plt.cla()
+            # plt.hist(maes, bins=100, density=True, alpha=0.5)
+            # plt.xlim(0,0.2)
+            # plt.savefig(f'Fig/train_distribution_AE_mae.jpg')
             
 
-            # if best_score < score:
-            #     print(f'Epoch : [{e}] Train loss : [{(epoch_loss/self.epoch)}] Val Score : [{score}])')
-            #     best_score = score
-            #     torch.save(self.model.module.state_dict(), f'./model_save/best_model_{1}.pth', _use_new_zipfile_serialization=False)
-  
-    
     def evaluation(self, test_loader, thr=0.95):
         cos = nn.CosineSimilarity(dim=1, eps=1e-6)
         self.model.eval()
@@ -110,39 +105,41 @@ class TrainMaker(base_trainer):
         true_list = []
         diffs = []
 
-        xs = []; preds = []; maes = []; mses = []; x_list = []; x_hat_list = []
+        xs = []; preds = []; maes = []; mses = []; x_list = []; x_hat_list = []; errors = []
         with torch.no_grad():
             for idx, (x, y) in enumerate(test_loader):
                 x = x.float().to(device = self.device)
                 self.optimizer.zero_grad()
-                
+                batch = x.shape[0]
+
                 pred = self.model(x)
-                x_hat_list.append(pred)
+                
+                error = torch.sum(abs(x - pred), axis=(1,2)).cpu().detach()
+                errors.extend(error)
                 
                 # mae = mean_absolute_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
                 # mse = mean_squared_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
-                batch = x.shape[0]
-                mae = mean_absolute_error(np.transpose(x.reshape(batch, -1).cpu().detach().numpy()), np.transpose(pred.reshape(batch, -1).cpu().detach().numpy()), multioutput='raw_values')
-                mse = mean_squared_error(np.transpose(x.reshape(batch, -1).cpu().detach().numpy()), np.transpose(pred.reshape(batch, -1).cpu().detach().numpy()), multioutput='raw_values')
+                
+                # mae = mean_absolute_error(np.transpose(x.reshape(batch, -1).cpu().detach().numpy()), np.transpose(pred.reshape(batch, -1).cpu().detach().numpy()), multioutput='raw_values')
+                # mse = mean_squared_error(np.transpose(x.reshape(batch, -1).cpu().detach().numpy()), np.transpose(pred.reshape(batch, -1).cpu().detach().numpy()), multioutput='raw_values')
 
-                x_list.append(x)
-                xs.extend(torch.mean(x, axis=(1,2)).cpu().detach().numpy().flatten()); preds.extend(torch.mean(pred, axis=(1,2)).cpu().detach().numpy().flatten())
-                maes.extend(mae.flatten()); mses.extend(mse.flatten())
-
-                y = y.reshape(y.shape[0], -1)
-                y = y.mean(axis=1).numpy()
+                x_list.append(x); x_hat_list.append(pred)
+                # xs.extend(torch.mean(x, axis=(1,2)).cpu().detach().numpy().flatten()); preds.extend(torch.mean(pred, axis=(1,2)).cpu().detach().numpy().flatten())
+                # maes.extend(mae.flatten()); mses.extend(mse.flatten())
 
                 x = x.reshape(x.shape[0], -1)
                 pred = pred.reshape(pred.shape[0], -1)
-                diff = cos(x, pred).cpu().tolist()
+                # diff = cos(x, pred).cpu().tolist()
                 
                 # batch_pred = np.where(((np.array(diff)<0) & (np.array(diff)>-0.1)), 1, 0)
-                batch_pred = np.where(np.array(diff)<0.7, 1, 0)
+                # batch_pred = np.where(np.array(diff)<0.7, 1, 0)
                 # y = np.where(y>0.69, 1, 0)
+            
+                # diffs.extend(diff)
+                # pred_list.extend(batch_pred)
+                y = y.reshape(y.shape[0], -1)
+                y = y.mean(axis=1).numpy()
                 y = np.where(y>0, 1, 0)
-
-                diffs.extend(diff)
-                pred_list.extend(batch_pred)
                 true_list.extend(y)
         
         x_real = torch.cat(x_list)
@@ -150,19 +147,37 @@ class TrainMaker(base_trainer):
         x_real = x_real.cpu().detach().numpy()
         x_hat = x_hat.cpu().detach().numpy()
 
-        errors, predictions_vs = reconstruction_errors(x_real, x_hat, score_window=self.args.seq_len, step_size=1) #score_window=config.window_size
-        error_range = find_anomalies(errors, index=range(len(errors)), anomaly_padding=5)
-        pred_list = np.zeros(len(true_list))
-        for i in error_range:
-            start = int(i[0])
-            end = int(i[1])
-            pred_list[start:end] = 1
+        l_quantile = np.quantile(np.array(errors), 0.025)
+        u_quantile = np.quantile(np.array(errors), 0.975)
+        in_range = np.logical_and(np.array(errors) >= l_quantile, np.array(errors) <= u_quantile)
+        # pred_list = [0 for i in errors if i in in_range]
+        np_errors = np.array(errors)
+        # pred_list = [i for i in np_errors if i in np.where((i >= l_quantile and i <= u_quantile), 0, 1)]
+        pred_list = np.zeros(len(errors))
+        for i in range(len(np_errors)):
+            if errors[i] >= l_quantile and errors[i] <= u_quantile:
+                pred_list[i] = 0
+            else:
+                pred_list[i] = 1
+
+        # errors, predictions_vs = reconstruction_errors(x_real, x_hat, score_window=self.args.seq_len, step_size=1) #score_window=config.window_size
+        # error_range = find_anomalies(errors, index=range(len(errors)), anomaly_padding=5)
+        # pred_list = np.zeros(len(true_list))
+        # for i in error_range:
+        #     start = int(i[0])
+        #     end = int(i[1])
+        #     pred_list[start:end] = 1
 
         # drawing(config, anomaly_value, pd.DataFrame(test_dataset.scaled_test))
+        
+        x_real = x_real.flatten()
+        x_hat = x_hat.flatten()
+
         f1 = f1_score(true_list, pred_list, average='macro')
         precision = precision_score(true_list, pred_list, average="macro")
         recall = recall_score(true_list, pred_list, average="macro")
-
+        
+        print(confusion_matrix(true_list, pred_list))
         print(f"f1 {f1} / precision {precision} / recall {recall}")
         
         # plt.cla()
