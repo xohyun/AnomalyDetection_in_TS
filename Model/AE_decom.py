@@ -1,9 +1,5 @@
-from re import X
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import numpy as np
-import math
 
 class moving_avg(nn.Module):
     """
@@ -167,4 +163,7 @@ class Model(nn.Module):
             x = x + means
 
         x = x.reshape(batch, self.seq_len, -1)
+
+        if self.combination:
+            return x, self.alpha
         return x 

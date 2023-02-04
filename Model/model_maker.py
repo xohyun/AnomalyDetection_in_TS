@@ -1,7 +1,7 @@
 from utils.utils import gpu_checking
 import os
 import pickle
-from Model import AE, DAGMM, OmniAnomaly, USAD, TadGAN, LSTMAE, AE_decom
+from Model import AE, DAGMM, OmniAnomaly, USAD, TadGAN, LSTMAE, AE_decom, LSTM_decom
 from utils.utils import create_folder
 import torch
 
@@ -64,7 +64,8 @@ class ModelMaker:
             #                                 self.data_info['seq_len']).to(self.device)
             # model = {'trend_model':trend_model, 
             #         'seasonal_model':seasonal_model}
-        
+        elif self.args.model == 'LSTM_decom':
+            model = LSTM_decom.Model(self.args, self.data_info['num_features'], self.device).to(self.device)
         create_folder(self.save_path)
 
         # write_pickle(os.path.join(self.save_path, f"model_{self.args.model}.pk"), model)

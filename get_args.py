@@ -51,9 +51,9 @@ class Args:
         parser.add_argument("--conv1d", type=bool, default=True)
 
         #---# Model #---#
-        parser.add_argument("--model", type=str, default="AE_decom", 
-                             choices=["AE", "DAGMM", "TadGAN", "OmniAnomaly", "USAD", "LSTMAE",
-                                    "AE_decom"])
+        parser.add_argument("--model", type=str, default="LSTM_decom", 
+                             choices=["AE", "DAGMM", "TadGAN", "OmniAnomaly", "USAD", 
+                                    "LSTMAE", "AE_decom", "LSTM_decom"])
 
         parser.add_argument("--lr", type=float, default=0.001)
         parser.add_argument("--wd", type=float, default=0.0001)
