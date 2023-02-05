@@ -12,6 +12,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
+from utils.feature_extractor import FeatureExtractor
 
 class TrainMaker(base_trainer):
     def __init__(self, args, model, data_loaders, data_info):
@@ -105,6 +106,10 @@ class TrainMaker(base_trainer):
         true_list = []
         diffs = []
 
+        flag = list(self.model._modules)[-1]
+        final_layer = self.model._modules.get(flag)
+        activated_features = FeatureExtractor(final_layer)
+
         xs = []; preds = []; maes = []; mses = []; x_list = []; x_hat_list = []; errors = []
         with torch.no_grad():
             for idx, (x, y) in enumerate(test_loader):
@@ -141,6 +146,11 @@ class TrainMaker(base_trainer):
                 y = y.mean(axis=1).numpy()
                 y = np.where(y>0, 1, 0)
                 true_list.extend(y)
+
+                #---# for t-sne #---#
+                embeds = activated_features.features_before # [256, 200, 1, 4]; embeds =  embeds.squeeze(2) # [256, 200, 4]
+                if test_embeds == None: test_embeds = embeds
+                else : test_embeds = torch.cat((test_embeds, embeds), dim=0) # [103, 800]
         
         x_real = torch.cat(x_list)
         x_hat = torch.cat(x_hat_list)
