@@ -46,6 +46,7 @@ class Model(nn.Module):
         super(Model, self).__init__()
         self.seq_len = configs.seq_len
         self.device = device
+        self.config = configs
 
         # Decomp
         self.kernel_size = configs.moving_avg_list
@@ -109,6 +110,8 @@ class Model(nn.Module):
 
         x = x.reshape(batch, self.seq_len, -1)
 
-        if self.combination:
-            return x, self.alpha
+        if self.config.mode == 'test' and self.combination:
+            print(">>> alpha <<<", self.alpha)
+        # if self.config.mode == 'test' and self.combination:
+        #     return x, self.alpha
         return x 
