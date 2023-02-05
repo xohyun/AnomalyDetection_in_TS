@@ -105,6 +105,7 @@ class TrainMaker(base_trainer):
         pred_list = []
         true_list = []
         diffs = []
+        test_embeds = None
 
         flag = list(self.model._modules)[-1]
         final_layer = self.model._modules.get(flag)
@@ -151,7 +152,7 @@ class TrainMaker(base_trainer):
                 embeds = activated_features.features_before # [256, 200, 1, 4]; embeds =  embeds.squeeze(2) # [256, 200, 4]
                 if test_embeds == None: test_embeds = embeds
                 else : test_embeds = torch.cat((test_embeds, embeds), dim=0) # [103, 800]
-        
+
         x_real = torch.cat(x_list)
         x_hat = torch.cat(x_hat_list)
         x_real = x_real.cpu().detach().numpy()
@@ -170,6 +171,7 @@ class TrainMaker(base_trainer):
             else:
                 pred_list[i] = 1
 
+        np.savez(f"./features/features_", test_embeds, true_list)
         # errors, predictions_vs = reconstruction_errors(x_real, x_hat, score_window=self.args.seq_len, step_size=1) #score_window=config.window_size
         # error_range = find_anomalies(errors, index=range(len(errors)), anomaly_padding=5)
         # pred_list = np.zeros(len(true_list))
