@@ -3,7 +3,7 @@ import torch
 from Model.AE_decom import *
 
 class LSTM(nn.Module):
-    def __init__(self, n_features, n_seq, num_layers, hidden_dim=64):
+    def __init__(self, n_features, n_seq, num_layers, hidden_dim=256):
         super(LSTM, self).__init__()
         self.n_features = n_features
         self.n_seq = n_seq
@@ -21,24 +21,40 @@ class LSTM(nn.Module):
         # self.act_fn = nn.ReLU()
         self.act_fn = nn.Tanh()
         middle_dim = int((self.hidden_dim)/2)
+        middle_dim2 = int((self.hidden_dim)/4)
         self.fc1 = nn.Linear(self.hidden_dim, middle_dim)
-        self.fc2 = nn.Linear(middle_dim ,self.n_features*self.n_seq)
-        self.fc3 = nn.Linear(self.hidden_dim*self.num_layers, self.n_features*self.n_seq)
+        self.fc2 = nn.Linear(middle_dim, self.n_features*self.n_seq)
+        self.fc3 = nn.Linear(self.hidden_dim, self.n_features*self.n_seq)
+        # self.fc4 = nn.Linear(self.hidden_dim*2, self.middle_dim)
+        # self.fc4 = nn.Linear(self.middle_dim, self.n_features*self.n_seq)
         # self.fc = nn.Linear(self.hidden_dim, self.pred_len)
         
     def forward(self, x):
-        x, (h_n, c_n) = self.lstm_layer(x) # shape [batch_size, 120, hidden_size]
-        x = x[:, -1, :] # shape [batch_size, 1, hidden_size]
-        x = self.act_fn(x)
-        # x = self.fc(x)
-        x = self.fc1(x)
-        x = self.act_fn(x)
-        x = self.fc2(x)
-        x = x.reshape(-1, self.n_seq, self.n_features)
+        x, (h_n, c_n) = self.lstm_layer(x) 
+        # x shape [batch_size, seq, hidden_size]
+        # c_n shape [layer, batch, hidden]
         
-        c_n = c_n.reshape(x.shape[0], -1)
-        c_n = self.fc3(c_n)
+        x = x[:, -1, :] # shape [batch, 1, hidden_size]
+        x = self.act_fn(x)
+
+        c_n = c_n[-1, :, :].reshape(x.shape) # final layer
+        
+        concats = torch.concat((x, c_n), axis=1) # [batch, hidden*2] 
+        concats = self.fc4(concats)
+        concats = concats.reshape(x.shape[0],  self.n_seq, self.n_features)
+        raise
+        # x = self.fc(x)
+        x = self.fc1(x) # [batch, 32]
+        x = self.act_fn(x)
+        x = self.fc2(x) # [batch, feature*seq]
+        x = x.reshape(-1, self.n_seq, self.n_features) # [batch, seq, feature]
+
+        # print(c_n.shape) # [layer, batch, hidden]
+        
+        c_n = c_n.reshape(x.shape[0], -1) # [batch, hidden]
+        c_n = self.fc3(c_n) # [batch, feature*seq]
         c_n = c_n.reshape(x.shape[0],  self.n_seq, self.n_features)
+        raise
         return x, h_n, c_n
 
 class Model(nn.Module):
@@ -96,11 +112,12 @@ class Model(nn.Module):
         trend_output = self.AE_trend(trend_init)
         seasonal_output, h_n, c_n = self.LSTM_seasonal(seasonal_init)
 
+        seasonal_output = seasonal_output + c_n
         if self.combination:
             x = (seasonal_output*(self.alpha)) + (trend_output*(1-self.alpha))     
         else:
-            # x = seasonal_output + trend_output
-            x = trend_output + c_n
+            x = seasonal_output + trend_output
+            # x = trend_output + c_n
         
         if self.RIN:
             x = x - self.affine_bias
