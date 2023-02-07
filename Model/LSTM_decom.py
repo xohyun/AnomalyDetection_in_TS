@@ -252,14 +252,7 @@ class Model(nn.Module):
         attention_feature = self.attention(enc_out, enc_out, enc_out, False)
         print(">>>>", ae_latent.shape, lstm_feature.shape, attention_feature[0].shape)
         raise
-        '''
-        seasonal_init = seasonal_init.squeeze()
-        trend_init = trend_init.squeeze()
-
-        trend_output = self.AE_trend(trend_init)
-        seasonal_output, h_n, c_n = self.LSTM_seasonal(seasonal_init)
-
-        seasonal_output = seasonal_output + c_n'''
+        
         if self.combination:
             x = (seasonal_output*(self.alpha)) + (trend_output*(1-self.alpha))     
         else:
