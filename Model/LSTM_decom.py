@@ -96,7 +96,7 @@ class LSTM(nn.Module):
         return concats
 
 # https://github.com/zhouhaoyi/Informer2020/blob/main/models/attn.py
-class PositionalEmbedding(nn.Module):
+'''class PositionalEmbedding(nn.Module):
     def __init__(self, d_model, max_len=5000):
         super(PositionalEmbedding, self).__init__()
         # Compute the positional encodings once in log space.
@@ -113,7 +113,34 @@ class PositionalEmbedding(nn.Module):
         self.register_buffer('pe', pe)
 
     def forward(self, x):
-        return self.pe[:, :x.size(1)]
+        return self.pe[:, :x.size(1)]'''
+class PositionalEmbedding(nn.Module):
+    
+    def __init__(self, seq_len, d_model, n, device):
+        
+        super(PositionalEmbedding, self).__init__() # nn.Module 초기화
+        
+        # encoding : (seq_len, d_model)
+        self.encoding = torch.zeros(seq_len, d_model, device=device)
+        self.encoding.requires_grad = False
+        
+        # (seq_len, )
+        pos = torch.arange(0, seq_len, device=device)
+        # (seq_len, 1)         
+        pos = pos.float().unsqueeze(dim=1) # int64 -> float32 (없어도 되긴 함)
+        
+        _2i = torch.arange(0, d_model, step=2, device=device).float()
+        
+        self.encoding[:, ::2] = torch.sin(pos / (n ** (_2i / d_model)))
+        self.encoding[:, 1::2] = torch.cos(pos / (n ** (_2i / d_model)))
+        
+        
+    def forward(self, x):
+        # x.shape : (batch, seq_len) or (batch, seq_len, d_model)
+        seq_len = x.size()[1] 
+        # return : (seq_len, d_model)
+        # return matrix will be added to x by broadcasting
+        return self.encoding[:seq_len, :]
 
 class FullAttention(nn.Module):
     def __init__(self, mask_flag=True, factor=5, scale=None, attention_dropout=0.1, output_attention=False):
@@ -177,7 +204,6 @@ class AttentionLayer(nn.Module):
         if self.mix:
             out = out.transpose(2,1).contiguous()
         out = out.view(B, L, -1)
-
         return self.out_projection(out), attn
 
 
@@ -209,7 +235,7 @@ class Model(nn.Module):
         factor = 5
         dropout = 0.0
         output_attention = False
-        d_model = 512
+        d_model = 38 #512
         n_heads = 1
         embed = 'fixed'
         freq = 'h'
@@ -242,16 +268,19 @@ class Model(nn.Module):
         lstm_feature = self.LSTM(x)
         
         dropout = 0.0
-        d_model = 512
+        d_model = 38 #512
         embed = 'fixed'
         freq = 'h'
         
-        enc_embedding = PositionalEmbedding(d_model)
+        # enc_embedding = PositionalEmbedding(d_model)
+        enc_embedding = PositionalEmbedding(seq_len=self.seq_len, d_model=d_model, n=20000, device=self.device)
         enc_out = enc_embedding(x) # [1,50,512]
-        
+        print(">>>000", enc_out.shape)
+        enc_out = enc_out + x ########
         attention_feature = self.attention(enc_out, enc_out, enc_out, False)
         print(">>>>", ae_latent.shape, lstm_feature.shape, attention_feature[0].shape)
         raise
+        ##################### https://kaya-dev.tistory.com/8
         
         if self.combination:
             x = (seasonal_output*(self.alpha)) + (trend_output*(1-self.alpha))     
