@@ -37,6 +37,29 @@ class AutoEncoder(nn.Module):
         # x = x.reshape(batch, self.seq_len, -1)
         return latent
 
+class Decoder(nn.Module):
+    def __init__(self, num_features, seq_len):
+        super(Decoder, self).__init__()
+        self.num_features = num_features
+        self.seq_len = seq_len
+        self.n = self.num_features * self.seq_len
+        self.hidden1 = int(self.n / 2)
+        self.hidden2 = int(self.n / 8)
+
+        self.Decoder = nn.Sequential(
+            nn.Linear(2374, 5000),
+            nn.BatchNorm1d(5000),
+            # nn.LayerNorm(64),
+            # nn.LeakyReLU(),
+            nn.ReLU(),
+            nn.Linear(5000, self.n)
+        )
+    def forward(self, x):
+        batch = x.shape[0]
+        x = self.Decoder(x)
+        x = x.reshape(batch, self.seq_len, -1)
+        return x
+
 class LSTM(nn.Module):
     def __init__(self, n_features, n_seq, num_layers, hidden_dim=256):
         super(LSTM, self).__init__()
@@ -114,6 +137,8 @@ class LSTM(nn.Module):
 
     def forward(self, x):
         return self.pe[:, :x.size(1)]'''
+
+# https://kaya-dev.tistory.com/8
 class PositionalEmbedding(nn.Module):
     
     def __init__(self, seq_len, d_model, n, device):
@@ -242,7 +267,7 @@ class Model(nn.Module):
         
         self.attention = AttentionLayer(FullAttention(False, factor, attention_dropout=dropout, output_attention=output_attention), 
                         d_model, n_heads, mix=False)
-        
+        self.decoder = Decoder(self.channels, self.seq_len).to(device=self.device)
         ### RIN Parameters ###
         if self.RIN:
             self.affine_weight = nn.Parameter(torch.ones(1, 1, 1))
@@ -275,18 +300,20 @@ class Model(nn.Module):
         # enc_embedding = PositionalEmbedding(d_model)
         enc_embedding = PositionalEmbedding(seq_len=self.seq_len, d_model=d_model, n=20000, device=self.device)
         enc_out = enc_embedding(x) # [1,50,512]
-        print(">>>000", enc_out.shape)
-        enc_out = enc_out + x ########
-        attention_feature = self.attention(enc_out, enc_out, enc_out, False)
-        print(">>>>", ae_latent.shape, lstm_feature.shape, attention_feature[0].shape)
-        raise
-        ##################### https://kaya-dev.tistory.com/8
         
-        if self.combination:
-            x = (seasonal_output*(self.alpha)) + (trend_output*(1-self.alpha))     
-        else:
-            x = seasonal_output + trend_output
-            # x = trend_output + c_n
+        enc_out = enc_out + x ########
+        attention_feature, out = self.attention(enc_out, enc_out, enc_out, False)
+
+        attention_feature = attention_feature.reshape(batch, -1)
+        feature_concat = torch.concat((ae_latent, lstm_feature, attention_feature), dim=1)
+
+        recon_x = self.decoder(feature_concat)
+        
+        # if self.combination:
+        #     x = (seasonal_output*(self.alpha)) + (trend_output*(1-self.alpha))     
+        # else:
+        #     x = seasonal_output + trend_output
+        #     # x = trend_output + c_n
         
         if self.RIN:
             x = x - self.affine_bias
@@ -294,7 +321,7 @@ class Model(nn.Module):
             x = x * stdev
             x = x + means
 
-        x = x.reshape(batch, self.seq_len, -1)
+        # x = x.reshape(batch, self.seq_len, -1)
 
         if self.config.mode == 'test' and self.combination:
             print(">>> alpha <<<", self.alpha)
