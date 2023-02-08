@@ -46,7 +46,13 @@ def metric(pred, true):
     return mae, mse, rmse, mape, mspe
 
 import torch
+# def mahalanobis(u, v, cov):
+#     delta = u - v
+#     m = torch.dot(delta, torch.matmul(torch.inverse(cov), delta))
+#     return torch.sqrt(m)
+
+import torch
 def mahalanobis(u, v, cov):
     delta = u - v
-    m = torch.dot(delta, torch.matmul(torch.inverse(cov), delta))
+    m = torch.matmul(delta.T, torch.matmul(torch.inverse(cov), delta))
     return torch.sqrt(m)

@@ -121,7 +121,7 @@ class TrainMaker(base_trainer):
                 batch = x.shape[0]
 
                 feature, pred = self.model(x)
-                features.extend(feature)
+                features.append(feature)
                 # error = torch.sum(abs(x - pred), axis=(1,2)).cpu().detach()
                 # errors.extend(error)
                 
@@ -156,7 +156,12 @@ class TrainMaker(base_trainer):
                 # else : test_embeds = torch.cat((test_embeds, embeds), dim=0) # [103, 800]
 
         features = torch.vstack(features)
-        print(">>>", featuers.shape)
+        
+        features_mean = torch.mean(features, dim=0).reshape(1,-1)
+        features_mean = features_mean.repeat(features.shape[0],1)
+        features_cov = torch.cov(features.T)
+        ma_distance = mahalanobis(features.T, features_mean.T, features_cov)
+        print(ma_distance)
         # x_real = torch.cat(x_list)
         # x_hat = torch.cat(x_hat_list)
         # x_real = x_real.cpu().detach().numpy()
