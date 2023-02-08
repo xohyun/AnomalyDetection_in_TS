@@ -13,6 +13,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 from utils.feature_extractor import FeatureExtractor
+from utils.metrics import mahalanobis
 
 class TrainMaker(base_trainer):
     def __init__(self, args, model, data_loaders, data_info):
@@ -55,7 +56,7 @@ class TrainMaker(base_trainer):
                 x = x.float().to(device = self.device)
                 self.optimizer.zero_grad()
                 
-                pred = self.model(x)
+                feature, pred = self.model(x)
                 loss = self.criterion(x, pred)
 
                 # mae = mean_absolute_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
@@ -112,16 +113,17 @@ class TrainMaker(base_trainer):
         activated_features = FeatureExtractor(final_layer)
 
         xs = []; preds = []; maes = []; mses = []; x_list = []; x_hat_list = []; errors = []
+        features = []
         with torch.no_grad():
             for idx, (x, y) in enumerate(test_loader):
                 x = x.float().to(device = self.device)
                 self.optimizer.zero_grad()
                 batch = x.shape[0]
 
-                pred = self.model(x)
-                
-                error = torch.sum(abs(x - pred), axis=(1,2)).cpu().detach()
-                errors.extend(error)
+                feature, pred = self.model(x)
+                features.extend(feature)
+                # error = torch.sum(abs(x - pred), axis=(1,2)).cpu().detach()
+                # errors.extend(error)
                 
                 # mae = mean_absolute_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
                 # mse = mean_squared_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
@@ -149,29 +151,33 @@ class TrainMaker(base_trainer):
                 true_list.extend(y)
 
                 #---# for t-sne #---#
-                embeds = activated_features.features_before # [256, 200, 1, 4]; embeds =  embeds.squeeze(2) # [256, 200, 4]
-                if test_embeds == None: test_embeds = embeds
-                else : test_embeds = torch.cat((test_embeds, embeds), dim=0) # [103, 800]
+                # embeds = activated_features.features_before # [256, 200, 1, 4]; embeds =  embeds.squeeze(2) # [256, 200, 4]
+                # if test_embeds == None: test_embeds = embeds
+                # else : test_embeds = torch.cat((test_embeds, embeds), dim=0) # [103, 800]
 
-        x_real = torch.cat(x_list)
-        x_hat = torch.cat(x_hat_list)
-        x_real = x_real.cpu().detach().numpy()
-        x_hat = x_hat.cpu().detach().numpy()
+        features = torch.vstack(features)
+        print(">>>", featuers.shape)
+        # x_real = torch.cat(x_list)
+        # x_hat = torch.cat(x_hat_list)
+        # x_real = x_real.cpu().detach().numpy()
+        # x_hat = x_hat.cpu().detach().numpy()
 
-        l_quantile = np.quantile(np.array(errors), 0)
-        u_quantile = np.quantile(np.array(errors), 0.96)
-        in_range = np.logical_and(np.array(errors) >= l_quantile, np.array(errors) <= u_quantile)
-        # pred_list = [0 for i in errors if i in in_range]
-        np_errors = np.array(errors)
-        # pred_list = [i for i in np_errors if i in np.where((i >= l_quantile and i <= u_quantile), 0, 1)]
-        pred_list = np.zeros(len(errors))
-        for i in range(len(np_errors)):
-            if errors[i] >= l_quantile and errors[i] <= u_quantile:
-                pred_list[i] = 0
-            else:
-                pred_list[i] = 1
 
-        np.savez(f"./features/features_", test_embeds, true_list)
+
+        # l_quantile = np.quantile(np.array(errors), 0)
+        # u_quantile = np.quantile(np.array(errors), 0.96)
+        # in_range = np.logical_and(np.array(errors) >= l_quantile, np.array(errors) <= u_quantile)
+        # # pred_list = [0 for i in errors if i in in_range]
+        # np_errors = np.array(errors)
+        # # pred_list = [i for i in np_errors if i in np.where((i >= l_quantile and i <= u_quantile), 0, 1)]
+        # pred_list = np.zeros(len(errors))
+        # for i in range(len(np_errors)):
+        #     if errors[i] >= l_quantile and errors[i] <= u_quantile:
+        #         pred_list[i] = 0
+        #     else:
+        #         pred_list[i] = 1
+
+        # np.savez(f"./features_", test_embeds=test_embeds, true_list=true_list)
         # errors, predictions_vs = reconstruction_errors(x_real, x_hat, score_window=self.args.seq_len, step_size=1) #score_window=config.window_size
         # error_range = find_anomalies(errors, index=range(len(errors)), anomaly_padding=5)
         # pred_list = np.zeros(len(true_list))
@@ -182,6 +188,7 @@ class TrainMaker(base_trainer):
 
         # drawing(config, anomaly_value, pd.DataFrame(test_dataset.scaled_test))
         
+        raise
         x_real = x_real.flatten()
         x_hat = x_hat.flatten()
 

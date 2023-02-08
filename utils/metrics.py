@@ -44,3 +44,9 @@ def metric(pred, true):
     mspe = MSPE(pred, true)
 
     return mae, mse, rmse, mape, mspe
+
+import torch
+def mahalanobis(u, v, cov):
+    delta = u - v
+    m = torch.dot(delta, torch.matmul(torch.inverse(cov), delta))
+    return torch.sqrt(m)

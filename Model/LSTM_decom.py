@@ -232,6 +232,7 @@ class AttentionLayer(nn.Module):
         return self.out_projection(out), attn
 
 
+
 class Model(nn.Module):
     def __init__(self, configs, num_features, device):
         super(Model, self).__init__()
@@ -276,6 +277,12 @@ class Model(nn.Module):
         ### combination ###
         if self.combination:
           self.alpha = nn.Parameter(torch.ones(1,1,1))
+        
+        ###
+        n = self.seq_len * self.channels
+        hidden = int(n / 8)
+        self.fc = nn.Linear(self.seq_len*self.channels, hidden) # hidden
+        self.fc2 = nn.Linear(hidden*3, 3)
 
     def forward(self, x):
         # x: [Batch, Input length, Channel]
@@ -303,10 +310,12 @@ class Model(nn.Module):
         
         enc_out = enc_out + x ########
         attention_feature, out = self.attention(enc_out, enc_out, enc_out, False)
-
         attention_feature = attention_feature.reshape(batch, -1)
+        attention_feature = self.fc(attention_feature)
+        
         feature_concat = torch.concat((ae_latent, lstm_feature, attention_feature), dim=1)
-
+        
+        feature = self.fc2(feature_concat)
         recon_x = self.decoder(feature_concat)
         
         # if self.combination:
@@ -323,8 +332,9 @@ class Model(nn.Module):
 
         # x = x.reshape(batch, self.seq_len, -1)
 
+
         if self.config.mode == 'test' and self.combination:
             print(">>> alpha <<<", self.alpha)
         # if self.config.mode == 'test' and self.combination:
         #     return x, self.alpha
-        return x 
+        return feature, x 
