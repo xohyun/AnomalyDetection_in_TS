@@ -94,58 +94,54 @@ class TrainMaker(base_trainer):
         diffs = []
 
         xs = []; preds = []; maes = []; mses = []; x_list = []; x_hat_list = []
+        errors = []
         with torch.no_grad():
             for idx, (x, y) in enumerate(test_loader):
                 x = x.float().to(device = self.device)
                 self.optimizer.zero_grad()
                 
                 pred = self.model(x)
-                x_hat_list.append(pred)
-                # mae = mean_absolute_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
-                # mse = mean_squared_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
-                batch = x.shape[0]
-                mae = mean_absolute_error(np.transpose(x.reshape(batch, -1).cpu().detach().numpy()), np.transpose(pred.reshape(batch, -1).cpu().detach().numpy()), multioutput='raw_values')
-                mse = mean_squared_error(np.transpose(x.reshape(batch, -1).cpu().detach().numpy()), np.transpose(pred.reshape(batch, -1).cpu().detach().numpy()), multioutput='raw_values')
-
-                x_list.append(x)
-                xs.extend(torch.mean(x, axis=(1,2)).cpu().detach().numpy().flatten()); preds.extend(torch.mean(pred, axis=(1,2)).cpu().detach().numpy().flatten())
-                maes.extend(mae.flatten()); mses.extend(mse.flatten())
+                
+                error = torch.sum(abs(x - pred), axis=(1,2)).cpu().detach()
+                errors.extend(error)
+              
+                x_list.append(x); x_hat_list.append(pred)
+                
+                x = x.reshape(x.shape[0], -1)
+                pred = pred.reshape(pred.shape[0], -1)
 
                 y = y.reshape(y.shape[0], -1)
                 y = y.mean(axis=1).numpy()
-
-                x = x.reshape(x.shape[0], -1)
-                pred = pred.reshape(pred.shape[0], -1)
-                diff = cos(x, pred).cpu().tolist()
-                
-                # batch_pred = np.where(((np.array(diff)<0) & (np.array(diff)>-0.1)), 1, 0)
-                batch_pred = np.where(np.array(diff)<0.7, 1, 0)
-                # y = np.where(y>0.69, 1, 0)
                 y = np.where(y>0, 1, 0)
-
-                diffs.extend(diff)
-                pred_list.extend(batch_pred)
                 true_list.extend(y)
 
-            x_real = torch.cat(x_list)
-            x_hat = torch.cat(x_hat_list)
-            x_real = x_real.cpu().detach().numpy()
-            x_hat = x_hat.cpu().detach().numpy()
-            
-            errors, predictions_vs = reconstruction_errors(x_real, x_hat, score_window=self.args.seq_len, step_size=1) #score_window=config.window_size
-            error_range = find_anomalies(errors, index=range(len(errors)), anomaly_padding=5)
-            pred_list = np.zeros(len(true_list))
-            for i in error_range:
-                start = int(i[0])
-                end = int(i[1])
-                pred_list[start:end] = 1
+        x_real = torch.cat(x_list)
+        x_hat = torch.cat(x_hat_list)
+        x_real = x_real.cpu().detach().numpy()
+        x_hat = x_hat.cpu().detach().numpy()
+        
+        l_quantile = np.quantile(np.array(errors), 0.025)
+        u_quantile = np.quantile(np.array(errors), 0.975)
+        in_range = np.logical_and(np.array(errors) >= l_quantile, np.array(errors) <= u_quantile)
+        # pred_list = [0 for i in errors if i in in_range]
+        np_errors = np.array(errors)
+        # pred_list = [i for i in np_errors if i in np.where((i >= l_quantile and i <= u_quantile), 0, 1)]
+        pred_list = np.zeros(len(errors))
+        for i in range(len(np_errors)):
+            if errors[i] >= l_quantile and errors[i] <= u_quantile:
+                pred_list[i] = 0
+            else:
+                pred_list[i] = 1
 
-            # drawing(config, anomaly_value, pd.DataFrame(test_dataset.scaled_test))
-            f1 = f1_score(true_list, pred_list, average='macro')
-            precision = precision_score(true_list, pred_list, average="macro")
-            recall = recall_score(true_list, pred_list, average="macro")
+        x_real = x_real.flatten()
+        x_hat = x_hat.flatten()
 
-            print(f"f1 {f1} / precision {precision} / recall {recall}")
+        f1 = f1_score(true_list, pred_list, average='macro')
+        precision = precision_score(true_list, pred_list, average="macro")
+        recall = recall_score(true_list, pred_list, average="macro")
+        
+        print(confusion_matrix(true_list, pred_list))
+        print(f"f1 {f1} / precision {precision} / recall {recall}")
         # plt.cla()
         # plt.hist(diffs, bins=50, density=True, alpha=0.5) # histtype='stepfilled'
         # plt.title("Cosine similarity")
