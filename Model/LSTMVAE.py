@@ -51,8 +51,10 @@ class RNNPredictor(nn.Module):
         self.decoder.bias.data.fill_(0)
         self.decoder.weight.data.uniform_(-initrange, initrange)
 
-    def forward(self, input, hidden, return_hiddens=False, noise=False):
+    def forward(self, input, hidden=3, return_hiddens=False, noise=False):
+        print(">>> input", input.shape)
         emb = self.drop(self.encoder(input.contiguous().view(-1,self.enc_input_size))) # [(seq_len x batch_size) * feature_size]
+        print(">>> emb", emb.shape)
         emb = emb.view(-1, input.size(1), self.rnn_hid_size) # [ seq_len * batch_size * feature_size]
         if noise:
             # emb_noise = Variable(torch.randn(emb.size()))
