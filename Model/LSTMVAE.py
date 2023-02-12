@@ -9,19 +9,20 @@ from pathlib import Path
 class RNNPredictor(nn.Module):
     """Container module with an encoder, a recurrent module, and a decoder."""
 
-    def __init__(self, rnn_type, enc_inp_size, rnn_inp_size, rnn_hid_size, dec_out_size, nlayers, dropout=0.5,
+    def __init__(self, rnn_type, enc_inp_size, rnn_inp_size, rnn_hid_size=64, dec_out_size=1, nlayers=3, dropout=0.5,
                  tie_weights=False,res_connection=False):
         super(RNNPredictor, self).__init__()
         self.enc_input_size = enc_inp_size
+        dec_out_size = self.enc_input_size ##
 
         self.drop = nn.Dropout(dropout)
         self.encoder = nn.Linear(enc_inp_size, rnn_inp_size)
         if rnn_type in ['LSTM', 'GRU']:
             self.rnn = getattr(nn, rnn_type)(rnn_inp_size, rnn_hid_size, nlayers, dropout=dropout)
-        elif rnn_type == 'SRU':
-            from cuda_functional import SRU, SRUCell
-            self.rnn = SRU(input_size=rnn_inp_size,hidden_size=rnn_hid_size,num_layers=nlayers,dropout=dropout,
-                           use_tanh=False,use_selu=True,layer_norm=True)
+        # elif rnn_type == 'SRU':
+        #     from cuda_functional import SRU, SRUCell
+        #     self.rnn = SRU(input_size=rnn_inp_size,hidden_size=rnn_hid_size,num_layers=nlayers,dropout=dropout,
+        #                    use_tanh=False,use_selu=True,layer_norm=True)
         else:
             try:
                 nonlinearity = {'RNN_TANH': 'tanh', 'RNN_RELU': 'relu'}[rnn_type]
