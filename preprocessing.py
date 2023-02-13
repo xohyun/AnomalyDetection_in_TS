@@ -21,6 +21,7 @@ def average_filter(values, n):
     res = np.cumsum(values, dtype=float, axis=0) # axis plus
 
     res[n:] = res[n:] - res[:-n]
+
     res[n:] = res[n:] / n
 
     for i in range(1, n):
@@ -36,7 +37,7 @@ def spectral_residual_transform(values, args):
     :return: mag: list.
         a list of float values as the spectral residual values
     """
-    EPS = 0.02
+    EPS = 1e-8
     __mag_window = args.seq_len
     ##
     trans = np.fft.fft(values)
@@ -66,15 +67,22 @@ if __name__ == "__main__":
         data_list = [i for i in data_list if any(key in i for key in args.choice_data)]
     train_list = [i for i in data_list if 'train' in i]; train_list.sort()
     train_data = []
-        
+    
+    cnt = 0
     for f in range(len(train_list)):
         load_file = np.load(os.path.join(data_folder, train_list[f]))
-        
+        # import matplotlib.pyplot as plt
+        # plt.figure(figsize=(15,6))
+        # plt.plot(load_file[:,0])
+        # plt.savefig(f"Fig/train_{f}.jpg")
+
         load_file = spectral_residual_transform(load_file, args)
-        
-        print(np.where(load_file!=0))
-        raise
+        # plt.clf()
+        # plt.figure(figsize=(15,6))
+        # plt.plot(load_file[:,0])
+        # plt.savefig(f"Fig/train2_{f}.jpg")
+        # print(np.where(load_file!=0))
         train_data.append(load_file)
 
-    data_x_2d = np.concatenate(train_data)
-    print(train_data[0].shape)
+    # data_x_2d = np.concatenate(train_data)
+    # print(train_data[0].shape)
