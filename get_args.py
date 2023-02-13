@@ -43,6 +43,8 @@ class Args:
         #---# Decomposition #---#
         parser.add_argument("--ma_window", type=int, default=500)
 
+        #---# Spectral Residual(SR) #---#
+        parser.add_argument("--SR", type=bool, default=True)
 
         #---# RIN #---#
         parser.add_argument("--RIN", type=bool, default=True)
@@ -53,7 +55,7 @@ class Args:
         #---# Model #---#
         parser.add_argument("--model", type=str, default="LSTM_decom", 
                              choices=["AE", "DAGMM", "TadGAN", "OmniAnomaly", "USAD", 
-                                    "LSTMAE", "AE_decom", "LSTM_decom"])
+                                    "LSTMAE", "LSTMVAE", "AE_decom", "LSTM_decom"])
 
         parser.add_argument("--lr", type=float, default=0.001)
         parser.add_argument("--wd", type=float, default=0.0001)

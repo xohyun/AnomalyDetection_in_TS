@@ -1,7 +1,7 @@
 from utils.utils import gpu_checking
 import os
 import pickle
-from Model import AE, DAGMM, OmniAnomaly, USAD, TadGAN, LSTMAE, AE_decom, LSTM_decom
+from Model import AE, DAGMM, OmniAnomaly, USAD, TadGAN, LSTMAE, LSTMVAE, AE_decom, LSTM_decom
 from utils.utils import create_folder
 import torch
 
@@ -47,6 +47,9 @@ class ModelMaker:
             model = LSTMAE.RecurrentAutoencoder(self.data_info['seq_len'],
                                                 self.data_info['num_features'],
                                                 device=self.device).to(self.device)         
+        elif self.args.model == 'LSTMVAE':
+            model = LSTMVAE.RNNPredictor('LSTM', self.data_info['seq_len'] * self.data_info['num_features'],
+                                        50)
         elif self.args.model == 'TadGAN':
             encoder = TadGAN.Encoder(self.data_info['num_features']*self.data_info['seq_len']).to(self.device) 
             decoder = TadGAN.Decoder(self.data_info['num_features']*self.data_info['seq_len']).to(self.device) 
