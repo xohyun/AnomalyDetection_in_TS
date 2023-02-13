@@ -71,18 +71,18 @@ if __name__ == "__main__":
     cnt = 0
     for f in range(len(train_list)):
         load_file = np.load(os.path.join(data_folder, train_list[f]))
-        # import matplotlib.pyplot as plt
-        # plt.figure(figsize=(15,6))
-        # plt.plot(load_file[:,0])
-        # plt.savefig(f"Fig/train_{f}.jpg")
+        import matplotlib.pyplot as plt
+        plt.figure(figsize=(15,6))
+        plt.plot(load_file[:,14])
+        plt.savefig(f"train_{f}.jpg")
 
         load_file = spectral_residual_transform(load_file, args)
-        # plt.clf()
-        # plt.figure(figsize=(15,6))
-        # plt.plot(load_file[:,0])
-        # plt.savefig(f"Fig/train2_{f}.jpg")
-        # print(np.where(load_file!=0))
+        plt.clf()
+        plt.figure(figsize=(15,6))
+        plt.plot(load_file[:,14])
+        plt.savefig(f"train2_{f}.jpg")
+        print(np.where(load_file!=0))
         train_data.append(load_file)
-
+        raise
     # data_x_2d = np.concatenate(train_data)
     # print(train_data[0].shape)
