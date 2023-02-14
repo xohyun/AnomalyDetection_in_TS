@@ -43,7 +43,8 @@ class Dataset_load(Dataset):
                 # plt.figure(figsize=(15,6))
                 # plt.plot(load_file[:,0])
                 # plt.savefig(f"train1_{f}.jpg")
-                if self.args.SR:
+                
+                if self.args.SR: # Spectral Residual
                     load_file_sr = spectral_residual_transform(load_file, self.seq_len)
                     saliencymap_thr = np.quantile(load_file_sr, 0.99, axis=0)
                     load_file_thr = np.quantile(load_file, 0.99, axis=0)
