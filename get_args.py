@@ -44,7 +44,7 @@ class Args:
         parser.add_argument("--ma_window", type=int, default=500)
 
         #---# Spectral Residual(SR) #---#
-        parser.add_argument("--SR", type=bool, default=True)
+        parser.add_argument("--SR", type=bool, default=False)
 
         #---# RIN #---#
         parser.add_argument("--RIN", type=bool, default=True)
