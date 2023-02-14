@@ -1,289 +1,331 @@
-import torch
 import torch.nn as nn
-import torch.optim as optim
-import numpy as np
-import tqdm
-import wandb
-from tqdm import tqdm
-from sklearn.metrics import f1_score, precision_score, recall_score
-from utils.utils import gpu_checking, find_bundle
-from Trainer.base_trainer import base_trainer
-from sklearn.metrics import mean_absolute_error, mean_squared_error
+import torch
+import math
 
-import matplotlib.pyplot as plt
-from sklearn.metrics import confusion_matrix
-from utils.feature_extractor import FeatureExtractor
-from utils.metrics import mahalanobis
+class AutoEncoder(nn.Module):
+    def __init__(self, num_features, seq_len):
+        super(AutoEncoder, self).__init__()
+        self.num_features = num_features
+        self.seq_len = seq_len
+        self.n = self.num_features * self.seq_len
+        self.hidden1 = int(self.n / 2)
+        self.hidden2 = int(self.n / 8)
 
-class TrainMaker(base_trainer):
-    def __init__(self, args, model, data_loaders, data_info):
-        self.args = args
-        self.model = model
-        self.mode = self.args.mode
+        self.Encoder = nn.Sequential(
+            nn.Linear(self.n, self.hidden1),
+            nn.BatchNorm1d(self.hidden1),
+            # nn.LeakyReLU(),
+            nn.ReLU(),
+            nn.Linear(self.hidden1, self.hidden2),
+            nn.BatchNorm1d(self.hidden2),
+            # nn.LeakyReLU(),
+            nn.ReLU(),
+        )
+        self.Decoder = nn.Sequential(
+            nn.Linear(self.hidden2, self.hidden1),
+            nn.BatchNorm1d(self.hidden1),
+            # nn.LayerNorm(64),
+            # nn.LeakyReLU(),
+            nn.ReLU(),
+            nn.Linear(self.hidden1, self.n)
+        )
+    def forward(self, x):
+        batch = x.shape[0]
+        x = x.reshape(batch, -1)
+        latent = self.Encoder(x)
+        # x = self.Decoder(x)
+        # x = x.reshape(batch, self.seq_len, -1)
+        return latent
 
-        if self.mode == "train" or self.mode == "all":
-            self.data_loader = data_loaders['train']
-            if self.args.valid_setting:
-                self.data_loader_valid = data_loaders['valid']
+class Decoder(nn.Module):
+    def __init__(self, num_features, seq_len):
+        super(Decoder, self).__init__()
+        self.num_features = num_features
+        self.seq_len = seq_len
+        self.n = self.num_features * self.seq_len
+        self.hidden1 = int(self.n / 2)
+        self.hidden2 = int(self.n / 8)
+
+        self.Decoder = nn.Sequential(
+            nn.Linear(711, 50),
+            nn.BatchNorm1d(50),
+            # nn.LayerNorm(64),
+            # nn.LeakyReLU(),
+            nn.ReLU(),
+            nn.Linear(50, self.n)
+        )
+    def forward(self, x):
+        batch = x.shape[0]
+        x = self.Decoder(x)
+        x = x.reshape(batch, self.seq_len, -1)
+        return x
+
+class LSTM(nn.Module):
+    def __init__(self, n_features, n_seq, num_layers, hidden_dim=256):
+        super(LSTM, self).__init__()
+        self.n_features = n_features
+        self.n_seq = n_seq
+        self.num_layers = num_layers
+        self.hidden_dim = hidden_dim
+
+        self.lstm_layer = nn.LSTM(
+            input_size = self.n_features,
+            hidden_size = self.hidden_dim,
+            num_layers = self.num_layers,
+            batch_first = True,
+            dropout = 0.25,
+        )
+
+        n = self.n_features * self.n_seq
+        self.hidden = int(n / 8)
+
+        # self.act_fn = nn.ReLU()
+        self.act_fn = nn.Tanh()
+        middle_dim = int((self.hidden_dim)/2)
+        middle_dim2 = int((self.hidden_dim)/4)
+        self.fc1 = nn.Linear(self.hidden_dim, middle_dim)
+        self.fc2 = nn.Linear(middle_dim, self.n_features*self.n_seq)
+        self.fc3 = nn.Linear(self.hidden_dim, self.n_features*self.n_seq)
+        self.fc4 = nn.Linear(self.hidden_dim*2, self.hidden)
+        # self.fc4 = nn.Linear(self.middle_dim, self.n_features*self.n_seq)
+        # self.fc = nn.Linear(self.hidden_dim, self.pred_len)
+
+    def forward(self, x):
+        x, (h_n, c_n) = self.lstm_layer(x) 
+        # x shape [batch_size, seq, hidden_size]
+        # c_n shape [layer, batch, hidden]
+
+        x = x[:, -1, :] # shape [batch, 1, hidden_size]
+        x = self.act_fn(x)
+
+        c_n = c_n[-1, :, :].reshape(x.shape) # final layer
+
+        concats = torch.concat((x, c_n), axis=1) # [batch, hidden*2] 
+        concats = self.fc4(concats)
+
+
+        '''# x = self.fc(x)
+        x = self.fc1(x) # [batch, 32]
+        x = self.act_fn(x)
+        x = self.fc2(x) # [batch, feature*seq]
+        x = x.reshape(-1, self.n_seq, self.n_features) # [batch, seq, feature]
+        # print(c_n.shape) # [layer, batch, hidden]
+        
+        c_n = c_n.reshape(x.shape[0], -1) # [batch, hidden]
+        c_n = self.fc3(c_n) # [batch, feature*seq]
+        c_n = c_n.reshape(x.shape[0],  self.n_seq, self.n_features)'''
+        # return x, h_n, c_n
+        return concats
+
+# https://github.com/zhouhaoyi/Informer2020/blob/main/models/attn.py
+'''class PositionalEmbedding(nn.Module):
+    def __init__(self, d_model, max_len=5000):
+        super(PositionalEmbedding, self).__init__()
+        # Compute the positional encodings once in log space.
+        pe = torch.zeros(max_len, d_model).float()
+        pe.require_grad = False
+        position = torch.arange(0, max_len).float().unsqueeze(1)
+        div_term = (torch.arange(0, d_model, 2).float() * -(math.log(10000.0) / d_model)).exp()
+        pe[:, 0::2] = torch.sin(position * div_term)
+        pe[:, 1::2] = torch.cos(position * div_term)
+        pe = pe.unsqueeze(0)
+        self.register_buffer('pe', pe)
+    def forward(self, x):
+        return self.pe[:, :x.size(1)]'''
+
+# https://kaya-dev.tistory.com/8
+class PositionalEmbedding(nn.Module):
+
+    def __init__(self, seq_len, d_model, n, device):
+        super(PositionalEmbedding, self).__init__() # nn.Module 초기화
+        # encoding : (seq_len, d_model)
+        self.encoding = torch.zeros(seq_len, d_model, device=device)
+        self.encoding.requires_grad = False
+        # (seq_len, )
+        pos = torch.arange(0, seq_len, device=device)
+        # (seq_len, 1)         
+        pos = pos.float().unsqueeze(dim=1) # int64 -> float32 (없어도 되긴 함)
+
+        _2i = torch.arange(0, d_model, step=2, device=device).float()
+
+        self.encoding[:, ::2] = torch.sin(pos / (n ** (_2i / d_model)))
+        self.encoding[:, 1::2] = torch.cos(pos / (n ** (_2i / d_model)))
+
+
+    def forward(self, x):
+        # x.shape : (batch, seq_len) or (batch, seq_len, d_model)
+        seq_len = x.size()[1] 
+        # return : (seq_len, d_model)
+        # return matrix will be added to x by broadcasting
+        return self.encoding[:seq_len, :]
+
+class FullAttention(nn.Module):
+    def __init__(self, mask_flag=True, factor=5, scale=None, attention_dropout=0.1, output_attention=False):
+        super(FullAttention, self).__init__()
+        self.scale = scale
+        self.mask_flag = mask_flag
+        self.output_attention = output_attention
+        self.dropout = nn.Dropout(attention_dropout)
+
+    def forward(self, queries, keys, values, attn_mask):
+        B, L, H, E = queries.shape
+        _, S, _, D = values.shape
+        scale = self.scale or 1./math.sqrt(E)
+
+        scores = torch.einsum("blhe,bshe->bhls", queries, keys)
+        if self.mask_flag:
+            if attn_mask is None:
+                attn_mask = TriangularCausalMask(B, L, device=queries.device)
+                scores.masked_fill_(attn_mask.mask, -np.inf)
+
+        A = self.dropout(torch.softmax(scale * scores, dim=-1))
+        V = torch.einsum("bhls,bshd->blhd", A, values)
+
+        if self.output_attention:
+            return (V.contiguous(), A)
         else:
-            self.data_loader_test = data_loaders['test']
-  
-        self.device =  gpu_checking(args)
+            return (V.contiguous(), None)
 
-        self.features = data_info['num_features']
-        self.epoch = self.args.epoch
+class AttentionLayer(nn.Module):
+    def __init__(self, attention, d_model, n_heads, 
+                 d_keys=None, d_values=None, mix=False):
+        super(AttentionLayer, self).__init__()
+
+        d_keys = d_keys or (d_model//n_heads)
+        d_values = d_values or (d_model//n_heads)
+
+        self.inner_attention = attention
+        self.query_projection = nn.Linear(d_model, d_keys * n_heads)
+        self.key_projection = nn.Linear(d_model, d_keys * n_heads)
+        self.value_projection = nn.Linear(d_model, d_values * n_heads)
+        self.out_projection = nn.Linear(d_values * n_heads, d_model)
+        self.n_heads = n_heads
+        self.mix = mix
+
+    def forward(self, queries, keys, values, attn_mask):
+        B, L, _ = queries.shape
+        _, S, _ = keys.shape
+        H = self.n_heads
+
+        queries = self.query_projection(queries).view(B, L, H, -1)
+        keys = self.key_projection(keys).view(B, S, H, -1)
+        values = self.value_projection(values).view(B, S, H, -1)
+
+        out, attn = self.inner_attention(
+            queries,
+            keys,
+            values,
+            attn_mask
+        )
+        if self.mix:
+            out = out.transpose(2,1).contiguous()
+        out = out.view(B, L, -1)
+        return self.out_projection(out), attn
+
+
+
+class Model(nn.Module):
+    def __init__(self, configs, num_features, device):
+        super(Model, self).__init__()
+        self.seq_len = configs.seq_len
+        self.device = device
+        self.config = configs
+
+        self.channels = num_features # configs.enc_in
+        self.conv1d = configs.conv1d
+
+        self.RIN = configs.RIN
+        self.combination =  configs.combination
+
+        self.batch_size = configs.batch_size
+
+        #------------------------#
+        #---# Ensemble model #---#
+        #------------------------#
+        ### AE encoder ###
+        self.AE = AutoEncoder(self.channels, self.seq_len).to(device=self.device)
+
+        ### LSTM model ###
+        self.LSTM = LSTM(num_features, self.seq_len, 3).to(device=self.device)
+
+        ### Self attention ###
+        factor = 5
+        dropout = 0.0
+        output_attention = False
+        d_model = 38 #512
+        n_heads = 1
+        embed = 'fixed'
+        freq = 'h'
+
+        self.attention = AttentionLayer(FullAttention(False, factor, attention_dropout=dropout, output_attention=output_attention), 
+                        d_model, n_heads, mix=False)
+        self.decoder = Decoder(self.channels, self.seq_len).to(device=self.device)
+        ### RIN Parameters ###
+        if self.RIN:
+            self.affine_weight = nn.Parameter(torch.ones(1, 1, 1))
+            self.affine_bias = nn.Parameter(torch.zeros(1, 1, 1))
+
+        ### combination ###
+        if self.combination:
+          self.alpha = nn.Parameter(torch.ones(1,1,1))
+
+        ###
+        n = self.seq_len * self.channels
+        hidden = int(n / 8)
+        self.fc = nn.Linear(self.seq_len*self.channels, hidden) # hidden
+        self.fc2 = nn.Linear(hidden*3, 3)
+
+    def forward(self, x):
+        # x: [Batch, Input length, Channel]
+        batch = x.shape[0]
+
+        if self.RIN:
+            print('/// RIN ACTIVATED ///\r', end='')
+            means = x.mean(1, keepdim=True).detach()
+            x = x - means
+            stdev = torch.sqrt(torch.var(x, dim=1, keepdim=True, unbiased=False) + 1e-5)
+            x /= stdev
+            x = x * self.affine_weight + self.affine_bias
+
+        ae_latent = self.AE(x)
+        lstm_feature = self.LSTM(x)
+
+        dropout = 0.0
+        d_model = 38 #512
+        embed = 'fixed'
+        freq = 'h'
+
+        # enc_embedding = PositionalEmbedding(d_model)
+        enc_embedding = PositionalEmbedding(seq_len=self.seq_len, d_model=d_model, n=20000, device=self.device)
+        enc_out = enc_embedding(x) # [1,50,512]
+        enc_out = enc_out + x ########
+        attention_feature, out = self.attention(enc_out, enc_out, enc_out, False)
+        attention_feature = attention_feature.reshape(batch, -1)
+        attention_feature = self.fc(attention_feature)
+
+        feature_concat = torch.concat((ae_latent, lstm_feature, attention_feature), dim=1)
+        feature = self.fc2(feature_concat)
+        recon_x = self.decoder(feature_concat)
+
+        # if self.combination:
+        #     x = (seasonal_output*(self.alpha)) + (trend_output*(1-self.alpha))     
+        # else:
+        #     x = seasonal_output + trend_output
+        #     # x = trend_output + c_n
+
+        if self.RIN:
+            x = x - self.affine_bias
+            x = x / (self.affine_weight + 1e-10)
+            x = x * stdev
+            x = x + means
+
+        # x = x.reshape(batch, self.seq_len, -1)
+
+
+        if self.config.mode == 'test' and self.combination:
+            print(">>> alpha <<<", self.alpha)
+        # if self.config.mode == 'test' and self.combination:
+        #     return x, self.alpha
+        return feature, x
+
         
-        self.lr = self.args.lr
-        self.wd = self.args.wd
-
-        self.optimizer = getattr(torch.optim, self.args.optimizer)
-        self.optimizer = self.optimizer(self.model.parameters(), lr=self.lr, weight_decay=self.wd)
-        
-        self.criterion = self.set_criterion(self.args.criterion)
-        self.scheduler = self.set_scheduler(args, self.optimizer)
-
-        # self.__set_criterion(self.criterion)
-        # self.__set_scheduler(self.args, self.optimizer)
-        # self.cal = Calculate()
-         
-    def train(self, shuffle=True):
-        for e in tqdm(range(self.epoch)):
-            epoch_loss = 0
-            self.model.train()
-            xs = []; preds = []; maes = []; mses = []
-            
-            for idx, x in enumerate(self.data_loader):
-                x = x.float().to(device = self.device)
-                self.optimizer.zero_grad()
-                
-                feature, pred = self.model(x)
-                loss = self.criterion(x, pred)
-
-                # mae = mean_absolute_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
-                # mse = mean_squared_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
-
-            
-                xs.extend(torch.mean(x, axis=(1,2)).cpu().detach().numpy().flatten()); preds.extend(torch.mean(pred, axis=(1,2)).cpu().detach().numpy().flatten())
-                # maes.extend(mae.flatten()); mses.extend(mse.flatten())
-                interval = 300
-                if (idx+1) % interval == 0: print(f'[Epoch{e+1}] Loss:{loss}')
-
-                loss.backward()
-                self.optimizer.step()
-                epoch_loss += loss
-            
-            torch.save(self.model.state_dict(), f'{self.args.save_path}model_{self.args.model}.pk')
-            print(f"{e}epoch / loss {loss}")
-
-            # wandb.log({"loss":loss})
-            # score = self.validation(0.94)
-            if self.scheduler is not None:
-                self.scheduler.step()
-            # iidx = list(range(len(xs)))
-
-            # plt.figure(figsize=(15,8))
-            # plt.ylim(0,0.5)
-            # plt.plot(iidx[:100], xs[:100], label="original")
-            # plt.plot(iidx[:100], preds[:100], label="predict")
-            # plt.fill_between(iidx[:100], xs[:100], preds[:100], color='green', alpha=0.5)
-            # plt.legend()
-            # plt.savefig(f'Fig/train_fill_between_AE_{e}.jpg')
-            
-            # plt.cla()
-            # plt.hist(mses, bins=100, density=True, alpha=0.5)
-            # plt.xlim(0,0.1)
-            # plt.savefig(f'Fig/train_distribution_AE_mse.jpg')
-            
-            # plt.cla()
-            # plt.hist(maes, bins=100, density=True, alpha=0.5)
-            # plt.xlim(0,0.2)
-            # plt.savefig(f'Fig/train_distribution_AE_mae.jpg')
-            
-
-    def evaluation(self, test_loader, thr=0.95):
-        cos = nn.CosineSimilarity(dim=1, eps=1e-6)
-        self.model.eval()
-        pred_list = []
-        true_list = []
-        diffs = []
-        test_embeds = None
-
-        flag = list(self.model._modules)[-1]
-        final_layer = self.model._modules.get(flag)
-        activated_features = FeatureExtractor(final_layer)
-
-        xs = []; preds = []; maes = []; mses = []; x_list = []; x_hat_list = []; errors = []
-        features = []
-        with torch.no_grad():
-            for idx, (x, y) in enumerate(test_loader):
-                x = x.float().to(device = self.device)
-                self.optimizer.zero_grad()
-                batch = x.shape[0]
-
-                feature, pred = self.model(x)
-                features.append(feature)
-                # error = torch.sum(abs(x - pred), axis=(1,2)).cpu().detach()
-                # errors.extend(error)
-                
-                # mae = mean_absolute_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
-                # mse = mean_squared_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
-                
-                # mae = mean_absolute_error(np.transpose(x.reshape(batch, -1).cpu().detach().numpy()), np.transpose(pred.reshape(batch, -1).cpu().detach().numpy()), multioutput='raw_values')
-                # mse = mean_squared_error(np.transpose(x.reshape(batch, -1).cpu().detach().numpy()), np.transpose(pred.reshape(batch, -1).cpu().detach().numpy()), multioutput='raw_values')
-
-                x_list.append(x); x_hat_list.append(pred)
-                # xs.extend(torch.mean(x, axis=(1,2)).cpu().detach().numpy().flatten()); preds.extend(torch.mean(pred, axis=(1,2)).cpu().detach().numpy().flatten())
-                # maes.extend(mae.flatten()); mses.extend(mse.flatten())
-
-                x = x.reshape(x.shape[0], -1)
-                pred = pred.reshape(pred.shape[0], -1)
-                # diff = cos(x, pred).cpu().tolist()
-                
-                # batch_pred = np.where(((np.array(diff)<0) & (np.array(diff)>-0.1)), 1, 0)
-                # batch_pred = np.where(np.array(diff)<0.7, 1, 0)
-                # y = np.where(y>0.69, 1, 0)
-            
-                # diffs.extend(diff)
-                # pred_list.extend(batch_pred)
-                y = y.reshape(y.shape[0], -1)
-                y = y.mean(axis=1).numpy()
-                y = np.where(y>0, 1, 0)
-                true_list.extend(y)
-
-                #---# for t-sne #---#
-                # embeds = activated_features.features_before # [256, 200, 1, 4]; embeds =  embeds.squeeze(2) # [256, 200, 4]
-                # if test_embeds == None: test_embeds = embeds
-                # else : test_embeds = torch.cat((test_embeds, embeds), dim=0) # [103, 800]
-
-        features = torch.vstack(features)
-        
-        features_mean = torch.mean(features, dim=0).reshape(1,-1)
-        features_mean = features_mean.repeat(features.shape[0],1)
-        features_cov = torch.cov(features.T)
-        ma_distance = mahalanobis(features.T, features_mean.T, features_cov)
-        print(ma_distance)
-        # x_real = torch.cat(x_list)
-        # x_hat = torch.cat(x_hat_list)
-        # x_real = x_real.cpu().detach().numpy()
-        # x_hat = x_hat.cpu().detach().numpy()
-
-
-
-        # l_quantile = np.quantile(np.array(errors), 0)
-        # u_quantile = np.quantile(np.array(errors), 0.96)
-        # in_range = np.logical_and(np.array(errors) >= l_quantile, np.array(errors) <= u_quantile)
-        # # pred_list = [0 for i in errors if i in in_range]
-        # np_errors = np.array(errors)
-        # # pred_list = [i for i in np_errors if i in np.where((i >= l_quantile and i <= u_quantile), 0, 1)]
-        # pred_list = np.zeros(len(errors))
-        # for i in range(len(np_errors)):
-        #     if errors[i] >= l_quantile and errors[i] <= u_quantile:
-        #         pred_list[i] = 0
-        #     else:
-        #         pred_list[i] = 1
-
-        # np.savez(f"./features_", test_embeds=test_embeds, true_list=true_list)
-        # errors, predictions_vs = reconstruction_errors(x_real, x_hat, score_window=self.args.seq_len, step_size=1) #score_window=config.window_size
-        # error_range = find_anomalies(errors, index=range(len(errors)), anomaly_padding=5)
-        # pred_list = np.zeros(len(true_list))
-        # for i in error_range:
-        #     start = int(i[0])
-        #     end = int(i[1])
-        #     pred_list[start:end] = 1
-
-        # drawing(config, anomaly_value, pd.DataFrame(test_dataset.scaled_test))
-        
-        raise
-        x_real = x_real.flatten()
-        x_hat = x_hat.flatten()
-
-        f1 = f1_score(true_list, pred_list, average='macro')
-        precision = precision_score(true_list, pred_list, average="macro")
-        recall = recall_score(true_list, pred_list, average="macro")
-        
-        print(confusion_matrix(true_list, pred_list))
-        print(f"f1 {f1} / precision {precision} / recall {recall}")
-        
-        # plt.cla()
-        # plt.hist(diffs, bins=50, density=True, alpha=0.5) # histtype='stepfilled'
-        # plt.title("Cosine similarity")
-        # plt.savefig('Fig/cosine_similarity_difference.jpg')
-        
-        
-        # plt.cla()
-        # plt.figure(figsize=(15,8))
-        # plt.ylim(0,0.5)
-        # iidx = list(range(len(xs)))
-        # plt.plot(iidx[:100], xs[:100], label="original")
-        # plt.plot(iidx[:100], preds[:100], label="predict")
-        # plt.fill_between(iidx[:100], xs[:100], preds[:100], color='green', alpha=0.5)
-        # plt.title("Normal")
-        # plt.legend()
-        # plt.savefig(f'Fig/test_fill_between_AE_Normal.jpg')
-        
-        # plt.cla()
-        # anomaly_idx = np.where(np.array(true_list) == 1)
-        # anomaly_idx_bundle = find_bundle(anomaly_idx[0].tolist())
-        # iidx = list(range(len(anomaly_idx_bundle[0])))
-        # plt.plot(iidx[:-1], xs[anomaly_idx_bundle[0][0]:anomaly_idx_bundle[0][-1]], label="original")
-        # plt.plot(iidx[:-1], preds[anomaly_idx_bundle[0][0]:anomaly_idx_bundle[0][-1]], label="predict")
-        # plt.fill_between(iidx[:-1], xs[anomaly_idx_bundle[0][0]:anomaly_idx_bundle[0][-1]], preds[anomaly_idx_bundle[0][0]:anomaly_idx_bundle[0][-1]], color='green', alpha=0.5)
-        # plt.title("Abnormal")
-        # plt.legend()
-        # plt.savefig(f'Fig/test_fill_between_AE_Anomaly.jpg')
-
-
-        # plt.cla()
-        # plt.hist(mses, density=True, bins=100, alpha=0.5)
-        # plt.xlim(0,0.1)
-        # plt.savefig(f'Fig/test_distribution_AE_mse.jpg')
-
-        # plt.cla()
-        # plt.hist(maes, density=True, bins=100, alpha=0.5)
-        # plt.xlim(0,0.2)
-        # plt.savefig(f'Fig/test_distribution_AE_mae.jpg')
-
-        # thres = np.percentile(np.array(maes), 99)
-        # pred_list = np.where(np.array(maes)>thres, 1, 0)
-        # f1 = f1_score(true_list, pred_list, average='macro')
-        # precision = precision_score(true_list, pred_list, average="macro")
-        # recall = recall_score(true_list, pred_list, average="macro")
-        # print(f"f1 score {f1}")
-
-        # print(confusion_matrix(true_list, pred_list))
-        return f1, precision, recall
-
-    def set_criterion(self, criterion):
-        if criterion == "MSE":
-            criterion = nn.MSELoss()
-        elif criterion == "CEE":
-            criterion = nn.CrossEntropyLoss()
-        elif criterion == "cosine":
-            criterion = nn.CosineEmbeddingLoss()
-            
-        return criterion
-
-    def set_scheduler(self, args, optimizer):
-        if args.scheduler is None:
-            return None
-        elif args.scheduler == 'exp':
-            scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=args.gamma)
-        elif args.scheduler == 'step':
-            scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=args.step_size, gamma=args.gamma)
-        elif args.scheduler == 'multi_step':
-            scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.milestones, gamma=args.gamma)
-        elif args.scheduler == 'plateau':
-            scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=20,
-                                                             threshold=0.1, threshold_mode='abs', verbose=True)
-        elif args.scheduler == 'cosine':
-            scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer,
-                                                             T_max=args.T_max if args.T_max else args.epochs,
-                                                             eta_min=args.eta_min if args.eta_min else 0)
-        elif args.scheduler == 'one_cycle':
-            scheduler = optim.lr_scheduler.OneCycleLR(optimizer,
-                                                    max_lr=args.max_lr, 
-                                                    steps_per_epoch=args.steps_per_epoch,
-                                                    epochs=args.cycle_epochs)
-        else:
-            raise ValueError(f"Not supported {args.scheduler}.")
-        return scheduler
