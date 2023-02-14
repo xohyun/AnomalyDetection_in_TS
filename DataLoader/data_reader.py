@@ -39,10 +39,10 @@ class Dataset_load(Dataset):
             for f in range(len(train_list)):
                 load_file = np.load(os.path.join(data_folder, train_list[f]))
                 
-                import matplotlib.pyplot as plt
-                plt.figure(figsize=(15,6))
-                plt.plot(load_file[:,0])
-                plt.savefig(f"train1_{f}.jpg")
+                # import matplotlib.pyplot as plt
+                # plt.figure(figsize=(15,6))
+                # plt.plot(load_file[:,0])
+                # plt.savefig(f"train1_{f}.jpg")
 
                 if self.args.SR: # Spectral Residual
                     load_file_sr = spectral_residual_transform(load_file, self.seq_len)
@@ -55,11 +55,10 @@ class Dataset_load(Dataset):
                         yy = over_thr_idx[1][idx]
                         load_file[xx, yy] = load_file_thr[yy]
                     
-                    plt.clf()
-                    plt.figure(figsize=(15,6))
-                    plt.plot(load_file[:,0])
-                    plt.savefig(f"train2_{f}.jpg")
-                    raise
+                    # plt.clf()
+                    # plt.figure(figsize=(15,6))
+                    # plt.plot(load_file[:,0])
+                    # plt.savefig(f"train2_{f}.jpg")
                 train_data.append(load_file)
 
         self.data_x_2d = np.concatenate(train_data)
