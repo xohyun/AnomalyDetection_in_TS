@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import torch.nn as nn
+import math
 
 '''# https://github.com/ServiceNow/N-BEATS/blob/master/models/nbeats.py
 class ModelBlock(nn.Module):
@@ -20,21 +21,22 @@ class ModelBlock(nn.Module):
 '''
 
 class AE_blocks(nn.Module):
-    def __init__(self, seq_len, feature_num):
+    def __init__(self, seq_len, feature_num, device):
         super().__init__()
         self.seq_len = seq_len
         self.feature_num = feature_num
 
-        self.ae = AutoEncoder()
-        self.forecast = Forecast(seq_len, feature_num)
+        self.ae = AutoEncoder(seq_len, feature_num).to(device=device)
+        self.forecast = Forecast(seq_len, feature_num).to(device=device)
 
     def forward(self, x):
         latent, reconstruct_x = self.ae(x)
         forecast = self.forecast(latent)
+        reconstruct_x = reconstruct_x.reshape(x.shape)
         return reconstruct_x, forecast
 
 class attention_blocks(nn.Module):
-    def __init__(self, blocks):
+    def __init__(self, device):
         super().__init__()
 
         ### Self attention ###
@@ -44,17 +46,22 @@ class attention_blocks(nn.Module):
         d_model = 38 #512
         n_heads = 1
 
-        self.blocks = blocks
+        # self.blocks = blocks
         self.attention = AttentionLayer(FullAttention(False, factor, attention_dropout=dropout, output_attention=output_attention), 
-                        d_model, n_heads, mix=False)
-
-    def forward(self, x, input_mask):
+                        d_model, n_heads, mix=False).to(device=device)
+        self.fc1 = nn.Linear(1520, 40*38)
+        self.fc2 = nn.Linear(1520, 5)
+        
+    def forward(self, x):
         batch = x.shape[0]
         attention_feature, out = self.attention(x, x, x, False)
         attention_feature = attention_feature.reshape(batch, -1)
-        forecast = self.fc(attention_feature)
+        
+        reconstruct = self.fc1(attention_feature)
+        reconstruct = reconstruct.reshape(x.shape)
+        forecast = self.fc2(attention_feature)
 
-        return forecast
+        return reconstruct, forecast
         # residuals = x.flip(dims=(1,))
         # input_mask = input_mask.flip(dims=(1,))
         # forecast = x[:, -1:]
@@ -69,9 +76,9 @@ class rnn_blocks(nn.Module):
         super().__init__()
 
         self.LSTM = LSTM(feature_num, seq_len, 3).to(device=device)
-        self.fc = nn.Linear(3,2) 
+        self.fc = nn.Linear(237,2) 
 
-    def forward(self, x, input_mask):
+    def forward(self, x):
         batch = x.shape[0]
         context_vector = self.LSTM(x)
         
@@ -87,7 +94,7 @@ class AutoEncoder(nn.Module):
         super(AutoEncoder, self).__init__()
         self.num_features = num_features
         self.seq_len = seq_len
-        self.n = self.num_features * self.seq_len
+        self.n = int(self.num_features * self.seq_len * 0.8)
         self.hidden1 = int(self.n / 2)
         self.hidden2 = int(self.n / 8)
 
@@ -113,9 +120,10 @@ class AutoEncoder(nn.Module):
     def forward(self, x):
         batch = x.shape[0]
         x = x.reshape(batch, -1)
+        
         latent = self.Encoder(x)
         x_reconstruct = self.Decoder(latent)
-        x_reconstruct = x_reconstruct.reshape(batch, self.seq_len, -1)
+        x_reconstruct = x_reconstruct.reshape(x.shape)
         return latent, x_reconstruct
 
 class Forecast(nn.Module):
@@ -123,7 +131,7 @@ class Forecast(nn.Module):
         super(Forecast, self).__init__()
         self.num_features = num_features
         self.seq_len = seq_len
-        self.n = self.num_features * self.seq_len
+        self.n = int(self.num_features * self.seq_len * 0.8)
         self.hidden1 = int(self.n / 2)
         self.hidden2 = int(self.n / 8)
 
@@ -138,7 +146,7 @@ class Forecast(nn.Module):
     def forward(self, x):
         batch = x.shape[0]
         forecast = self.Decoder(x)
-        forecast = forecast.reshape(batch, self.seq_len, -1)
+        forecast = forecast.reshape(batch, int(self.seq_len*0.2), -1)
         return forecast
 
 class PositionalEmbedding(nn.Module):
@@ -291,31 +299,35 @@ class LSTM(nn.Module):
 ###########################################################################
 
 class Model(torch.nn.Module):
-    def __init__(self, seq_len, feature_num, stack_num):
+    def __init__(self, seq_len, feature_num, stack_num, device):
         super().__init__()
         self.seq_len = seq_len
         self.feature_num = feature_num
         self.stack_num = stack_num
+        self.device =device
 
-        self.AE_block = AE_blocks()
-        self.attention_block = attention_blocks()
-        self.rnn_block = rnn_blocks()
+        self.AE_block = AE_blocks(seq_len, feature_num, device)
+        self.attention_block = attention_blocks(device)
+        self.rnn_block = rnn_blocks(seq_len, feature_num, device)
 
     def forward(self, x): # x shape [batch, seq_len, feature_num]
         part_idx = int(self.seq_len * 0.8)
         reconstruct_part = x[:, :part_idx, :]
         forecast_part = x[:, part_idx, :]
 
+        residual = reconstruct_part
         forecasts = []
         for stack in range(self.stack_num):
             #---# AutoEncoder block #---#
-            reconstruct, forecast_ae = self.AE_block(reconstruct_part)
+            reconstruct, forecast_ae = self.AE_block(residual)
     
             #---# Attention block #---#
-            attention_block, forecast_attention = self.attention_block(reconstruct_part - reconstruct)
+            residual -= reconstruct
+            reconstruct, forecast_attention = self.attention_block(residual)
             
             #---# RNN block #---#
-            rnn_block, forecast_rnn = self.rnn_block()
+            residual -= reconstruct
+            reconstruct, forecast_rnn = self.rnn_block(residual)
 
             #---# Concat forecast #---#
             forecasts.append(torch.concat(forecast_ae, forecast_attention, forecast_rnn))
