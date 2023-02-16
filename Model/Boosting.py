@@ -27,18 +27,37 @@ class AE_blocks(nn.Module):
         self.feature_num = feature_num
 
         self.ae = AutoEncoder(seq_len, feature_num).to(device=device)
-        self.forecast = Forecast(seq_len, feature_num).to(device=device)
+        
+        ### 나중에 decoder가져와서 붙여도될듯
+        self.n = int(self.feature_num * self.seq_len * 0.8)
+        self.hidden1 = int(self.n / 2)
+        self.hidden2 = int(self.n / 8)
+        self.forecast = int(self.feature_num * self.seq_len * 0.2)
+
+        self.fc_forecast = nn.Sequential(
+            nn.Linear(self.hidden2, self.hidden1),
+            nn.BatchNorm1d(self.hidden1),
+            # nn.LayerNorm(64),
+            # nn.LeakyReLU(),
+            nn.ReLU(inplace=False),
+            nn.Linear(self.hidden1, self.forecast)
+        )
 
     def forward(self, x):
+        batch = x.shape[0]
         latent, reconstruct_x = self.ae(x)
-        forecast = self.forecast(latent)
+        forecast = self.fc_forecast(latent) # [batch, seq_len * 0.2, feature_num]
+        forecast = forecast.reshape(batch, -1, self.feature_num)
+       
         reconstruct_x = reconstruct_x.reshape(x.shape)
         return reconstruct_x, forecast
 
 class attention_blocks(nn.Module):
-    def __init__(self, device):
+    def __init__(self, seq_len, feature_num, device):
         super().__init__()
-
+        self.seq_len = seq_len
+        self.feature_num = feature_num
+        
         ### Self attention ###
         factor = 5
         dropout = 0.0
@@ -49,18 +68,30 @@ class attention_blocks(nn.Module):
         # self.blocks = blocks
         self.attention = AttentionLayer(FullAttention(False, factor, attention_dropout=dropout, output_attention=output_attention), 
                         d_model, n_heads, mix=False).to(device=device)
-        self.fc1 = nn.Linear(1520, 40*38)
-        self.fc2 = nn.Linear(1520, 5)
+
+        ### 나중에 decoder가져와서 붙여도될듯
+        self.n = int(self.feature_num * self.seq_len * 0.8)
+        self.hidden1 = int(self.n / 2)
+        self.hidden2 = int(self.n / 8)
+        self.forecast = int(self.feature_num * self.seq_len * 0.2)
+
+        self.fc_forecast = nn.Sequential(
+            nn.Linear(self.n, self.hidden1),
+            nn.BatchNorm1d(self.hidden1),
+            # nn.LayerNorm(64),
+            # nn.LeakyReLU(),
+            nn.ReLU(inplace=False),
+            nn.Linear(self.hidden1, self.forecast)
+        )
         
     def forward(self, x):
         batch = x.shape[0]
         attention_feature, out = self.attention(x, x, x, False)
         attention_feature = attention_feature.reshape(batch, -1)
         
-        reconstruct = self.fc1(attention_feature)
-        reconstruct = reconstruct.reshape(x.shape)
-        forecast = self.fc2(attention_feature)
-
+        reconstruct = attention_feature.reshape(x.shape)
+        forecast = self.fc_forecast(attention_feature)
+        forecast = forecast.reshape(batch, -1, self.feature_num)
         return reconstruct, forecast
         # residuals = x.flip(dims=(1,))
         # input_mask = input_mask.flip(dims=(1,))
@@ -74,16 +105,33 @@ class attention_blocks(nn.Module):
 class rnn_blocks(nn.Module):
     def __init__(self, seq_len, feature_num, device):
         super().__init__()
+        self.seq_len = seq_len
+        self.feature_num = feature_num
 
-        self.LSTM = LSTM(feature_num, seq_len, 3).to(device=device)
-        self.fc = nn.Linear(237,2) 
+        self.LSTM = LSTM(feature_num, int(seq_len*0.8), 3).to(device=device)
+
+        ### 나중에 decoder가져와서 붙여도될듯
+        self.n = int(self.feature_num * self.seq_len * 0.8)
+        self.hidden1 = int(self.n / 2)
+        self.hidden2 = int(self.n / 8)
+        self.forecast = int(self.feature_num * self.seq_len * 0.2)
+
+        self.fc_forecast = nn.Sequential(
+            nn.Linear(self.n, self.hidden1),
+            nn.BatchNorm1d(self.hidden1),
+            # nn.LayerNorm(64),
+            # nn.LeakyReLU(),
+            nn.ReLU(inplace=False),
+            nn.Linear(self.hidden1, self.forecast)
+        )
 
     def forward(self, x):
         batch = x.shape[0]
-        context_vector = self.LSTM(x)
+        context_vector = self.LSTM(x) # [batch, seq_len*feature_num]
         
-        reconstruct = self.fc(context_vector)
-        forecast = self.fc(context_vector)
+        reconstruct = context_vector.reshape(x.shape)
+        forecast = self.fc_forecast(context_vector)
+        forecast = forecast.reshape(batch, -1, self.feature_num)
         return reconstruct, forecast
 ###########################################################################  delete
 ###########################################################################
@@ -102,18 +150,18 @@ class AutoEncoder(nn.Module):
             nn.Linear(self.n, self.hidden1),
             nn.BatchNorm1d(self.hidden1),
             # nn.LeakyReLU(),
-            nn.ReLU(),
+            nn.ReLU(inplace=False),
             nn.Linear(self.hidden1, self.hidden2),
             nn.BatchNorm1d(self.hidden2),
             # nn.LeakyReLU(),
-            nn.ReLU(),
+            nn.ReLU(inplace=False),
         )
         self.Decoder = nn.Sequential(
             nn.Linear(self.hidden2, self.hidden1),
             nn.BatchNorm1d(self.hidden1),
             # nn.LayerNorm(64),
             # nn.LeakyReLU(),
-            nn.ReLU(),
+            nn.ReLU(inplace=False),
             nn.Linear(self.hidden1, self.n)
         )
 
@@ -140,7 +188,7 @@ class Forecast(nn.Module):
             nn.BatchNorm1d(self.hidden1),
             # nn.LayerNorm(64),
             # nn.LeakyReLU(),
-            nn.ReLU(),
+            nn.ReLU(inplace=False),
             nn.Linear(self.hidden1, self.n)
         )
     def forward(self, x):
@@ -262,7 +310,7 @@ class LSTM(nn.Module):
         middle_dim2 = int((self.hidden_dim)/4)
         self.fc1 = nn.Linear(self.hidden_dim, middle_dim)
         self.fc2 = nn.Linear(middle_dim, self.n_features*self.n_seq)
-        self.fc3 = nn.Linear(self.hidden_dim, self.n_features*self.n_seq)
+        self.fc3 = nn.Linear(self.hidden_dim*2, self.n_features*self.n_seq)
         self.fc4 = nn.Linear(self.hidden_dim*2, self.hidden)
         # self.fc4 = nn.Linear(self.middle_dim, self.n_features*self.n_seq)
         # self.fc = nn.Linear(self.hidden_dim, self.pred_len)
@@ -278,7 +326,7 @@ class LSTM(nn.Module):
         c_n = c_n[-1, :, :].reshape(x.shape) # final layer
 
         concats = torch.concat((x, c_n), axis=1) # [batch, hidden*2] 
-        concats = self.fc4(concats)
+        concats = self.fc3(concats)
 
 
         '''# x = self.fc(x)
@@ -307,7 +355,7 @@ class Model(torch.nn.Module):
         self.device =device
 
         self.AE_block = AE_blocks(seq_len, feature_num, device)
-        self.attention_block = attention_blocks(device)
+        self.attention_block = attention_blocks(seq_len, feature_num, device)
         self.rnn_block = rnn_blocks(seq_len, feature_num, device)
 
     def forward(self, x): # x shape [batch, seq_len, feature_num]
@@ -315,7 +363,7 @@ class Model(torch.nn.Module):
         reconstruct_part = x[:, :part_idx, :]
         forecast_part = x[:, part_idx, :]
 
-        
+        forecasts = 0; reconstructs = 0
         residual = reconstruct_part
         for stack in range(self.stack_num):
             #---# AutoEncoder block #---#
@@ -330,8 +378,9 @@ class Model(torch.nn.Module):
             reconstruct_rnn, forecast_rnn = self.rnn_block(residual)
 
             #---# Concat forecast #---#
-            forecasts = forecast_ae + forecast_attention + forecast_rnn
-            reconstructs = reconstruct_ae + reconstruct_attention + reconstruct_rnn
+            forecasts = forecasts + forecast_ae + forecast_attention + forecast_rnn
+            reconstructs = reconstructs + reconstruct_ae + reconstruct_attention + reconstruct_rnn
 
-
-        return reconstructs, forecasts
+        x_hat = torch.concat((reconstructs, forecasts), dim=1)
+        print(x_hat.shape)
+        return x_hat
