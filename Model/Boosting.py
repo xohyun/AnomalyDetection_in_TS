@@ -370,11 +370,11 @@ class Model(torch.nn.Module):
             reconstruct_ae, forecast_ae = self.AE_block(residual)
     
             #---# Attention block #---#
-            residual -= reconstruct_ae
+            residual = residual -  reconstruct_ae
             reconstruct_attention, forecast_attention = self.attention_block(residual)
             
             #---# RNN block #---#
-            residual -= reconstruct_attention
+            residual = residual - reconstruct_attention
             reconstruct_rnn, forecast_rnn = self.rnn_block(residual)
 
             #---# Concat forecast #---#
@@ -382,5 +382,4 @@ class Model(torch.nn.Module):
             reconstructs = reconstructs + reconstruct_ae + reconstruct_attention + reconstruct_rnn
 
         x_hat = torch.concat((reconstructs, forecasts), dim=1)
-        print(x_hat.shape)
         return x_hat
