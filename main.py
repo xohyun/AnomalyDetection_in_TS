@@ -13,7 +13,7 @@ def load_module_func(module_name):
 def main():
     args_class = Args()
     args = args_class.args
-    
+
     create_folder(args.fig_path); create_folder(args.csv_path)
 
     #---# import #---#
