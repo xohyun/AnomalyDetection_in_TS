@@ -1,8 +1,5 @@
-import numpy as np
 import torch
 import torch.nn as nn
-import math
-
 from layer.AE_blocks import AE_blocks
 from layer.attention_blocks import attention_blocks
 from layer.rnn_blocks import rnn_blocks
@@ -32,9 +29,6 @@ class Forecast(nn.Module):
         forecast = forecast.reshape(batch, int(self.seq_len*0.2), -1)
         return forecast
 
-###########################################################################
-###########################################################################
-###########################################################################
 ###########################################################################
 
 
