@@ -315,21 +315,23 @@ class Model(torch.nn.Module):
         reconstruct_part = x[:, :part_idx, :]
         forecast_part = x[:, part_idx, :]
 
+        
         residual = reconstruct_part
-        forecasts = []
         for stack in range(self.stack_num):
             #---# AutoEncoder block #---#
-            reconstruct, forecast_ae = self.AE_block(residual)
+            reconstruct_ae, forecast_ae = self.AE_block(residual)
     
             #---# Attention block #---#
-            residual -= reconstruct
-            reconstruct, forecast_attention = self.attention_block(residual)
+            residual -= reconstruct_ae
+            reconstruct_attention, forecast_attention = self.attention_block(residual)
             
             #---# RNN block #---#
-            residual -= reconstruct
-            reconstruct, forecast_rnn = self.rnn_block(residual)
+            residual -= reconstruct_attention
+            reconstruct_rnn, forecast_rnn = self.rnn_block(residual)
 
             #---# Concat forecast #---#
-            forecasts.append(torch.concat(forecast_ae, forecast_attention, forecast_rnn))
+            forecasts = forecast_ae + forecast_attention + forecast_rnn
+            reconstructs = reconstruct_ae + reconstruct_attention + reconstruct_rnn
 
-        return forecasts
+
+        return reconstructs, forecasts
