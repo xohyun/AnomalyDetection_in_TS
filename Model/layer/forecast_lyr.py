@@ -1,7 +1,6 @@
 import torch.nn as nn
 
-
-class forecast_layer(nn.Module):
+class forecast_lyr(nn.Module):
     def __init__(self, seq_len, feature_num):
         super().__init__()
         self.seq_len = seq_len

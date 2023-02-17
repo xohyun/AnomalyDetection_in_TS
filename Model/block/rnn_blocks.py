@@ -1,7 +1,7 @@
 import torch.nn as nn
 from layer.LSTM import LSTM
-from layer.forecast_layer import forecast_layer
-
+from Model.layer.forecast_lyr import forecast_layer
+from Model.layer.v_inference_lyr import v_inference_lyr
 
 class rnn_blocks(nn.Module):
     def __init__(self, seq_len, feature_num, device):
@@ -13,11 +13,14 @@ class rnn_blocks(nn.Module):
         self.fc_forecast = forecast_layer(
             seq_len, feature_num).to(device=device)
 
-    def forward(self, x):
+        self.v_inference = v_inference_lyr(seq_len, feature_num).to(device=device)
+
+    def forward(self, x, original_data):
         batch = x.shape[0]
         context_vector = self.LSTM(x)  # [batch, seq_len*feature_num]
 
         reconstruct = context_vector.reshape(x.shape)
         forecast = self.fc_forecast(context_vector, batch)
         forecast = forecast.reshape(batch, -1, self.feature_num)
-        return reconstruct, forecast
+        var = self.v_inference(x + original_data)
+        return reconstruct, forecast, var

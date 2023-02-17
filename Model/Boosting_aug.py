@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
-from layer.AE_blocks import AE_blocks
-from layer.attention_blocks import attention_blocks
-from layer.rnn_blocks import rnn_blocks
+from Model.block.AE_blocks import AE_blocks
+from Model.block.attention_blocks import attention_blocks
+from Model.block.rnn_blocks import rnn_blocks
 
 
 class Forecast(nn.Module):
@@ -30,7 +30,7 @@ class Forecast(nn.Module):
         return forecast
 
 ###########################################################################
-
+###########################################################################
 
 class Model(torch.nn.Module):
     def __init__(self, seq_len, feature_num, stack_num, device):
@@ -51,24 +51,24 @@ class Model(torch.nn.Module):
 
         forecasts = 0
         reconstructs = 0
+        variances = 0
         residual = reconstruct_part
         for stack in range(self.stack_num):
             # ---# AutoEncoder block #---#
-            reconstruct_ae, forecast_ae = self.AE_block(residual)
+            reconstruct_ae, forecast_ae, var_ae = self.AE_block(residual, reconstruct_part)
 
             # ---# Attention block #---#
             residual = residual - reconstruct_ae
-            reconstruct_attention, forecast_attention = self.attention_block(
-                residual)
+            reconstruct_att, forecast_att, var_att = self.attention_block(residual)
 
             # ---# RNN block #---#
-            residual = residual - reconstruct_attention
-            reconstruct_rnn, forecast_rnn = self.rnn_block(residual)
+            residual = residual - reconstruct_att
+            reconstruct_rnn, forecast_rnn, var_rnn = self.rnn_block(residual)
 
             # ---# Concat forecast #---#
-            forecasts = forecasts + forecast_ae + forecast_attention + forecast_rnn
-            reconstructs = reconstructs + reconstruct_ae + \
-                reconstruct_attention + reconstruct_rnn
+            forecasts = forecasts + forecast_ae + forecast_att + forecast_rnn
+            reconstructs = reconstructs + reconstruct_ae + reconstruct_att + reconstruct_rnn
+            variances = variances + var_ae + var_att + var_rnn
 
         x_hat = torch.concat((reconstructs, forecasts), dim=1)
-        return x_hat
+        return x_hat, variances

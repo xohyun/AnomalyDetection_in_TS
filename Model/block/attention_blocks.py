@@ -1,7 +1,7 @@
 import torch.nn as nn
-from AttentionLayer import AttentionLayer, FullAttention
-from layer.forecast_layer import forecast_layer
-
+from layer.Attention_lyr import AttentionLayer, FullAttention
+from Model.layer.forecast_lyr import forecast_layer
+from Model.layer.v_inference_lyr import v_inference_lyr
 
 class attention_blocks(nn.Module):
     def __init__(self, seq_len, feature_num, device):
@@ -22,8 +22,9 @@ class attention_blocks(nn.Module):
 
         self.fc_forecast = forecast_layer(
             seq_len, feature_num).to(device=device)
+        self.v_inference = v_inference_lyr(seq_len, feature_num).to(device=device)
 
-    def forward(self, x):
+    def forward(self, x, original_data):
         batch = x.shape[0]
         attention_feature, out = self.attention(x, x, x, False)
         attention_feature = attention_feature.reshape(batch, -1)
@@ -31,7 +32,8 @@ class attention_blocks(nn.Module):
         reconstruct = attention_feature.reshape(x.shape)
         forecast = self.fc_forecast(attention_feature, batch)
         forecast = forecast.reshape(batch, -1, self.feature_num)
-        return reconstruct, forecast
+        var = self.v_inference(x + original_data)
+        return reconstruct, forecast, var
         # residuals = x.flip(dims=(1,))
         # input_mask = input_mask.flip(dims=(1,))
         # forecast = x[:, -1:]
