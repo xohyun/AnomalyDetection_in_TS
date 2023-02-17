@@ -27,7 +27,7 @@ class LSTM(nn.Module):
         middle_dim2 = int((self.hidden_dim)/4)
         self.fc1 = nn.Linear(self.hidden_dim, middle_dim)
         self.fc2 = nn.Linear(middle_dim, self.n_features*self.n_seq)
-        self.fc3 = nn.Linear(self.hidden_dim, self.n_features*self.n_seq)
+        self.fc3 = nn.Linear(self.hidden_dim*2, n)
         self.fc4 = nn.Linear(self.hidden_dim*2, self.hidden)
         # self.fc4 = nn.Linear(self.middle_dim, self.n_features*self.n_seq)
         # self.fc = nn.Linear(self.hidden_dim, self.pred_len)
@@ -43,7 +43,7 @@ class LSTM(nn.Module):
         c_n = c_n[-1, :, :].reshape(x.shape)  # final layer
 
         concats = torch.concat((x, c_n), axis=1)  # [batch, hidden*2]
-        concats = self.fc4(concats)
+        concats = self.fc3(concats)
 
         '''# x = self.fc(x)
         x = self.fc1(x) # [batch, 32]

@@ -59,16 +59,16 @@ class Model(torch.nn.Module):
 
             # ---# Attention block #---#
             residual = residual - reconstruct_ae
-            reconstruct_att, forecast_att, var_att = self.attention_block(residual)
+            reconstruct_att, forecast_att, var_att = self.attention_block(residual, reconstruct_part)
 
             # ---# RNN block #---#
             residual = residual - reconstruct_att
-            reconstruct_rnn, forecast_rnn, var_rnn = self.rnn_block(residual)
+            reconstruct_rnn, forecast_rnn, var_rnn = self.rnn_block(residual, reconstruct_part)
 
             # ---# Concat forecast #---#
             forecasts = forecasts + forecast_ae + forecast_att + forecast_rnn
             reconstructs = reconstructs + reconstruct_ae + reconstruct_att + reconstruct_rnn
             variances = variances + var_ae + var_att + var_rnn
-
+            
         x_hat = torch.concat((reconstructs, forecasts), dim=1)
         return x_hat, variances

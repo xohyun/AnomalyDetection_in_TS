@@ -11,7 +11,7 @@ class forecast_lyr(nn.Module):
         self.hidden2 = int(self.n / 8)
         self.forecast = int(self.feature_num * self.seq_len * 0.2)
 
-        self.fc_forecast = nn.Sequential(
+        self.fc_forecast_latent = nn.Sequential(
             nn.Linear(self.hidden2, self.hidden1),
             nn.BatchNorm1d(self.hidden1),
             # nn.LayerNorm(64),
@@ -20,7 +20,19 @@ class forecast_lyr(nn.Module):
             nn.Linear(self.hidden1, self.forecast)
         )
 
-    def forward(self, x, batch):
-        forecast = self.fc_forecast(x)
+        self.fc_forecast = nn.Sequential(
+            nn.Linear(self.n, self.hidden1),
+            nn.BatchNorm1d(self.hidden1),
+            # nn.LayerNorm(64),
+            # nn.LeakyReLU(),
+            nn.ReLU(inplace=False),
+            nn.Linear(self.hidden1, self.forecast)
+        )
+
+    def forward(self, x, latent=False):
+        if latent:
+            forecast = self.fc_forecast_latent(x)
+        else:
+            forecast = self.fc_forecast(x)
         # forecast = forecast.reshape(batch, -1, self.feature_num)
         return forecast

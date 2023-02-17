@@ -56,7 +56,7 @@ class Args:
         parser.add_argument("--model", type=str, default="LSTM_decom", 
                              choices=["AE", "DAGMM", "TadGAN", "OmniAnomaly", "USAD", 
                                     "LSTMAE", "LSTMVAE", "AE_decom", "LSTM_decom",
-                                    "Boosting"])
+                                    "Boosting", "Boosting_aug"])
 
         parser.add_argument("--lr", type=float, default=0.001)
         parser.add_argument("--wd", type=float, default=0.0001)
