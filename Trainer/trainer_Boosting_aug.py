@@ -49,7 +49,7 @@ class TrainMaker(base_trainer):
             epoch_loss = 0
             self.model.train()
             xs = []; preds = []; maes = []; mses = []
-            
+            reconstructs = []; forecasts = []; variance_preds = []
             for idx, x in enumerate(self.data_loader):
                 x = x.float().to(device = self.device)
                 self.optimizer.zero_grad()
@@ -57,9 +57,16 @@ class TrainMaker(base_trainer):
                 forecast_part = x[:,int(self.args.seq_len*0.8):,:]
                 variances = torch.var(forecast_part, dim=1)
 
-                pred, pred_variances = self.model(x)
+                reconstruct, forecast, variance_pred = self.model(x)
+                reconstructs.append(reconstruct)
+                forecasts.append(forecast)
+                variance_preds.append(variance_pred)
+
+                pred = torch.concat((reconstruct, forecast), dim=1)
+                
+
                 loss = self.criterion(x, pred)
-                loss_var = self.criterion(variances, pred_variances)
+                loss_var = self.criterion(variances, variance_pred)
                 loss = loss + loss_var
                 # mae = mean_absolute_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
                 # mse = mean_squared_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
@@ -99,7 +106,11 @@ class TrainMaker(base_trainer):
             # plt.hist(maes, bins=100, density=True, alpha=0.5)
             # plt.xlim(0,0.2)
             # plt.savefig(f'Fig/train_distribution_AE_mae.jpg')
-            
+        
+        # stack?? -> 확인아직안함
+        # reconstructs = torch.stack(reconstructs)
+        # forecasts = torch.stack(forecasts)
+        # variance_preds = torch.stack(variance_preds)
 
     def evaluation(self, test_loader, thr=0.95):
         cos = nn.CosineSimilarity(dim=1, eps=1e-6)
