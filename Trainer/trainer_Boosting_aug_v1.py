@@ -13,7 +13,6 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 
-
 class TrainMaker(base_trainer):
     def __init__(self, args, model, data_loaders, data_info):
         self.args = args
@@ -26,67 +25,55 @@ class TrainMaker(base_trainer):
                 self.data_loader_valid = data_loaders['valid']
         else:
             self.data_loader_test = data_loaders['test']
-
-        self.device = gpu_checking(args)
+  
+        self.device =  gpu_checking(args)
 
         self.features = data_info['num_features']
         self.epoch = self.args.epoch
-
+        
         self.lr = self.args.lr
         self.wd = self.args.wd
 
         self.optimizer = getattr(torch.optim, self.args.optimizer)
-        self.optimizer = self.optimizer(
-            self.model.parameters(), lr=self.lr, weight_decay=self.wd)
-
+        self.optimizer = self.optimizer(self.model.parameters(), lr=self.lr, weight_decay=self.wd)
+        
         self.criterion = self.set_criterion(self.args.criterion)
         self.scheduler = self.set_scheduler(args, self.optimizer)
 
         # self.__set_criterion(self.criterion)
         # self.__set_scheduler(self.args, self.optimizer)
         # self.cal = Calculate()
-
+         
     def train(self, shuffle=True):
         for e in tqdm(range(self.epoch)):
             epoch_loss = 0
             self.model.train()
-            xs = []
-            preds = []
-            maes = []
-            mses = []
-
+            xs = []; preds = []; maes = []; mses = []
+            
             for idx, x in enumerate(self.data_loader):
-                x = x.float().to(device=self.device)
+                x = x.float().to(device = self.device)
                 self.optimizer.zero_grad()
-
-                forecast_part = x[:, int(self.args.seq_len*0.8):, :]
+                
+                forecast_part = x[:,int(self.args.seq_len*0.8):,:]
                 variances = torch.var(forecast_part, dim=1)
 
-                output = self.model(x)
-
-                pred = torch.concat(
-                    (output["reconstructs"], output["forecasts"]), dim=1)
+                pred, pred_variances = self.model(x)
                 loss = self.criterion(x, pred)
-                loss_var = self.criterion(variances, output["variances"])
+                loss_var = self.criterion(variances, pred_variances)
                 loss = loss + loss_var
                 # mae = mean_absolute_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
                 # mse = mean_squared_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
-
-                xs.extend(torch.mean(x, axis=(1, 2)
-                                     ).cpu().detach().numpy().flatten())
-                preds.extend(torch.mean(pred, axis=(1, 2)
-                                        ).cpu().detach().numpy().flatten())
+            
+                xs.extend(torch.mean(x, axis=(1,2)).cpu().detach().numpy().flatten()); preds.extend(torch.mean(pred, axis=(1,2)).cpu().detach().numpy().flatten())
                 # maes.extend(mae.flatten()); mses.extend(mse.flatten())
                 interval = 300
-                if (idx+1) % interval == 0:
-                    print(f'[Epoch{e+1}] Loss:{loss}')
+                if (idx+1) % interval == 0: print(f'[Epoch{e+1}] Loss:{loss}')
 
                 loss.backward()
                 self.optimizer.step()
                 epoch_loss += loss
-
-            torch.save(self.model.state_dict(),
-                       f'{self.args.save_path}model_{self.args.model}.pk')
+            
+            torch.save(self.model.state_dict(), f'{self.args.save_path}model_{self.args.model}.pk')
             print(f"{e}epoch / loss {loss}")
 
             # wandb.log({"loss":loss})
@@ -102,16 +89,17 @@ class TrainMaker(base_trainer):
             # plt.fill_between(iidx[:100], xs[:100], preds[:100], color='green', alpha=0.5)
             # plt.legend()
             # plt.savefig(f'Fig/train_fill_between_AE_{e}.jpg')
-
+            
             # plt.cla()
             # plt.hist(mses, bins=100, density=True, alpha=0.5)
             # plt.xlim(0,0.1)
             # plt.savefig(f'Fig/train_distribution_AE_mse.jpg')
-
+            
             # plt.cla()
             # plt.hist(maes, bins=100, density=True, alpha=0.5)
             # plt.xlim(0,0.2)
             # plt.savefig(f'Fig/train_distribution_AE_mae.jpg')
+            
 
     def evaluation(self, test_loader, thr=0.95):
         cos = nn.CosineSimilarity(dim=1, eps=1e-6)
@@ -120,56 +108,46 @@ class TrainMaker(base_trainer):
         true_list = []
         diffs = []
 
-        xs = []
-        preds = []
-        maes = []
-        mses = []
-        x_list = []
-        x_hat_list = []
-        errors = []
+        xs = []; preds = []; maes = []; mses = []; x_list = []; x_hat_list = []; errors = []
         with torch.no_grad():
             for idx, (x, y) in enumerate(test_loader):
-                x = x.float().to(device=self.device)
+                x = x.float().to(device = self.device)
                 self.optimizer.zero_grad()
                 batch = x.shape[0]
 
-                forecast_part = x[:, int(self.args.seq_len*0.8):, :]
+                forecast_part = x[:,int(self.args.seq_len*0.8):,:]
                 variances = torch.var(forecast_part, dim=1)
 
-                output = self.model(x)
-
-                pred = torch.concat(
-                    (output["reconstructs"], output["forecasts"]), dim=1)
-
-                error = torch.sum(abs(x - pred), axis=(1, 2)).cpu().detach()
+                pred, pred_variances = self.model(x)
+                
+                error = torch.sum(abs(x - pred), axis=(1,2)).cpu().detach()
                 errors.extend(error)
-
+                
                 # mae = mean_absolute_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
                 # mse = mean_squared_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
-
+                
                 # mae = mean_absolute_error(np.transpose(x.reshape(batch, -1).cpu().detach().numpy()), np.transpose(pred.reshape(batch, -1).cpu().detach().numpy()), multioutput='raw_values')
                 # mse = mean_squared_error(np.transpose(x.reshape(batch, -1).cpu().detach().numpy()), np.transpose(pred.reshape(batch, -1).cpu().detach().numpy()), multioutput='raw_values')
 
-                x_list.append(x)
-                x_hat_list.append(pred)
+                x_list.append(x); x_hat_list.append(pred)
                 # xs.extend(torch.mean(x, axis=(1,2)).cpu().detach().numpy().flatten()); preds.extend(torch.mean(pred, axis=(1,2)).cpu().detach().numpy().flatten())
                 # maes.extend(mae.flatten()); mses.extend(mse.flatten())
 
                 x = x.reshape(x.shape[0], -1)
                 pred = pred.reshape(pred.shape[0], -1)
                 # diff = cos(x, pred).cpu().tolist()
-
+                
                 # batch_pred = np.where(((np.array(diff)<0) & (np.array(diff)>-0.1)), 1, 0)
                 # batch_pred = np.where(np.array(diff)<0.7, 1, 0)
                 # y = np.where(y>0.69, 1, 0)
-
+            
                 # diffs.extend(diff)
                 # pred_list.extend(batch_pred)
                 y = y.reshape(y.shape[0], -1)
                 y = y.mean(axis=1).numpy()
-                y = np.where(y > 0, 1, 0)
+                y = np.where(y>0, 1, 0)
                 true_list.extend(y)
-
+        
         x_real = torch.cat(x_list)
         x_hat = torch.cat(x_hat_list)
         x_real = x_real.cpu().detach().numpy()
@@ -177,8 +155,7 @@ class TrainMaker(base_trainer):
 
         l_quantile = np.quantile(np.array(errors), 0.025)
         u_quantile = np.quantile(np.array(errors), 0.975)
-        in_range = np.logical_and(
-            np.array(errors) >= l_quantile, np.array(errors) <= u_quantile)
+        in_range = np.logical_and(np.array(errors) >= l_quantile, np.array(errors) <= u_quantile)
         # pred_list = [0 for i in errors if i in in_range]
         np_errors = np.array(errors)
         # pred_list = [i for i in np_errors if i in np.where((i >= l_quantile and i <= u_quantile), 0, 1)]
@@ -198,22 +175,23 @@ class TrainMaker(base_trainer):
         #     pred_list[start:end] = 1
 
         # drawing(config, anomaly_value, pd.DataFrame(test_dataset.scaled_test))
-
+        
         x_real = x_real.flatten()
         x_hat = x_hat.flatten()
 
         f1 = f1_score(true_list, pred_list, average='macro')
         precision = precision_score(true_list, pred_list, average="macro")
         recall = recall_score(true_list, pred_list, average="macro")
-
+        
         print(confusion_matrix(true_list, pred_list))
         print(f"f1 {f1} / precision {precision} / recall {recall}")
-
+        
         # plt.cla()
         # plt.hist(diffs, bins=50, density=True, alpha=0.5) # histtype='stepfilled'
         # plt.title("Cosine similarity")
         # plt.savefig('Fig/cosine_similarity_difference.jpg')
-
+        
+        
         # plt.cla()
         # plt.figure(figsize=(15,8))
         # plt.ylim(0,0.5)
@@ -224,7 +202,7 @@ class TrainMaker(base_trainer):
         # plt.title("Normal")
         # plt.legend()
         # plt.savefig(f'Fig/test_fill_between_AE_Normal.jpg')
-
+        
         # plt.cla()
         # anomaly_idx = np.where(np.array(true_list) == 1)
         # anomaly_idx_bundle = find_bundle(anomaly_idx[0].tolist())
@@ -235,6 +213,7 @@ class TrainMaker(base_trainer):
         # plt.title("Abnormal")
         # plt.legend()
         # plt.savefig(f'Fig/test_fill_between_AE_Anomaly.jpg')
+
 
         # plt.cla()
         # plt.hist(mses, density=True, bins=100, alpha=0.5)
@@ -263,21 +242,18 @@ class TrainMaker(base_trainer):
             criterion = nn.CrossEntropyLoss()
         elif criterion == "cosine":
             criterion = nn.CosineEmbeddingLoss()
-
+            
         return criterion
 
     def set_scheduler(self, args, optimizer):
         if args.scheduler is None:
             return None
         elif args.scheduler == 'exp':
-            scheduler = optim.lr_scheduler.ExponentialLR(
-                optimizer, gamma=args.gamma)
+            scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=args.gamma)
         elif args.scheduler == 'step':
-            scheduler = optim.lr_scheduler.StepLR(
-                optimizer, step_size=args.step_size, gamma=args.gamma)
+            scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=args.step_size, gamma=args.gamma)
         elif args.scheduler == 'multi_step':
-            scheduler = optim.lr_scheduler.MultiStepLR(
-                optimizer, milestones=args.milestones, gamma=args.gamma)
+            scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.milestones, gamma=args.gamma)
         elif args.scheduler == 'plateau':
             scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=20,
                                                              threshold=0.1, threshold_mode='abs', verbose=True)
@@ -287,9 +263,10 @@ class TrainMaker(base_trainer):
                                                              eta_min=args.eta_min if args.eta_min else 0)
         elif args.scheduler == 'one_cycle':
             scheduler = optim.lr_scheduler.OneCycleLR(optimizer,
-                                                      max_lr=args.max_lr,
-                                                      steps_per_epoch=args.steps_per_epoch,
-                                                      epochs=args.cycle_epochs)
+                                                    max_lr=args.max_lr, 
+                                                    steps_per_epoch=args.steps_per_epoch,
+                                                    epochs=args.cycle_epochs)
         else:
             raise ValueError(f"Not supported {args.scheduler}.")
         return scheduler
+

@@ -40,7 +40,8 @@ class LSTM(nn.Module):
         x = x[:, -1, :]  # shape [batch, 1, hidden_size]
         x = self.act_fn(x)
 
-        c_n = c_n[-1, :, :].reshape(x.shape)  # final layer
+        c_n = c_n[-1, :, :].reshape(x.shape)  # cell final layer
+        h_n = h_n[-1, :, :].reshape(x.shape)  # hidden final layer
 
         concats = torch.concat((x, c_n), axis=1)  # [batch, hidden*2]
         concats = self.fc3(concats)
@@ -56,4 +57,4 @@ class LSTM(nn.Module):
         c_n = self.fc3(c_n) # [batch, feature*seq]
         c_n = c_n.reshape(x.shape[0],  self.n_seq, self.n_features)'''
         # return x, h_n, c_n
-        return concats
+        return c_n, concats

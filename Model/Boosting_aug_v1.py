@@ -32,7 +32,6 @@ class Forecast(nn.Module):
 ###########################################################################
 ###########################################################################
 
-
 class Model(torch.nn.Module):
     def __init__(self, seq_len, feature_num, stack_num, device):
         super().__init__()
@@ -56,30 +55,20 @@ class Model(torch.nn.Module):
         residual = reconstruct_part
         for stack in range(self.stack_num):
             # ---# AutoEncoder block #---#
-            latent, reconstruct_ae, forecast_ae, var_ae = self.AE_block(
-                residual, reconstruct_part)
+            reconstruct_ae, forecast_ae, var_ae = self.AE_block(residual, reconstruct_part)
 
             # ---# Attention block #---#
             residual = residual - reconstruct_ae
-            out, reconstruct_att, forecast_att, var_att = self.attention_block(
-                residual)
+            reconstruct_att, forecast_att, var_att = self.attention_block(residual, reconstruct_part)
 
             # ---# RNN block #---#
             residual = residual - reconstruct_att
-            hidden_cell, reconstruct_rnn, forecast_rnn, var_rnn = self.rnn_block(
-                residual)
+            reconstruct_rnn, forecast_rnn, var_rnn = self.rnn_block(residual, reconstruct_part)
 
             # ---# Concat forecast #---#
             forecasts = forecasts + forecast_ae + forecast_att + forecast_rnn
             reconstructs = reconstructs + reconstruct_ae + reconstruct_att + reconstruct_rnn
             variances = variances + var_ae + var_att + var_rnn
-
-        # x_hat = torch.concat((reconstructs, forecasts), dim=1)
-        return {
-            'out': out,
-            'latent': latent,
-            'hidden_cell': hidden_cell,
-            'reconstructs': reconstructs,
-            'forecasts': forecasts,
-            'variances': variances
-        }
+            
+        x_hat = torch.concat((reconstructs, forecasts), dim=1)
+        return x_hat, variances
