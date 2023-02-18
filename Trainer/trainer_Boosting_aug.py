@@ -108,7 +108,8 @@ class TrainMaker(base_trainer):
         true_list = []
         diffs = []
 
-        xs = []; preds = []; maes = []; mses = []; x_list = []; x_hat_list = []; errors = []
+        x_list = []; x_hat_list = []; errors = []
+        reconstructs = []; forecasts = []; variance_preds = []
         with torch.no_grad():
             for idx, (x, y) in enumerate(test_loader):
                 x = x.float().to(device = self.device)
@@ -118,8 +119,12 @@ class TrainMaker(base_trainer):
                 forecast_part = x[:,int(self.args.seq_len*0.8):,:]
                 variances = torch.var(forecast_part, dim=1)
 
-                pred, pred_variances = self.model(x)
-                
+                reconstruct, forecast, variance_pred = self.model(x)
+                reconstructs.append(reconstruct)
+                forecasts.append(forecast)
+                variance_preds.append(variance_pred)
+
+                pred = torch.concat((reconstruct, forecast), dim=1)
                 error = torch.sum(abs(x - pred), axis=(1,2)).cpu().detach()
                 errors.extend(error)
                 
@@ -148,6 +153,11 @@ class TrainMaker(base_trainer):
                 y = np.where(y>0, 1, 0)
                 true_list.extend(y)
         
+        # stack?? -> 확인아직안함
+        # reconstructs = torch.stack(reconstructs)
+        # forecasts = torch.stack(forecasts)
+        # variance_preds = torch.stack(variance_preds)
+
         x_real = torch.cat(x_list)
         x_hat = torch.cat(x_hat_list)
         x_real = x_real.cpu().detach().numpy()
