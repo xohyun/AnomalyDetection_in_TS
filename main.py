@@ -11,6 +11,7 @@ def load_module_func(module_name):
     return mod
     
 def main():
+    print()
     args_class = Args()
     args = args_class.args
 
