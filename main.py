@@ -4,12 +4,8 @@ from utils.utils import fix_random_seed, create_folder
 import pandas as pd
 from DataLoader.data_provider import get_dataloader
 from Model.model_maker import ModelMaker
-import importlib
+from utils.utils import load_module_func
 
-def load_module_func(module_name):
-    mod = importlib.import_module(module_name)
-    return mod
-    
 def main():
     args_class = Args()
     args = args_class.args

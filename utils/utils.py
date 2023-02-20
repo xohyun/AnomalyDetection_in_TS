@@ -60,3 +60,8 @@ def save_checkpoint(self, epoch):
         'optimizer_state_dict': self.optimizer.state_dict(),
         # 'scheduler_state_dict': self.scheduler.state_dict() if self.scheduler else None
     }, os.path.join(self.args.save_path, f"checkpoints/{epoch}.tar"))
+
+def load_module_func(module_name):
+    import importlib
+    mod = importlib.import_module(module_name)
+    return mod

@@ -34,7 +34,6 @@ class Args:
         else:
             parser.add_argument("--choice_data", default=None)
         
-        
         #---# Dataset setting #---#
         parser.add_argument("--seq_len", default=50, type=int)
         parser.add_argument("--pred_len", default=1, type=int)
@@ -85,7 +84,9 @@ class Args:
 
         parser.add_argument("--criterion", type=str, default="MSE") #triplet
         parser.add_argument("--optimizer", type=str, default="SGD")   # AdamW, SGD
-
+        
+        #---# Score #---#
+        parser.add_argument("--score", type=str, default="PA", choices=['PA'])
         args = parser.parse_args()
         return args
 

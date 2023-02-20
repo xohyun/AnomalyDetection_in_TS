@@ -13,7 +13,6 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 
-
 class TrainMaker(base_trainer):
     def __init__(self, args, model, data_loaders, data_info):
         self.args = args
@@ -139,35 +138,17 @@ class TrainMaker(base_trainer):
                 variances = torch.var(forecast_part, dim=1)
 
                 output = self.model(x)
-
-                pred = torch.concat(
-                    (output["reconstructs"], output["forecasts"]), dim=1)
+                pred = torch.concat((output["reconstructs"], output["forecasts"]), dim=1)
 
                 error = torch.sum(abs(x - pred), axis=(1, 2)).cpu().detach()
-
                 errors.extend(error)
-
-                # mae = mean_absolute_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
-                # mse = mean_squared_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
-
-                # mae = mean_absolute_error(np.transpose(x.reshape(batch, -1).cpu().detach().numpy()), np.transpose(pred.reshape(batch, -1).cpu().detach().numpy()), multioutput='raw_values')
-                # mse = mean_squared_error(np.transpose(x.reshape(batch, -1).cpu().detach().numpy()), np.transpose(pred.reshape(batch, -1).cpu().detach().numpy()), multioutput='raw_values')
 
                 x_list.append(x)
                 x_hat_list.append(pred)
-                # xs.extend(torch.mean(x, axis=(1,2)).cpu().detach().numpy().flatten()); preds.extend(torch.mean(pred, axis=(1,2)).cpu().detach().numpy().flatten())
-                # maes.extend(mae.flatten()); mses.extend(mse.flatten())
-
+                
                 x = x.reshape(x.shape[0], -1)
                 pred = pred.reshape(pred.shape[0], -1)
-                # diff = cos(x, pred).cpu().tolist()
-
-                # batch_pred = np.where(((np.array(diff)<0) & (np.array(diff)>-0.1)), 1, 0)
-                # batch_pred = np.where(np.array(diff)<0.7, 1, 0)
-                # y = np.where(y>0.69, 1, 0)
-
-                # diffs.extend(diff)
-                # pred_list.extend(batch_pred)
+                
                 y = y.reshape(y.shape[0], -1)
                 y = y.mean(axis=1).numpy()
                 y = np.where(y > 0, 1, 0)
@@ -178,85 +159,11 @@ class TrainMaker(base_trainer):
         x_real = x_real.cpu().detach().numpy()
         x_hat = x_hat.cpu().detach().numpy()
 
-        l_quantile = np.quantile(np.array(errors), 0.025)
-        u_quantile = np.quantile(np.array(errors), 0.975)
-        in_range = np.logical_and(
-            np.array(errors) >= l_quantile, np.array(errors) <= u_quantile)
-        # pred_list = [0 for i in errors if i in in_range]
-        np_errors = np.array(errors)
-        # pred_list = [i for i in np_errors if i in np.where((i >= l_quantile and i <= u_quantile), 0, 1)]
-        pred_list = np.zeros(len(errors))
-        for i in range(len(np_errors)):
-            if errors[i] >= l_quantile and errors[i] <= u_quantile:
-                pred_list[i] = 0
-            else:
-                pred_list[i] = 1
+        # x_real = x_real.flatten()
+        # x_hat = x_hat.flatten()
 
-        # errors, predictions_vs = reconstruction_errors(x_real, x_hat, score_window=self.args.seq_len, step_size=1) #score_window=config.window_size
-        # error_range = find_anomalies(errors, index=range(len(errors)), anomaly_padding=5)
-        # pred_list = np.zeros(len(true_list))
-        # for i in error_range:
-        #     start = int(i[0])
-        #     end = int(i[1])
-        #     pred_list[start:end] = 1
-
-        # drawing(config, anomaly_value, pd.DataFrame(test_dataset.scaled_test))
-
-        x_real = x_real.flatten()
-        x_hat = x_hat.flatten()
-
-        f1 = f1_score(true_list, pred_list, average='macro')
-        precision = precision_score(true_list, pred_list, average="macro")
-        recall = recall_score(true_list, pred_list, average="macro")
-
-        print(confusion_matrix(true_list, pred_list))
-        print(f"f1 {f1} / precision {precision} / recall {recall}")
-
-        # plt.cla()
-        # plt.hist(diffs, bins=50, density=True, alpha=0.5) # histtype='stepfilled'
-        # plt.title("Cosine similarity")
-        # plt.savefig('Fig/cosine_similarity_difference.jpg')
-
-        # plt.cla()
-        # plt.figure(figsize=(15,8))
-        # plt.ylim(0,0.5)
-        # iidx = list(range(len(xs)))
-        # plt.plot(iidx[:100], xs[:100], label="original")
-        # plt.plot(iidx[:100], preds[:100], label="predict")
-        # plt.fill_between(iidx[:100], xs[:100], preds[:100], color='green', alpha=0.5)
-        # plt.title("Normal")
-        # plt.legend()
-        # plt.savefig(f'Fig/test_fill_between_AE_Normal.jpg')
-
-        # plt.cla()
-        # anomaly_idx = np.where(np.array(true_list) == 1)
-        # anomaly_idx_bundle = find_bundle(anomaly_idx[0].tolist())
-        # iidx = list(range(len(anomaly_idx_bundle[0])))
-        # plt.plot(iidx[:-1], xs[anomaly_idx_bundle[0][0]:anomaly_idx_bundle[0][-1]], label="original")
-        # plt.plot(iidx[:-1], preds[anomaly_idx_bundle[0][0]:anomaly_idx_bundle[0][-1]], label="predict")
-        # plt.fill_between(iidx[:-1], xs[anomaly_idx_bundle[0][0]:anomaly_idx_bundle[0][-1]], preds[anomaly_idx_bundle[0][0]:anomaly_idx_bundle[0][-1]], color='green', alpha=0.5)
-        # plt.title("Abnormal")
-        # plt.legend()
-        # plt.savefig(f'Fig/test_fill_between_AE_Anomaly.jpg')
-
-        # plt.cla()
-        # plt.hist(mses, density=True, bins=100, alpha=0.5)
-        # plt.xlim(0,0.1)
-        # plt.savefig(f'Fig/test_distribution_AE_mse.jpg')
-
-        # plt.cla()
-        # plt.hist(maes, density=True, bins=100, alpha=0.5)
-        # plt.xlim(0,0.2)
-        # plt.savefig(f'Fig/test_distribution_AE_mae.jpg')
-
-        # thres = np.percentile(np.array(maes), 99)
-        # pred_list = np.where(np.array(maes)>thres, 1, 0)
-        # f1 = f1_score(true_list, pred_list, average='macro')
-        # precision = precision_score(true_list, pred_list, average="macro")
-        # recall = recall_score(true_list, pred_list, average="macro")
-        # print(f"f1 score {f1}")
-
-        # print(confusion_matrix(true_list, pred_list))
+        scoring = self.get_score(self.args.score)
+        f1, precision, recall = scoring(true_list, errors)       
         return f1, precision, recall
 
     def set_criterion(self, criterion):
@@ -296,3 +203,8 @@ class TrainMaker(base_trainer):
         else:
             raise ValueError(f"Not supported {args.scheduler}.")
         return scheduler
+
+    def get_score(self, method):
+        if method == 'PA':
+            from Score import PA
+            return PA.PA
