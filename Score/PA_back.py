@@ -2,10 +2,7 @@ import numpy as np
 from sklearn.metrics import f1_score, precision_score, recall_score
 from sklearn.metrics import confusion_matrix
 
-class PA():
-    '''
-    point adjust with quantile
-    '''
+class PA_back():
     def score(self, true_list, errors):
         l_quantile = np.quantile(np.array(errors), 0.025)
         u_quantile = np.quantile(np.array(errors), 0.975)
@@ -29,25 +26,3 @@ class PA():
         print(f"f1 {f1} / precision {precision} / recall {recall}")
 
         return f1, precision, recall
-    
-## TadGAN   
-# errors, predictions_vs = reconstruction_errors(x_real, x_hat, score_window=self.args.seq_len, step_size=1) #score_window=config.window_size
-# error_range = find_anomalies(errors, index=range(len(errors)), anomaly_padding=5)
-# pred_list = np.zeros(len(true_list))
-# for i in error_range:
-#     start = int(i[0])
-#     end = int(i[1])
-#     pred_list[start:end] = 1
-
-# drawing(config, anomaly_value, pd.DataFrame(test_dataset.scaled_test))
-
-## batch 안에서 cosine similarity
-# diff = cos(x, pred).cpu().tolist()
-
-# batch_pred = np.where(((np.array(diff)<0) & (np.array(diff)>-0.1)), 1, 0)
-# batch_pred = np.where(np.array(diff)<0.7, 1, 0)
-# y = np.where(y>0.69, 1, 0)
-
-# diffs.extend(diff)
-# pred_list.extend(batch_pred)
-        

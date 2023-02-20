@@ -116,8 +116,8 @@ class TrainMaker(base_trainer):
     def evaluation(self, test_loader, thr=0.95):
         cos = nn.CosineSimilarity(dim=1, eps=1e-6)
         self.model.eval()
-        pred_list = []
         true_list = []
+        true_list_each = []
         diffs = []
 
         xs = []
@@ -150,6 +150,7 @@ class TrainMaker(base_trainer):
                 pred = pred.reshape(pred.shape[0], -1)
                 
                 y = y.reshape(y.shape[0], -1)
+                true_list_each.extend(y)
                 y = y.mean(axis=1).numpy()
                 y = np.where(y > 0, 1, 0)
                 true_list.extend(y)
@@ -161,10 +162,12 @@ class TrainMaker(base_trainer):
 
         # x_real = x_real.flatten()
         # x_hat = x_hat.flatten()
-
-        scoring = self.get_score(self.args.score)
-        f1, precision, recall = scoring.score(true_list, errors)       
-        return f1, precision, recall
+        from Score.PA_back import PA_back
+        scoring = PA_back()
+        # scoring = self.get_score(self.args.score)
+        print("???", len(true_list_each))
+        f1, precision, recall = scoring.score(true_list_each, errors)       
+        # return f1, precision, recall
 
     def set_criterion(self, criterion):
         if criterion == "MSE":
