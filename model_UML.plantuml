@@ -71,6 +71,10 @@ title Abnormaly Detection Model
         class trainer
 
     }
+    package "Score" #6cc3f5
+    {
+        class PA
+    }
     package "utils" #6cc3f5
     {
         class early_stopping
