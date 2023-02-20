@@ -62,12 +62,12 @@ class Model(torch.nn.Module):
             # ---# Attention block #---#
             residual = residual - reconstruct_ae
             out, reconstruct_att, forecast_att, var_att = self.attention_block(
-                residual)
+                residual, reconstruct_part)
 
             # ---# RNN block #---#
             residual = residual - reconstruct_att
             hidden_cell, reconstruct_rnn, forecast_rnn, var_rnn = self.rnn_block(
-                residual)
+                residual, reconstruct_part)
 
             # ---# Concat forecast #---#
             forecasts = forecasts + forecast_ae + forecast_att + forecast_rnn

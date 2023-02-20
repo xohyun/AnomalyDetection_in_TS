@@ -1,7 +1,7 @@
 from utils.utils import gpu_checking
 import os
 import pickle
-from Model import AE, DAGMM, Boosting_aug_v1, OmniAnomaly, USAD, TadGAN, LSTMAE, LSTMVAE, AE_decom, LSTM_decom, Boosting
+from Model import AE, DAGMM, Boosting_aug, OmniAnomaly, USAD, TadGAN, LSTMAE, LSTMVAE, AE_decom, LSTM_decom, Boosting
 from utils.utils import create_folder
 import torch
 
@@ -86,7 +86,7 @@ class ModelMaker:
             model = Boosting.Model(self.data_info['seq_len'], self.data_info['num_features'],
                                    stack_num=2, device=self.device).to(self.device)
         elif self.args.model == 'Boosting_aug':
-            model = Boosting_aug_v1.Model(self.data_info['seq_len'], self.data_info['num_features'],
+            model = Boosting_aug.Model(self.data_info['seq_len'], self.data_info['num_features'],
                                           stack_num=2, device=self.device).to(self.device)
         create_folder(self.save_path)
 

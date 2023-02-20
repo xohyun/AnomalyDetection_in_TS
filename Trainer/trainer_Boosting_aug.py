@@ -163,7 +163,7 @@ class TrainMaker(base_trainer):
         # x_hat = x_hat.flatten()
 
         scoring = self.get_score(self.args.score)
-        f1, precision, recall = scoring(true_list, errors)       
+        f1, precision, recall = scoring.score(true_list, errors)       
         return f1, precision, recall
 
     def set_criterion(self, criterion):
@@ -207,4 +207,5 @@ class TrainMaker(base_trainer):
     def get_score(self, method):
         if method == 'PA':
             from Score import PA
-            return PA.PA
+            score_fun = PA.PA()
+        return score_fun
