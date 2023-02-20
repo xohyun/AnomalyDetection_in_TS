@@ -1,0 +1,99 @@
+@startuml model_UML
+
+scale 1.0
+title Abnormaly Detection Model
+
+    package "TimeSeries-Anomaly-Detection-Dataset" #6cc3f5
+    {
+        Object MSL
+        Object NAB
+        Object SMAP
+        Object SMD
+        Object WADI
+
+    }
+    package "DataLoader" #6cc3f5 {
+        class data_provider
+        class data_reader_decom
+        class data_reader
+    }
+
+
+    package "Model" #6cc3f5 {
+
+        class AE_decom
+        class AE
+        class Boosting_aug
+        class Boosting
+        class DAGMM
+        class LSTM_decom
+        class LSTMAE
+        class LSTMVAE 
+        class model_maker
+        class OmniAnomaly
+        class TadGAN
+        class USAD
+
+        package "block" #E3C800 {
+            class AE_blocks
+            class attention_blocks
+            class base_blocks
+            class rnn_blocks
+            class weight_blocks
+        }
+        package "layer" #E3C800 {
+            class AE
+            class AE_2
+            class Attention_lyr
+            class AutoEncoder
+            class decompose
+            class forecast_lyr
+            class LSTM
+            class v_inference_lyr
+        }
+        "layer" --|> "block"
+     }
+    package "Trainer" #6cc3f5
+    {
+        class base_trainer
+        class trainer_AE_decom_sad
+        class trainer_AE_decom
+        class trainer_AE
+        class trainer_Boosting_aug
+        class trainer_Boosting
+        class trainer_DAGMM
+        class trainer_LSTM_decom
+        class trainer_LSTMAE
+        class trainer_LSTMVAE
+        class trainer_OmniAnomaly
+        class trainer_TadGAN
+        class trainer_USAD
+        class trainer
+
+    }
+    package "utils" #6cc3f5
+    {
+        class early_stopping
+        class feature_extractor
+        class metrics 
+        class utils
+    }
+
+    package "main" #6cc3f5 {
+        class get_args
+        class main_drawing
+        class main_IF
+        class main_OCSVM
+        class main_drawing
+        class preprocessing
+        class test 
+    }
+
+    "TimeSeries-Anomaly-Detection-Dataset" --|> "DataLoader"
+
+    "Trainer" <|-- "Model"
+    "Trainer" <|-- "DataLoader"
+    "main" <|-- "Trainer"
+
+
+@enduml

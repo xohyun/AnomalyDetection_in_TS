@@ -32,7 +32,7 @@ class attention_blocks(nn.Module):
         forecast = self.fc_forecast(attention_feature)
         forecast = forecast.reshape(batch, -1, self.feature_num)
         var = self.v_inference(x + original_data)
-        return reconstruct, forecast, var
+        return out, reconstruct, forecast, var
         # residuals = x.flip(dims=(1,))
         # input_mask = input_mask.flip(dims=(1,))
         # forecast = x[:, -1:]

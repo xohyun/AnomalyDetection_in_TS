@@ -5,3 +5,4 @@ csvs/
 wandb/
 Fig/
 tmp/
+out/
