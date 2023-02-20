@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from Model.layer.AE_2 import AutoEncoder
+from Model.layer.AE import AutoEncoder
 from Model.layer.forecast_lyr import forecast_lyr
 from Model.layer.v_inference_lyr import v_inference_lyr
 

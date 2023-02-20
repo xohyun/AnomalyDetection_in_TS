@@ -7,7 +7,7 @@ class AutoEncoder(nn.Module):
         super(AutoEncoder, self).__init__()
         self.num_features = num_features
         self.seq_len = seq_len
-        self.n = self.num_features * self.seq_len
+        self.n = int(self.num_features * self.seq_len * 0.8)
         self.hidden1 = int(self.n / 2)
         self.hidden2 = int(self.n / 8)
 
@@ -35,6 +35,6 @@ class AutoEncoder(nn.Module):
         x = x.reshape(batch, -1)
 
         latent = self.Encoder(x)
-        x = self.Decoder(x)
-        x = x.reshape(batch, self.seq_len, -1)
-        return x
+        x_reconstruct = self.Decoder(latent)
+        x_reconstruct = x_reconstruct.reshape(x.shape)
+        return latent, x_reconstruct
