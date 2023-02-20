@@ -50,16 +50,11 @@ class TrainMaker(base_trainer):
         for e in tqdm(range(self.epoch)):
             epoch_loss = 0
             self.model.train()
-<<<<<<< HEAD
-            xs = []; preds = []; maes = []; mses = []
-            reconstructs = []; forecasts = []; variance_preds = []
-=======
             xs = []
             preds = []
             maes = []
             mses = []
 
->>>>>>> origin/Augustine
             for idx, x in enumerate(self.data_loader):
                 x = x.float().to(device=self.device)
                 self.optimizer.zero_grad()
@@ -67,25 +62,13 @@ class TrainMaker(base_trainer):
                 forecast_part = x[:, int(self.args.seq_len*0.8):, :]
                 variances = torch.var(forecast_part, dim=1)
 
-<<<<<<< HEAD
-                reconstruct, forecast, variance_pred = self.model(x)
-                reconstructs.append(reconstruct)
-                forecasts.append(forecast)
-                variance_preds.append(variance_pred)
-
-                pred = torch.concat((reconstruct, forecast), dim=1)
-                
-
-                loss = self.criterion(x, pred)
-                loss_var = self.criterion(variances, variance_pred)
-=======
                 output = self.model(x)
 
                 pred = torch.concat(
                     (output["reconstructs"], output["forecasts"]), dim=1)
                 loss = self.criterion(x, pred)
                 loss_var = self.criterion(variances, output["variances"])
->>>>>>> origin/Augustine
+
                 loss = loss + loss_var
                 # mae = mean_absolute_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
                 # mse = mean_squared_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
@@ -130,14 +113,6 @@ class TrainMaker(base_trainer):
             # plt.hist(maes, bins=100, density=True, alpha=0.5)
             # plt.xlim(0,0.2)
             # plt.savefig(f'Fig/train_distribution_AE_mae.jpg')
-<<<<<<< HEAD
-        
-        # stack?? -> 확인아직안함
-        # reconstructs = torch.stack(reconstructs)
-        # forecasts = torch.stack(forecasts)
-        # variance_preds = torch.stack(variance_preds)
-=======
->>>>>>> origin/Augustine
 
     def evaluation(self, test_loader, thr=0.95):
         cos = nn.CosineSimilarity(dim=1, eps=1e-6)
@@ -146,10 +121,6 @@ class TrainMaker(base_trainer):
         true_list = []
         diffs = []
 
-<<<<<<< HEAD
-        x_list = []; x_hat_list = []; errors = []
-        reconstructs = []; forecasts = []; variance_preds = []
-=======
         xs = []
         preds = []
         maes = []
@@ -157,7 +128,7 @@ class TrainMaker(base_trainer):
         x_list = []
         x_hat_list = []
         errors = []
->>>>>>> origin/Augustine
+
         with torch.no_grad():
             for idx, (x, y) in enumerate(test_loader):
                 x = x.float().to(device=self.device)
@@ -167,22 +138,13 @@ class TrainMaker(base_trainer):
                 forecast_part = x[:, int(self.args.seq_len*0.8):, :]
                 variances = torch.var(forecast_part, dim=1)
 
-<<<<<<< HEAD
-                reconstruct, forecast, variance_pred = self.model(x)
-                reconstructs.append(reconstruct)
-                forecasts.append(forecast)
-                variance_preds.append(variance_pred)
-
-                pred = torch.concat((reconstruct, forecast), dim=1)
-                error = torch.sum(abs(x - pred), axis=(1,2)).cpu().detach()
-=======
                 output = self.model(x)
 
                 pred = torch.concat(
                     (output["reconstructs"], output["forecasts"]), dim=1)
 
                 error = torch.sum(abs(x - pred), axis=(1, 2)).cpu().detach()
->>>>>>> origin/Augustine
+
                 errors.extend(error)
 
                 # mae = mean_absolute_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
@@ -210,14 +172,6 @@ class TrainMaker(base_trainer):
                 y = y.mean(axis=1).numpy()
                 y = np.where(y > 0, 1, 0)
                 true_list.extend(y)
-<<<<<<< HEAD
-        
-        # stack?? -> 확인아직안함
-        # reconstructs = torch.stack(reconstructs)
-        # forecasts = torch.stack(forecasts)
-        # variance_preds = torch.stack(variance_preds)
-=======
->>>>>>> origin/Augustine
 
         x_real = torch.cat(x_list)
         x_hat = torch.cat(x_hat_list)

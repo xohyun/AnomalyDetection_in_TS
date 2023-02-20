@@ -73,11 +73,6 @@ class Model(torch.nn.Module):
             forecasts = forecasts + forecast_ae + forecast_att + forecast_rnn
             reconstructs = reconstructs + reconstruct_ae + reconstruct_att + reconstruct_rnn
             variances = variances + var_ae + var_att + var_rnn
-<<<<<<< HEAD
-            
-        # x_hat = torch.concat((reconstructs, forecasts), dim=1)
-        return reconstructs, forecasts, variances
-=======
 
         # x_hat = torch.concat((reconstructs, forecasts), dim=1)
         return {
@@ -88,4 +83,3 @@ class Model(torch.nn.Module):
             'forecasts': forecasts,
             'variances': variances
         }
->>>>>>> origin/Augustine
