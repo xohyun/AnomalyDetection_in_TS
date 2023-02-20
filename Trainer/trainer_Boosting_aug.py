@@ -127,6 +127,7 @@ class TrainMaker(base_trainer):
         x_list = []
         x_hat_list = []
         errors = []
+        errors_each = []
 
         with torch.no_grad():
             for idx, (x, y) in enumerate(test_loader):
@@ -139,9 +140,10 @@ class TrainMaker(base_trainer):
 
                 output = self.model(x)
                 pred = torch.concat((output["reconstructs"], output["forecasts"]), dim=1)
-
+                
                 error = torch.sum(abs(x - pred), axis=(1, 2)).cpu().detach()
                 errors.extend(error)
+                errors_each.extend(torch.sum(abs(x - pred), axis=2).reshape(-1))
 
                 x_list.append(x)
                 x_hat_list.append(pred)
@@ -149,8 +151,8 @@ class TrainMaker(base_trainer):
                 x = x.reshape(x.shape[0], -1)
                 pred = pred.reshape(pred.shape[0], -1)
                 
+                true_list_each.extend(y.reshape(-1))
                 y = y.reshape(y.shape[0], -1)
-                true_list_each.extend(y)
                 y = y.mean(axis=1).numpy()
                 y = np.where(y > 0, 1, 0)
                 true_list.extend(y)
@@ -162,12 +164,13 @@ class TrainMaker(base_trainer):
 
         # x_real = x_real.flatten()
         # x_hat = x_hat.flatten()
-        from Score.PA_back import PA_back
-        scoring = PA_back()
-        # scoring = self.get_score(self.args.score)
-        print("???", len(true_list_each))
-        f1, precision, recall = scoring.score(true_list_each, errors)       
-        # return f1, precision, recall
+        # from Score.PA_back import PA_back
+        # scoring = PA_back()
+        # f1, precision, recall = scoring.score(true_list_each, errors_each)
+        scoring = self.get_score(self.args.score)
+        f1, precision, recall = scoring.score(true_list, errors) 
+               
+        return f1, precision, recall
 
     def set_criterion(self, criterion):
         if criterion == "MSE":
