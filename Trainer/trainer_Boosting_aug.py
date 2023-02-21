@@ -93,25 +93,16 @@ class TrainMaker(base_trainer):
             # score = self.validation(0.94)
             if self.scheduler is not None:
                 self.scheduler.step()
-            # iidx = list(range(len(xs)))
-
-            # plt.figure(figsize=(15,8))
-            # plt.ylim(0,0.5)
-            # plt.plot(iidx[:100], xs[:100], label="original")
-            # plt.plot(iidx[:100], preds[:100], label="predict")
-            # plt.fill_between(iidx[:100], xs[:100], preds[:100], color='green', alpha=0.5)
-            # plt.legend()
-            # plt.savefig(f'Fig/train_fill_between_AE_{e}.jpg')
-
-            # plt.cla()
-            # plt.hist(mses, bins=100, density=True, alpha=0.5)
-            # plt.xlim(0,0.1)
-            # plt.savefig(f'Fig/train_distribution_AE_mse.jpg')
-
-            # plt.cla()
-            # plt.hist(maes, bins=100, density=True, alpha=0.5)
-            # plt.xlim(0,0.2)
-            # plt.savefig(f'Fig/train_distribution_AE_mae.jpg')
+            
+            #---# To save trainer data #---#
+            outputs = []
+            with torch.no_grad():
+                for idx, x in enumerate(self.data_loader):
+                    x = x.float().to(device=self.device)
+                    output = self.model(x)
+                    outputs.append(output)
+                outputs = np.array(outputs)
+                np.save(f'{self.args.save_path}train_output.npy', outputs)
 
     def evaluation(self, test_loader, thr=0.95):
         cos = nn.CosineSimilarity(dim=1, eps=1e-6)
@@ -135,7 +126,7 @@ class TrainMaker(base_trainer):
                 
                 error = torch.sum(abs(x - pred), axis=(1, 2)).cpu().detach()
                 errors.extend(error)
-                errors_each.extend(torch.sum(abs(x - pred), axis=2).reshape(-1))
+                errors_each.extend(torch.sum(abs(x - pred), axis=2).reshape(-1).cpu().detach())
 
                 x_list.append(x)
                 x_hat_list.append(pred)
