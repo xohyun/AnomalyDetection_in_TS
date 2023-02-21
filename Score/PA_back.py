@@ -18,12 +18,12 @@ class PA_back():
             else:
                 pred_list[i] = 1
         
-        # pred_list_back = [0 for i in range(5*len(pred_list)/50+50)]
-        # true_list_back = [0 for i in range(5*len(pred_list)/50+50)]
-        # print("::>>",  len(pred_list_back))
-        # for i in range(len(true_list)):
-        #     pred_list_back[i*5:i*5+50] = pred_list[i]
-        #     true_list_back[i*5:i*5+50] = true_list[i]
+        pred_list_back = [0 for i in range(5*len(pred_list)/50+50)]
+        true_list_back = [0 for i in range(5*len(pred_list)/50+50)]
+        print("::>>",  len(pred_list_back))
+        for i in range(len(true_list)):
+            pred_list_back[i*5:i*5+50] = pred_list[i]
+            true_list_back[i*5:i*5+50] = true_list[i]
 
         f1 = f1_score(true_list, pred_list, average='macro')
         precision = precision_score(true_list, pred_list, average="macro")

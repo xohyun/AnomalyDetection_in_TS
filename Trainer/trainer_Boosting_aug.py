@@ -116,18 +116,10 @@ class TrainMaker(base_trainer):
     def evaluation(self, test_loader, thr=0.95):
         cos = nn.CosineSimilarity(dim=1, eps=1e-6)
         self.model.eval()
-        true_list = []
-        true_list_each = []
-        diffs = []
+        true_list = []; true_list_each = []
 
-        xs = []
-        preds = []
-        maes = []
-        mses = []
-        x_list = []
-        x_hat_list = []
-        errors = []
-        errors_each = []
+        x_list = []; x_hat_list = []
+        errors = []; errors_each = []
 
         with torch.no_grad():
             for idx, (x, y) in enumerate(test_loader):
@@ -164,11 +156,11 @@ class TrainMaker(base_trainer):
 
         # x_real = x_real.flatten()
         # x_hat = x_hat.flatten()
-        # from Score.PA_back import PA_back
-        # scoring = PA_back()
-        # f1, precision, recall = scoring.score(true_list_each, errors_each)
-        scoring = self.get_score(self.args.score)
-        f1, precision, recall = scoring.score(true_list, errors) 
+        from Score.PA_back import PA_back
+        scoring = PA_back()
+        f1, precision, recall = scoring.score(true_list_each, errors_each)
+        # scoring = self.get_score(self.args.score)
+        # f1, precision, recall = scoring.score(true_list, errors) 
                
         return f1, precision, recall
 
