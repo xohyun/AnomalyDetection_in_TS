@@ -140,8 +140,6 @@ class TrainMaker(base_trainer):
                 y = np.where(y > 0, 1, 0)
                 true_list.extend(y)
 
-        # errors = errors.cpu().detach()
-        # errors_each = errors_each.cpu().detach()
         errors = torch.tensor(errors, device = 'cpu').numpy()
         errors_each = torch.tensor(errors_each, device='cpu').numpy()
 
@@ -152,9 +150,10 @@ class TrainMaker(base_trainer):
 
         # x_real = x_real.flatten()
         # x_hat = x_hat.flatten()
-        from Score.PA_back import PA_back
-        scoring = PA_back()
-        f1, precision, recall = scoring.score(true_list_each, errors_each)
+
+        # true_list, pred_list = scoring.score(true_list_each, errors_each)
+        true_list, pred_list = self.get_score(self.args.score, true_list, errors)
+        f1, precision, recall = self.get_metric(self.args.calc, self.args, true_list, pred_list)
         # scoring = self.get_score(self.args.score)
         # f1, precision, recall = scoring.score(true_list, errors) 
                
@@ -167,7 +166,6 @@ class TrainMaker(base_trainer):
             criterion = nn.CrossEntropyLoss()
         elif criterion == "cosine":
             criterion = nn.CosineEmbeddingLoss()
-
         return criterion
 
     def set_scheduler(self, args, optimizer):
@@ -198,8 +196,18 @@ class TrainMaker(base_trainer):
             raise ValueError(f"Not supported {args.scheduler}.")
         return scheduler
 
-    def get_score(self, method):
-        if method == 'PA':
-            from Score import PA
-            score_fun = PA.PA()
-        return score_fun
+    def get_score(self, method, true_list, errors):
+        from Score import make_pred
+        score_func = make_pred.Pred_making()
+        if method == 'quantile':
+            true_list, pred_list = score_func.quantile_score(true_list, errors)
+        return true_list, pred_list
+    
+    def get_metric(self, method, args, true_list, pred_list):
+        from Score.calculate_score import Calculate_score
+        metric_func = Calculate_score(args)
+        if method == 'default':
+            f1, precision, recall = metric_func.score(true_list, pred_list)
+        elif method == 'back':
+            f1, precision, recall = metric_func.back_score(true_list, pred_list)
+        return f1, precision, recall

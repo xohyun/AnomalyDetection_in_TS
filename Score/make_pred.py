@@ -2,11 +2,11 @@ import numpy as np
 from sklearn.metrics import f1_score, precision_score, recall_score
 from sklearn.metrics import confusion_matrix
 
-class PA():
+class Pred_making():
     '''
     point adjust with quantile
     '''
-    def score(self, true_list, errors):
+    def quantile_score(self, true_list, errors):
         l_quantile = np.quantile(np.array(errors), 0.025)
         u_quantile = np.quantile(np.array(errors), 0.975)
         in_range = np.logical_and(
@@ -21,14 +21,10 @@ class PA():
             else:
                 pred_list[i] = 1
         
-        f1 = f1_score(true_list, pred_list, average='macro')
-        precision = precision_score(true_list, pred_list, average="macro")
-        recall = recall_score(true_list, pred_list, average="macro")
+        true_list = np.array(true_list)
+        pred_list = np.array(pred_list)
 
-        print(confusion_matrix(true_list, pred_list))
-        print(f"f1 {f1} / precision {precision} / recall {recall}")
-
-        return f1, precision, recall
+        return true_list, pred_list
     
 ## TadGAN   
 # errors, predictions_vs = reconstruction_errors(x_real, x_hat, score_window=self.args.seq_len, step_size=1) #score_window=config.window_size
