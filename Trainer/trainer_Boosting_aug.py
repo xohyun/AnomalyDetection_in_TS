@@ -124,9 +124,9 @@ class TrainMaker(base_trainer):
                 output = self.model(x)
                 pred = torch.concat((output["reconstructs"], output["forecasts"]), dim=1)
                 
-                error = torch.sum(abs(x - pred), axis=(1, 2)).cpu().detach()
+                error = torch.sum(abs(x - pred), axis=(1, 2))
                 errors.extend(error)
-                errors_each.extend(torch.sum(abs(x - pred), axis=2).reshape(-1).cpu().detach())
+                errors_each.extend(torch.sum(abs(x - pred), axis=2).reshape(-1))
 
                 x_list.append(x)
                 x_hat_list.append(pred)
@@ -139,6 +139,11 @@ class TrainMaker(base_trainer):
                 y = y.mean(axis=1).numpy()
                 y = np.where(y > 0, 1, 0)
                 true_list.extend(y)
+
+        # errors = errors.cpu().detach()
+        # errors_each = errors_each.cpu().detach()
+        errors = torch.tensor(errors, device = 'cpu').numpy()
+        errors_each = torch.tensor(errors_each, device='cpu').numpy()
 
         x_real = torch.cat(x_list)
         x_hat = torch.cat(x_hat_list)
