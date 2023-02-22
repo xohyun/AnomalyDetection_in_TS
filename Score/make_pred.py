@@ -1,6 +1,4 @@
 import numpy as np
-from sklearn.metrics import f1_score, precision_score, recall_score
-from sklearn.metrics import confusion_matrix
 
 class Pred_making():
     '''

@@ -72,11 +72,14 @@ class TrainMaker(base_trainer):
                 # mae = mean_absolute_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
                 # mse = mean_squared_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
 
-                xs.extend(torch.mean(x, axis=(1, 2)
-                                     ).cpu().detach().numpy().flatten())
-                preds.extend(torch.mean(pred, axis=(1, 2)
-                                        ).cpu().detach().numpy().flatten())
-                # maes.extend(mae.flatten()); mses.extend(mse.flatten())
+                # xs.extend(torch.mean(x, axis=(1, 2)
+                #                      ).cpu().detach().numpy().flatten())
+                # preds.extend(torch.mean(pred, axis=(1, 2)
+                #                         ).cpu().detach().numpy().flatten())
+
+                # xs.extend(torch.mean(x, axis=(1, 2)))
+                # preds.extend(torch.mean(pred, axis=(1, 2)))
+                
                 interval = 300
                 if (idx+1) % interval == 0:
                     print(f'[Epoch{e+1}] Loss:{loss}')
@@ -94,6 +97,7 @@ class TrainMaker(base_trainer):
             if self.scheduler is not None:
                 self.scheduler.step()
             
+
             #---# To save trainer data #---#
             outputs = []
             with torch.no_grad():
@@ -104,11 +108,11 @@ class TrainMaker(base_trainer):
                 outputs = np.array(outputs)
                 np.save(f'{self.args.save_path}train_output.npy', outputs)
 
-    def evaluation(self, test_loader, thr=0.95):
+    def evaluation(self, test_loader):
         cos = nn.CosineSimilarity(dim=1, eps=1e-6)
         self.model.eval()
-        true_list = []; true_list_each = []
 
+        true_list = []; true_list_each = []
         x_list = []; x_hat_list = []
         errors = []; errors_each = []
 
@@ -143,17 +147,17 @@ class TrainMaker(base_trainer):
         errors = torch.tensor(errors, device = 'cpu').numpy()
         errors_each = torch.tensor(errors_each, device='cpu').numpy()
 
-        x_real = torch.cat(x_list)
-        x_hat = torch.cat(x_hat_list)
-        x_real = x_real.cpu().detach().numpy()
-        x_hat = x_hat.cpu().detach().numpy()
-
+        # x_real = torch.cat(x_list)
+        # x_hat = torch.cat(x_hat_list)
+        # x_real = x_real.cpu().detach().numpy()
+        # x_hat = x_hat.cpu().detach().numpy()
         # x_real = x_real.flatten()
         # x_hat = x_hat.flatten()
 
         # true_list, pred_list = scoring.score(true_list_each, errors_each)
-        true_list, pred_list = self.get_score(self.args.score, true_list, errors)
-        f1, precision, recall = self.get_metric(self.args.calc, self.args, true_list, pred_list)
+        # true_list, pred_list = self.get_score(self.args.score, true_list, errors, true_list_each, errors_each)
+        f1, precision, recall = self.get_metric(self.args.calc, self.args, true_list, 
+                                                errors,  true_list_each, errors_each)
         # scoring = self.get_score(self.args.score)
         # f1, precision, recall = scoring.score(true_list, errors) 
                
@@ -199,15 +203,21 @@ class TrainMaker(base_trainer):
     def get_score(self, method, true_list, errors):
         from Score import make_pred
         score_func = make_pred.Pred_making()
+
         if method == 'quantile':
             true_list, pred_list = score_func.quantile_score(true_list, errors)
         return true_list, pred_list
     
-    def get_metric(self, method, args, true_list, pred_list):
+    def get_metric(self, method, args, true_list, errors, true_list_each, errors_each):
+        from Score import make_pred
         from Score.calculate_score import Calculate_score
+        score_func = make_pred.Pred_making()
         metric_func = Calculate_score(args)
+        
         if method == 'default':
+            true_list, pred_list = score_func.quantile_score(true_list, errors)
             f1, precision, recall = metric_func.score(true_list, pred_list)
         elif method == 'back':
+            true_list, pred_list = score_func.quantile_score(true_list_each, errors_each)
             f1, precision, recall = metric_func.back_score(true_list, pred_list)
         return f1, precision, recall
