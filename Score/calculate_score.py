@@ -34,11 +34,12 @@ class Calculate_score():
         pred_list_back[-self.seq_len:] = pred_list[-self.seq_len:]
         true_list_back[-self.seq_len:] = true_list[-self.seq_len:]
 
-        f1 = f1_score(true_list, pred_list, average='macro')
-        precision = precision_score(true_list, pred_list, average="macro")
-        recall = recall_score(true_list, pred_list, average="macro")
+        f1, precision, recall = self.score(true_list_back, pred_list_back)
+        # f1 = f1_score(true_list, pred_list, average='macro')
+        # precision = precision_score(true_list, pred_list, average="macro")
+        # recall = recall_score(true_list, pred_list, average="macro")
 
-        print(confusion_matrix(true_list, pred_list))
-        print(f"f1 {f1} / precision {precision} / recall {recall}")
+        # print(confusion_matrix(true_list, pred_list))
+        # print(f"f1 {f1} / precision {precision} / recall {recall}")
 
         return f1, precision, recall
