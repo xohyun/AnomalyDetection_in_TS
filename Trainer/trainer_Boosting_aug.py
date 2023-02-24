@@ -49,10 +49,6 @@ class TrainMaker(base_trainer):
         for e in tqdm(range(self.epoch)):
             epoch_loss = 0
             self.model.train()
-            xs = []
-            preds = []
-            maes = []
-            mses = []
 
             for idx, x in enumerate(self.data_loader):
                 x = x.float().to(device=self.device)
