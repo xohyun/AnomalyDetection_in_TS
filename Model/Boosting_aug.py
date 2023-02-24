@@ -50,9 +50,9 @@ class Model(torch.nn.Module):
         reconstruct_part = x[:, :part_idx, :]
         forecast_part = x[:, part_idx, :]
 
-        forecasts = 0
-        reconstructs = 0
-        variances = 0
+        # forecasts = 0
+        # reconstructs = 0
+        # variances = 0
         residual = reconstruct_part
         for stack in range(self.stack_num):
             # ---# AutoEncoder block #---#
@@ -70,9 +70,11 @@ class Model(torch.nn.Module):
                 residual, reconstruct_part)
 
             # ---# Concat forecast #---#
-            forecasts = forecasts + forecast_ae + forecast_att + forecast_rnn
-            reconstructs = reconstructs + reconstruct_ae + reconstruct_att + reconstruct_rnn
-            variances = variances + var_ae + var_att + var_rnn
+            forecasts = forecast_ae + forecast_att + \
+                forecast_rnn               # forecasts +
+            reconstructs = reconstruct_ae + reconstruct_att + \
+                reconstruct_rnn   # reconstructs +
+            variances = var_ae + var_att + var_rnn                              # variances +
 
         # x_hat = torch.concat((reconstructs, forecasts), dim=1)
         return {

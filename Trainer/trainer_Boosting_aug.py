@@ -13,6 +13,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 
+
 class TrainMaker(base_trainer):
     def __init__(self, args, model, data_loaders, data_info):
         self.args = args
@@ -49,10 +50,8 @@ class TrainMaker(base_trainer):
         for e in tqdm(range(self.epoch)):
             epoch_loss = 0
             self.model.train()
-            xs = []
-            preds = []
-            maes = []
-            mses = []
+
+            dist_list = []
 
             for idx, x in enumerate(self.data_loader):
                 x = x.float().to(device=self.device)
@@ -62,6 +61,7 @@ class TrainMaker(base_trainer):
                 variances = torch.var(forecast_part, dim=1)
 
                 output = self.model(x)
+                output["real_variances"] = variances
 
                 pred = torch.concat(
                     (output["reconstructs"], output["forecasts"]), dim=1)
@@ -79,7 +79,7 @@ class TrainMaker(base_trainer):
 
                 # xs.extend(torch.mean(x, axis=(1, 2)))
                 # preds.extend(torch.mean(pred, axis=(1, 2)))
-                
+
                 interval = 300
                 if (idx+1) % interval == 0:
                     print(f'[Epoch{e+1}] Loss:{loss}')
@@ -96,25 +96,29 @@ class TrainMaker(base_trainer):
             # score = self.validation(0.94)
             if self.scheduler is not None:
                 self.scheduler.step()
-            
 
-            #---# To save trainer data #---#
-            outputs = []
-            with torch.no_grad():
-                for idx, x in enumerate(self.data_loader):
-                    x = x.float().to(device=self.device)
-                    output = self.model(x)
-                    outputs.append(output)
-                outputs = np.array(outputs)
-                np.save(f'{self.args.save_path}train_output.npy', outputs)
+        # ---# To save trainer data #---#
+        outputs = []
+        with torch.no_grad():
+            for idx, x in enumerate(self.data_loader):
+                x = x.float().to(device=self.device)
+                output = self.model(x)
+                outputs.append(output)
+            outputs = np.array(outputs)
+            np.save(f'{self.args.save_path}train_output.npy', outputs)
 
     def evaluation(self, test_loader):
         cos = nn.CosineSimilarity(dim=1, eps=1e-6)
         self.model.eval()
 
-        true_list = []; true_list_each = []
-        x_list = []; x_hat_list = []
-        errors = []; errors_each = []
+        dist_list = []
+
+        true_list = []
+        true_list_each = []
+        x_list = []
+        x_hat_list = []
+        errors = []
+        errors_each = []
 
         with torch.no_grad():
             for idx, (x, y) in enumerate(test_loader):
@@ -126,25 +130,31 @@ class TrainMaker(base_trainer):
                 variances = torch.var(forecast_part, dim=1)
 
                 output = self.model(x)
-                pred = torch.concat((output["reconstructs"], output["forecasts"]), dim=1)
-                
+                pred = torch.concat(
+                    (output["reconstructs"], output["forecasts"]), dim=1)
+
+                # var_dist
+                dist = [output["forecasts"], output["variances"]]
+                dist_list.append(dist)
+
                 error = torch.sum(abs(x - pred), axis=(1, 2))
                 errors.extend(error)
-                errors_each.extend(torch.sum(abs(x - pred), axis=2).reshape(-1))
+                errors_each.extend(
+                    torch.sum(abs(x - pred), axis=2).reshape(-1))
 
                 x_list.append(x)
                 x_hat_list.append(pred)
-                
+
                 x = x.reshape(x.shape[0], -1)
                 pred = pred.reshape(pred.shape[0], -1)
-                
+
                 true_list_each.extend(y.reshape(-1))
                 y = y.reshape(y.shape[0], -1)
                 y = y.mean(axis=1).numpy()
                 y = np.where(y > 0, 1, 0)
                 true_list.extend(y)
 
-        errors = torch.tensor(errors, device = 'cpu').numpy()
+        errors = torch.tensor(errors, device='cpu').numpy()
         errors_each = torch.tensor(errors_each, device='cpu').numpy()
 
         # x_real = torch.cat(x_list)
@@ -156,11 +166,11 @@ class TrainMaker(base_trainer):
 
         # true_list, pred_list = scoring.score(true_list_each, errors_each)
         # true_list, pred_list = self.get_score(self.args.score, true_list, errors, true_list_each, errors_each)
-        f1, precision, recall = self.get_metric(self.args.calc, self.args, true_list, 
+        f1, precision, recall = self.get_metric(self.args.calc, self.args, dist_list, true_list,
                                                 errors,  true_list_each, errors_each)
         # scoring = self.get_score(self.args.score)
-        # f1, precision, recall = scoring.score(true_list, errors) 
-               
+        # f1, precision, recall = scoring.score(true_list, errors)
+
         return f1, precision, recall
 
     def set_criterion(self, criterion):
@@ -207,17 +217,24 @@ class TrainMaker(base_trainer):
         if method == 'quantile':
             true_list, pred_list = score_func.quantile_score(true_list, errors)
         return true_list, pred_list
-    
-    def get_metric(self, method, args, true_list, errors, true_list_each, errors_each):
+
+    def get_metric(self, method, args, dist_list, true_list, errors, true_list_each, errors_each):
         from Score import make_pred
         from Score.calculate_score import Calculate_score
         score_func = make_pred.Pred_making()
         metric_func = Calculate_score(args)
-        
+
         if method == 'default':
             true_list, pred_list = score_func.quantile_score(true_list, errors)
             f1, precision, recall = metric_func.score(true_list, pred_list)
         elif method == 'back':
-            true_list, pred_list = score_func.quantile_score(true_list_each, errors_each)
-            f1, precision, recall = metric_func.back_score(true_list, pred_list)
+            true_list, pred_list = score_func.quantile_score(
+                true_list_each, errors_each)
+            f1, precision, recall = metric_func.back_score(
+                true_list, pred_list)
+        # var calc not ready
+        # elif method == 'var_dist':
+        #     true_list, pred_list = score_func.distance_var_calc_score(true_list,
+        #                                                               dist_list)
+        #     f1, precision, recall = metric_func.score(true_list, pred_list)
         return f1, precision, recall
