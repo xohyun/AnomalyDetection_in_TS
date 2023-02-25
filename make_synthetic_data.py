@@ -1,5 +1,9 @@
 import numpy as np
+from utils.utils import create_folder
 # np.random.binomial(n=1, p=0.5, size=20) # to make sensor data
+
+#---# save folder #---# 
+create_folder('./synthethic_dataset/synthetic')
 
 #---# Make train data #---#
 total_train_len = 100000
