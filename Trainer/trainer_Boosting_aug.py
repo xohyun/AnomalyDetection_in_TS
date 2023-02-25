@@ -50,7 +50,6 @@ class TrainMaker(base_trainer):
         for e in tqdm(range(self.epoch)):
             epoch_loss = 0
             self.model.train()
-
             dist_list = []
 
             for idx, x in enumerate(self.data_loader):
@@ -102,9 +101,15 @@ class TrainMaker(base_trainer):
         with torch.no_grad():
             for idx, x in enumerate(self.data_loader):
                 x = x.float().to(device=self.device)
+
+                forecast_part = x[:, int(self.args.seq_len*0.8):, :]
+                variances = torch.var(forecast_part, dim=1)
+
                 output = self.model(x)
+                output["real_variances"] = variances.numpy()
                 outputs.append(output)
             outputs = np.array(outputs)
+
             np.save(f'{self.args.save_path}train_output.npy', outputs)
 
     def evaluation(self, test_loader):

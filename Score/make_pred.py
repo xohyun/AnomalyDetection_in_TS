@@ -28,19 +28,14 @@ class Pred_making():
         return true_list, pred_list
 
     def distance_var_calc_score(self, true_list, dist_list):
-        # # target-feature 만의 variace를 계산해야 할 것인가 전체-feature를 할 것인가?
-        # # feature 간 또는 sequence 순서에 따른 모든 변동성에 차이를 고려할 것인가?
-        #  ** threshold =
-        # print(dist_list.shape)
-        # forecast_variances = torch.var(dist_list[:, 0], dim=1).numpy()
-        # # numpy array 라면 가로축(시간축)에 따라 각 feature 표준편차 계산
-        # # forecast_variances = np.var(dist_list[:,0], axis=-1, ddof=1)
-        # dist = np.sqrt((dist_list[:, 1] - forecast_variances)**2)
+        threshold = 0.03
+        print(dist_list.shape)
+        forecast_variances = torch.var(dist_list[:, 0], dim=1).numpy()
+        dist = np.sqrt((dist_list[:, 1] - forecast_variances)**2)
 
-        #  ** pred_list = [n for n in dist if n > threshold else 0]
+        pred_list = [n if n > threshold else 0 for n in dist]
 
-        # # return true_list, pred_list
-        pass
+        return true_list, pred_list
 
 
 # TadGAN
