@@ -101,11 +101,28 @@ class TrainMaker(base_trainer):
         outputs = []
         with torch.no_grad():
             for idx, x in enumerate(self.data_loader):
-                x = x.float().to(device=self.device)
+                x = x.float().to(device=self.device)                
+               
+                forecast_part = x[:, int(self.args.seq_len*0.8):, :]
+                variances = torch.var(forecast_part, dim=1)
                 output = self.model(x)
+
+                output["real_variances"] = variances
+
                 outputs.append(output)
+
+            # save out-source
             outputs = np.array(outputs)
+            real_variances = np.array(variances)
+            reconstructs = np.array(outputs['reconstructs'])
+            forecasts = np.array(outputs['forecasts'])
+            variances = np.array(outputs['variances'])
+
             np.save(f'{self.args.save_path}train_output.npy', outputs)
+            np.save(f'{self.args.save_path}real_variances.npy', real_variances)
+            np.save(f'{self.args.save_path}reconstructs.npy', reconstructs)
+            np.save(f'{self.args.save_path}forecasts.npy', forecasts)
+            np.save(f'{self.args.save_path}variances.npy', variances)
 
     def evaluation(self, test_loader):
         cos = nn.CosineSimilarity(dim=1, eps=1e-6)
