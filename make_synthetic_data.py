@@ -28,6 +28,7 @@ label = np.array([0 for i in range(len(data))])
 label[idx_anomaly.astype(int)] = 1
 
 data = data.reshape(-1, 1)
-label = data.reshape(-1, 1)
+label = label.reshape(-1, 1)
+
 np.save('./synthetic_dataset/synthetic/test.npy', data)
 np.save('./synthetic_dataset/synthetic/label.npy', label)
