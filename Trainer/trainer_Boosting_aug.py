@@ -106,10 +106,10 @@ class TrainMaker(base_trainer):
                 variances = torch.var(forecast_part, dim=1)
 
                 output = self.model(x)
-                output["real_variances"] = variances.numpy()
+                output["real_input"] = x.cpu().detach()
+                output["real_variances"] = variances.cpu().detach()
                 outputs.append(output)
             outputs = np.array(outputs)
-
             np.save(f'{self.args.save_path}train_output.npy', outputs)
 
     def evaluation(self, test_loader):

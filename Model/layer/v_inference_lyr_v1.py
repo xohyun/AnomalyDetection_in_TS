@@ -1,5 +1,5 @@
 import torch.nn as nn
-
+import torch
 
 class v_inference_lyr(nn.Module):
     def __init__(self, seq_len, feature_num):
@@ -12,9 +12,15 @@ class v_inference_lyr(nn.Module):
         self.hidden2 = int(self.n / 8)
 
         self.fc = nn.Sequential(
-            nn.Linear(self.n, self.feature_num)
+            nn.Linear(self.n, self.hidden1),
+            nn.BatchNorm1d(self.hidden1),
+            nn.ReLU(),
+            nn.Linear(self.hidden1, self.hidden2),
+            nn.BatchNorm1d(self.hidden2),
+            nn.ReLU(),
+            nn.Linear(self.hidden2, self.feature_num)
         )
-
+    
     def forward(self, x):
         batch = x.shape[0]
         x = x.reshape(batch, -1)
