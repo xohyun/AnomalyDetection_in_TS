@@ -19,7 +19,7 @@ class rnn_blocks(nn.Module):
 
     def forward(self, x, original_data):
         batch = x.shape[0]
-        hidden_cell, context_vector = self.LSTM(x)  # [batch, seq_len*feature_num]
+        hidden_cell, context_vector = self.LSTM(x)  # [batch, seq_len, feature_num]
         reconstruct = context_vector.reshape(x.shape)
         forecast = self.fc_forecast(context_vector)
         forecast = forecast.reshape(batch, -1, self.feature_num)
