@@ -27,7 +27,7 @@ class Pred_making():
 
         return true_list, pred_list
     
-    def _fixed_threshold(errors, k=4):
+    def _fixed_threshold(errors, k=3):
         """Calculate the threshold.
         The fixed threshold is defined as k standard deviations away from the mean.
         Args:

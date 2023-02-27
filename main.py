@@ -60,7 +60,7 @@ def main():
         df.loc[idx] = [args.dataset, f1, precision, recall, 
                        args.seq_len, args.step_len, args.lr, args.wd, 
                        args.batch_size, args.epoch, args.score, args.calc]
-        make_csv(df, idx, args)
+        make_csv(df, args)
 
 if __name__ == "__main__":
     main()
