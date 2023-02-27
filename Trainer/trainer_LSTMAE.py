@@ -111,14 +111,13 @@ class TrainMaker(base_trainer):
                 x = x.reshape(x.shape[0], -1)
                 pred = pred.reshape(pred.shape[0], -1)
 
-                true_list.extend(y.reshape(-1))
                 y = y.reshape(y.shape[0], -1)
                 y = y.mean(axis=1).numpy()
                 y = np.where(y>0, 1, 0)
+                true_list.extend(y.reshape(-1))
                 
-
         errors = torch.tensor(errors, device = 'cpu').numpy()
-        errors_each = torch.tensor(errors_each, device='cpu').numpy()
+        # errors_each = torch.tensor(errors_each, device='cpu').numpy()
         # x_real = torch.cat(x_list)
         # x_hat = torch.cat(x_hat_list)
         # x_real = x_real.cpu().detach().numpy()
