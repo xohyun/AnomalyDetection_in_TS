@@ -86,7 +86,7 @@ class Args:
         parser.add_argument("--optimizer", type=str, default="SGD")   # AdamW, SGD
         
         #---# Score #---#
-        parser.add_argument("--score", type=str, default="quantile", choices=["quantile"])
+        parser.add_argument("--score", type=str, default="quantile", choices=["quantile", "fix"])
         parser.add_argument("--calc", type=str, default="default", choices=['default', 'back'])
         args = parser.parse_args()
         return args

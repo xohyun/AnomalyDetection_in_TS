@@ -227,6 +227,9 @@ class TrainMaker(base_trainer):
         if method == 'default':
             true_list, pred_list = score_func.quantile_score(true_list, errors)
             f1, precision, recall = metric_func.score(true_list, pred_list)
+        elif method == 'fix':
+            true_list, pred_list = score_func.fix_threshold(true_list, errors)
+            f1, precision, recall = metric_func.score(true_list, pred_list)
         elif method == 'back':
             true_list, pred_list = score_func.quantile_score(true_list_each, errors_each)
             f1, precision, recall = metric_func.back_score(true_list, pred_list)

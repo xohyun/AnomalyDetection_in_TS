@@ -26,6 +26,28 @@ class Pred_making():
         pred_list = np.array(pred_list)
 
         return true_list, pred_list
+    
+    def _fixed_threshold(errors, k=4):
+        """Calculate the threshold.
+        The fixed threshold is defined as k standard deviations away from the mean.
+        Args:
+            errors (ndarray):
+                Array of errors.
+        Returns:
+            float:
+                Calculated threshold value.
+        """
+        mean = errors.mean()
+        std = errors.std()
+
+        return mean + k * std
+    
+    def fix_threshold(self, true_list, errors):
+        threshold = self._fixed_threshold(errors)
+        pred_list = np.zeros(len(errors))
+        above_idx = np.where(np.array(errors) > threshold)
+        pred_list[above_idx] = 1
+        return true_list, pred_list
 
     def distance_var_calc_score(self, true_list, dist_list):
         # # target-feature 만의 variace를 계산해야 할 것인가 전체-feature를 할 것인가?
@@ -41,6 +63,8 @@ class Pred_making():
 
         # # return true_list, pred_list
         pass
+
+    
 
 
 # TadGAN
