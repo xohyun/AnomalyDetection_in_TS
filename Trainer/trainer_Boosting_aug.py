@@ -223,7 +223,8 @@ class TrainMaker(base_trainer):
             true_list, pred_list = score_func.quantile_score(true_list, errors)
         return true_list, pred_list
 
-    def get_metric(self, method, args, dist_list, true_list, errors, true_list_each, errors_each):
+    def get_metric(self, method, args, dist_list, true_list, errors, 
+                   true_list_each=None, errors_each=None):
         from Score import make_pred
         from Score.calculate_score import Calculate_score
         score_func = make_pred.Pred_making()
