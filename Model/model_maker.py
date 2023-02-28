@@ -56,7 +56,7 @@ class ModelMaker:
                                                 device=self.device).to(self.device)
         elif self.args.model == 'LSTMVAE':
             model = LSTMVAE.RNNPredictor('LSTM', self.data_info['seq_len'] * self.data_info['num_features'],
-                                         50)
+                                         50).to(self.device)
         elif self.args.model == 'TadGAN':
             encoder = TadGAN.Encoder(
                 self.data_info['num_features']*self.data_info['seq_len']).to(self.device)

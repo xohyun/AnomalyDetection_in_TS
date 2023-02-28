@@ -53,15 +53,18 @@ class TrainMaker(base_trainer):
             hidden = self.model.init_hidden(self.args.batch_size)
 
             for idx, (x, index_x) in enumerate(self.data_loader):
+                if 68467 in index_x : break
                 batch = x.shape[0]
                 targetSeq = self.get_batch(index_x, self.data_loader) # shape : [seq_len, batch, features]
                 
                 x = x.reshape(targetSeq.shape)
+                x = x.float().to(device = self.device)
+                self.optimizer.zero_grad()
+                
                 hidden = self.model.repackage_hidden(hidden) 
                 hidden_ = self.model.repackage_hidden(hidden)
 
-                x = x.float().to(device = self.device)
-                self.optimizer.zero_grad()
+                
                 
                 # pred = self.model(x, hidden)
 
@@ -70,7 +73,7 @@ class TrainMaker(base_trainer):
                 outVals=[]
                 hids1 = []
                 for i in range(x.size(0)):
-                    outVal, hidden_, hid = self.model.forward(outVal, hidden_,return_hiddens=True)
+                    outVal, hidden_, hid = self.model(outVal, hidden_,return_hiddens=True)
                     outVals.append(outVal)
                     hids1.append(hid)
                 
@@ -139,55 +142,23 @@ class TrainMaker(base_trainer):
 
         xs = []; preds = []; maes = []; mses = []; x_list = []; x_hat_list = []; errors = []
         train_dataset = self.get_trainset(self.args)
+        train_dataset = torch.tensor(train_dataset).float().to(device = self.device)
         channel_idx = 0
         mean, cov = self.fit_norm_distribution_param(self.args, self.model, train_dataset, channel_idx=channel_idx)
         
-        with torch.no_grad():
-            for idx, (x, y) in enumerate(test_loader):
-                x = x.float().to(device = self.device)
-                self.optimizer.zero_grad()
-                batch = x.shape[0]
-
-                pred = self.model(x)
-                
-                error = torch.sum(abs(x - pred), axis=(1,2)).cpu().detach()
-                errors.extend(error)
-                
-                # mae = mean_absolute_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
-                # mse = mean_squared_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
-                
-                # mae = mean_absolute_error(np.transpose(x.reshape(batch, -1).cpu().detach().numpy()), np.transpose(pred.reshape(batch, -1).cpu().detach().numpy()), multioutput='raw_values')
-                # mse = mean_squared_error(np.transpose(x.reshape(batch, -1).cpu().detach().numpy()), np.transpose(pred.reshape(batch, -1).cpu().detach().numpy()), multioutput='raw_values')
-
-                x_list.append(x); x_hat_list.append(pred)
-                # xs.extend(torch.mean(x, axis=(1,2)).cpu().detach().numpy().flatten()); preds.extend(torch.mean(pred, axis=(1,2)).cpu().detach().numpy().flatten())
-                # maes.extend(mae.flatten()); mses.extend(mse.flatten())
-
-                x = x.reshape(x.shape[0], -1)
-                pred = pred.reshape(pred.shape[0], -1)
-                # diff = cos(x, pred).cpu().tolist()
-                
-                # batch_pred = np.where(((np.array(diff)<0) & (np.array(diff)>-0.1)), 1, 0)
-                # batch_pred = np.where(np.array(diff)<0.7, 1, 0)
-                # y = np.where(y>0.69, 1, 0)
-            
-                # diffs.extend(diff)
-                # pred_list.extend(batch_pred)
-                y = y.reshape(y.shape[0], -1)
-                y = y.mean(axis=1).numpy()
-                y = np.where(y>0, 1, 0)
-                true_list.extend(y)
-        
-        
+        test_dataset = torch.tensor(test_loader.dataset.data_x).float().to(device = self.device)
         score, sorted_prediction, sorted_error, _, predicted_score = self.anomalyScore(self.args, self.model, test_dataset, mean, cov,
-                                                                                  score_predictor=score_predictor,
                                                                                   channel_idx=channel_idx)
-        
-        precision, recall, f_beta = self.get_precision_recall(args, score, num_samples=1000, beta=args.beta,
-                                                         label=TimeseriesData.testLabel.to(args.device))
+        label_data = torch.tensor(test_loader.dataset.data_y).to(self.device)
+        precision, recall, f_beta = self.get_precision_recall(self.args, score, num_samples=1000,
+                                                         label=label_data)
+        # precision, recall, f_beta = self.get_precision_recall(self.args, score, num_samples=1000,
+        #                                                  label=TimeseriesData.testLabel.to(self.device))
     
         # return f1, precision, recall
-        return f_beta, precision, recall
+        print("score!!!", torch.mean(precision), torch.mean(recall), torch.mean(f_beta))
+        
+        return torch.mean(f_beta), torch.mean(precision), torch.mean(recall)
 
     def get_batch(self, idx, train_loader):
         next_idx = idx + 1
@@ -201,27 +172,30 @@ class TrainMaker(base_trainer):
         _args.mode = "train"
         from DataLoader.data_provider import get_dataloader
         dl = get_dataloader(_args)
-        return dl.data_loaders.dataset
+        return dl.data_loaders['train'].dataset.data_x
 
     def fit_norm_distribution_param(self, args, model, train_dataset, channel_idx=0):
         predictions = []
         organized = []
         errors = []
+        train_dataset = train_dataset.reshape(train_dataset.shape[1], train_dataset.shape[0], -1)
         with torch.no_grad():
             # Turn on evaluation mode which disables dropout.
             model.eval()
-            pasthidden = model.init_hidden(1)
+            pasthidden = model.init_hidden(train_dataset.shape[1])
+            args.prediction_window_size=3
             for t in range(len(train_dataset)):
                 out, hidden = model.forward(train_dataset[t].unsqueeze(0), pasthidden)
                 predictions.append([])
                 organized.append([])
                 errors.append([])
                 predictions[t].append(out.data.cpu()[0][0][channel_idx])
+                
                 pasthidden = model.repackage_hidden(hidden)
                 for prediction_step in range(1,args.prediction_window_size):
                     out, hidden = model.forward(out, hidden)
                     predictions[t].append(out.data.cpu()[0][0][channel_idx])
-
+ 
                 if t >= args.prediction_window_size:
                     for step in range(args.prediction_window_size):
                         organized[t].append(predictions[step+t-args.prediction_window_size][args.prediction_window_size-1-step])
@@ -233,7 +207,7 @@ class TrainMaker(base_trainer):
         mean = errors_tensor.mean(dim=0)
         cov = errors_tensor.t().mm(errors_tensor)/errors_tensor.size(0) - mean.unsqueeze(1).mm(mean.unsqueeze(0))
         # cov: positive-semidefinite and symmetric.
-
+        print("mean, cov", mean, cov)
         return mean, cov
 
     def anomalyScore(self, args, model, dataset, mean, cov, channel_idx=0, score_predictor=None):
@@ -242,10 +216,12 @@ class TrainMaker(base_trainer):
         errors = []
         hiddens = []
         predicted_scores = []
+
+        dataset = dataset.reshape(dataset.shape[1], dataset.shape[0], -1)
         with torch.no_grad():
             # Turn on evaluation mode which disables dropout.
             model.eval()
-            pasthidden = model.init_hidden(1)
+            pasthidden = model.init_hidden(dataset.shape[1])
             for t in range(len(dataset)):
                 out, hidden = model.forward(dataset[t].unsqueeze(0), pasthidden)
                 predictions.append([])
