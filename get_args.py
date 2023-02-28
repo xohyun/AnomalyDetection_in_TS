@@ -52,7 +52,7 @@ class Args:
         parser.add_argument("--conv1d", type=bool, default=True)
 
         #---# Model #---#
-        parser.add_argument("--model", type=str, default="LSTM_decom", 
+        parser.add_argument("--model", type=str, default="LSTMVAE", 
                              choices=["AE", "DAGMM", "TadGAN", "OmniAnomaly", "USAD", 
                                     "LSTMAE", "LSTMVAE", "AE_decom", "LSTM_decom",
                                     "Boosting", "Boosting_aug"])

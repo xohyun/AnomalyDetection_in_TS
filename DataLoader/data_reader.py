@@ -114,6 +114,8 @@ class Dataset_load(Dataset):
     def __getitem__(self, idx):
         if self.mode == 'test':
             return self.data_x[idx], self.data_y[idx]
+        elif self.args.model == 'LSTMVAE':
+            return self.data_x[idx], idx
         else:
             return self.data_x[idx]
 
