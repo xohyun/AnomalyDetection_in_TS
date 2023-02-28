@@ -50,11 +50,46 @@ class TrainMaker(base_trainer):
             self.model.train()
             xs = []; preds = []; maes = []; mses = []
             
+            hidden = self.model.init_hidden(1)
+
             for idx, x in enumerate(self.data_loader):
+                batch = x.shape[0]
+                hidden = self.model.repackage_hidden(hidden) 
+                hidden_ = self.model.repackage_hidden(hidden)
+
+                print(">trainer", hidden[0].shape)
                 x = x.float().to(device = self.device)
                 self.optimizer.zero_grad()
                 
-                pred = self.model(x)
+                # pred = self.model(x, hidden)
+
+                '''Loss1: Free running loss'''
+                outVal = x[0].unsqueeze(0)
+                outVals=[]
+                hids1 = []
+                for i in range(x.size(0)):
+                    outVal, hidden_, hid = self.model.forward(outVal, hidden_,return_hiddens=True)
+                    outVals.append(outVal)
+                    hids1.append(hid)
+                
+                outSeq1 = torch.cat(outVals,dim=0)
+                hids1 = torch.cat(hids1,dim=0)
+                loss1 = self.criterion(outSeq1.view(batch,-1), x.view(batch,-1))
+
+                '''Loss2: Teacher forcing loss'''
+                outSeq2, hidden, hids2 = self.model.forward(x, hidden, return_hiddens=True)
+                loss2 = self.criterion(outSeq2.view(batch, -1), x.view(batch, -1))
+
+                '''Loss3: Simplified Professor forcing loss'''
+                loss3 = self.criterion(hids1.view(batch,-1), hids2.view(batch, -1).detach())
+
+                '''Total loss = Loss1+Loss2+Loss3'''
+                loss = loss1+loss2+loss3
+                loss.backward()
+                raise
+
+
+                ''''''
                 loss = self.criterion(x, pred)
 
                 # mae = mean_absolute_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())

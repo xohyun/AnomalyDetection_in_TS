@@ -9,10 +9,13 @@ from pathlib import Path
 class RNNPredictor(nn.Module):
     """Container module with an encoder, a recurrent module, and a decoder."""
 
-    def __init__(self, rnn_type, enc_inp_size, rnn_inp_size, rnn_hid_size=64, dec_out_size=1, nlayers=3, dropout=0.5,
+    def __init__(self, rnn_type, enc_inp_size, rnn_inp_size, rnn_hid_size=64, 
+                 dec_out_size=1, nlayers=3, dropout=0.5,
                  tie_weights=False,res_connection=False):
         super(RNNPredictor, self).__init__()
-        self.enc_input_size = enc_inp_size
+        self.enc_input_size = enc_inp_size # 50*38
+        rnn_hid_size = 38*50 ##########
+        rnn_inp_size = enc_inp_size
         dec_out_size = self.enc_input_size ##
 
         self.drop = nn.Dropout(dropout)
@@ -52,10 +55,12 @@ class RNNPredictor(nn.Module):
         self.decoder.weight.data.uniform_(-initrange, initrange)
 
     def forward(self, input, hidden=3, return_hiddens=False, noise=False):
+        input = input.reshape(input.shape[1], input.shape[0], input.shape[2])
         print(">>> input", input.shape)
         emb = self.drop(self.encoder(input.contiguous().view(-1,self.enc_input_size))) # [(seq_len x batch_size) * feature_size]
         print(">>> emb", emb.shape)
         emb = emb.view(-1, input.size(1), self.rnn_hid_size) # [ seq_len * batch_size * feature_size]
+
         if noise:
             # emb_noise = Variable(torch.randn(emb.size()))
             # hidden_noise = Variable(torch.randn(hidden[0].size()))
@@ -66,6 +71,8 @@ class RNNPredictor(nn.Module):
             hidden = (F.dropout(hidden[0],training=True,p=0.9),F.dropout(hidden[1],training=True,p=0.9))
 
         #emb = self.layerNorm1(emb)
+        print(">>>", emb.shape)
+        print(">>>", hidden[0].shape, hidden[1].shape)
         output, hidden = self.rnn(emb, hidden)
         #output = self.layerNorm2(output)
 
