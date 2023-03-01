@@ -54,7 +54,7 @@ class TrainMaker(base_trainer):
 
             for idx, (x, index_x) in enumerate(self.data_loader):
                 batch = x.shape[0]
-                x = x.reshape(targetSeq.shape)
+                x = x.reshape(x.shape[1], x.shape[0], x.shape[2])
                 x = x.float().to(device = self.device)
                 x, targetSeq = x[:int(len(x)/2)], x[int(len(x)/2):]
                 # targetSeq = self.get_batch(index_x, self.data_loader) # shape : [seq_len, batch, features]

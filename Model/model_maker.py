@@ -17,6 +17,9 @@ class ModelMaker:
         self.save_path = self.args.save_path
 
         self.model = self.__build_model(self.args)
+        if self.args.mode == "pretrained":
+            self.model.load_state_dict(torch.load(
+                    f"{self.save_path}model_{self.args.model}.pk"))
         if self.args.mode == "test":
             # self.model = pretrained_model(self.args.save_path, self.args.model)
             if self.args.model == "TadGAN":
