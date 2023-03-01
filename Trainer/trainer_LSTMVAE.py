@@ -53,18 +53,17 @@ class TrainMaker(base_trainer):
             hidden = self.model.init_hidden(self.args.batch_size)
 
             for idx, (x, index_x) in enumerate(self.data_loader):
-                if 68467 in index_x : break
                 batch = x.shape[0]
-                targetSeq = self.get_batch(index_x, self.data_loader) # shape : [seq_len, batch, features]
-                
                 x = x.reshape(targetSeq.shape)
                 x = x.float().to(device = self.device)
+                x, targetSeq = x[:int(len(x)/2)], x[int(len(x)/2):]
+                # targetSeq = self.get_batch(index_x, self.data_loader) # shape : [seq_len, batch, features]
+                
                 self.optimizer.zero_grad()
                 
                 hidden = self.model.repackage_hidden(hidden) 
                 hidden_ = self.model.repackage_hidden(hidden)
 
-                
                 
                 # pred = self.model(x, hidden)
 
@@ -91,7 +90,6 @@ class TrainMaker(base_trainer):
                 '''Total loss = Loss1+Loss2+Loss3'''
                 loss = loss1+loss2+loss3
                 loss.backward()
-
 
 
                 # mae = mean_absolute_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
