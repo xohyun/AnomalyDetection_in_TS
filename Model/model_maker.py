@@ -51,7 +51,7 @@ class ModelMaker:
             model = OmniAnomaly.OmniAnomaly(
                 self.data_info['num_features']).to(self.device)
         elif self.args.model == 'USAD':
-            model = USAD.USAD(self.data_info['num_features'],
+            model = USAD.UsadModel(self.data_info['num_features'],
                               self.data_info['seq_len']).to(self.device)
         elif self.args.model == 'LSTMAE':
             model = LSTMAE.RecurrentAutoencoder(self.data_info['seq_len'],

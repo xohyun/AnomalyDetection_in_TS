@@ -55,7 +55,7 @@ class TrainMaker(base_trainer):
                 self.optimizer.zero_grad()
                 
                 recon_data, mu, log_var = self.model(x)
-                print("x", x, "recon_data", recon_data)
+                # print("x", x, "recon_data", recon_data)
                 loss = self.loss_fn(recon_data, x, mu, log_var)
 
                 # mae = mean_absolute_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())

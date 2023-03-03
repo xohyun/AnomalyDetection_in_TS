@@ -1,4 +1,5 @@
 import torch.nn as nn
+import torch
 
 # https://github.com/manigalati/usad/blob/master/usad.py
 class Encoder(nn.Module):
