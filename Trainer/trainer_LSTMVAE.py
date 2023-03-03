@@ -66,7 +66,9 @@ class TrainMaker(base_trainer):
                     print(f'[Epoch{e+1}] Loss:{loss}')
                 # xs.extend(torch.mean(x, axis=(1,2)).cpu().detach().numpy().flatten()); preds.extend(torch.mean(pred, axis=(1,2)).cpu().detach().numpy().flatten())
                 # maes.extend(mae.flatten()); mses.extend(mse.flatten())
-
+                
+                if idx == 10:
+                    raise
                 loss.backward()
                 self.optimizer.step()
                 # losses.append(loss.item())

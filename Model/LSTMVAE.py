@@ -43,17 +43,27 @@ class LSTMVAE(nn.Module):
 
     def decode(self, z):
         z = self.decoder_fc(z)
+        print("here1", z)
         z = self.relu(z)
+        print("here2", z)
         if self.batch_norm:
             z = self.batchnorm1d_decoder(z)  # apply batch normalization
+        print("here3", z)
         z = z.unsqueeze(1).repeat(1, self.seq_len, 1)  # repeat along sequence length
+        print("here4", z)
         z, _ = self.decoder_lstm(z)
+        print("here5", z)
         z = self.output_fc(z)
+        print("here6", z)
+        
         return z
 
     def forward(self, x):
         mu, logvar = self.encode(x)
+        print("here7", mu)
+        print("hrer7.5", logvar)
         z = self.reparameterize(mu, logvar)
+        print("here8", z)
         output = self.decode(z)
         return output, mu, logvar
 
