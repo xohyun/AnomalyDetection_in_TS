@@ -18,7 +18,7 @@ class TrainMaker(base_trainer):
         self.args = args
         self.model = model
         self.mode = self.args.mode
-        
+
         if self.mode == "train" or self.mode == "all":
             self.data_loader = data_loaders['train']
             if self.args.valid_setting:
@@ -46,91 +46,47 @@ class TrainMaker(base_trainer):
          
     def train(self, shuffle=True):
         for e in tqdm(range(self.epoch)):
-            epoch_loss = 0
             self.model.train()
-            xs = []; preds = []; maes = []; mses = []
-            
-            hidden = self.model.init_hidden(self.args.batch_size)
+            epoch_loss = 0
+            losses = []
 
-            for idx, (x, index_x) in enumerate(self.data_loader):
-                batch = x.shape[0]
-                x = x.reshape(x.shape[1], x.shape[0], x.shape[2])
+            for idx, x in enumerate(self.data_loader):
                 x = x.float().to(device = self.device)
-                x, targetSeq = x[:int(len(x)/2)], x[int(len(x)/2):]
-                # targetSeq = self.get_batch(index_x, self.data_loader) # shape : [seq_len, batch, features]
-                
                 self.optimizer.zero_grad()
                 
-                hidden = self.model.repackage_hidden(hidden) 
-                hidden_ = self.model.repackage_hidden(hidden)
-
-                
-                # pred = self.model(x, hidden)
-
-                '''Loss1: Free running loss'''
-                outVal = x[0].unsqueeze(0)
-                outVals=[]
-                hids1 = []
-                for i in range(x.size(0)):
-                    outVal, hidden_, hid = self.model(outVal, hidden_,return_hiddens=True)
-                    outVals.append(outVal)
-                    hids1.append(hid)
-                
-                outSeq1 = torch.cat(outVals,dim=0)
-                hids1 = torch.cat(hids1,dim=0)
-                loss1 = self.criterion(outSeq1.reshape(batch,-1), targetSeq.reshape(batch,-1))
-
-                '''Loss2: Teacher forcing loss'''
-                outSeq2, hidden, hids2 = self.model.forward(x, hidden, return_hiddens=True)
-                loss2 = self.criterion(outSeq2.view(batch, -1), targetSeq.view(batch, -1))
-
-                '''Loss3: Simplified Professor forcing loss'''
-                loss3 = self.criterion(hids1.view(batch,-1), hids2.view(batch, -1).detach())
-
-                '''Total loss = Loss1+Loss2+Loss3'''
-                loss = loss1+loss2+loss3
-                loss.backward()
-
+                recon_data, mu, log_var = self.model(x)
+                print("x", x, "recon_data", recon_data)
+                loss = self.loss_fn(recon_data, x, mu, log_var)
 
                 # mae = mean_absolute_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
                 # mse = mean_squared_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
-    
-        
-                # maes.extend(mae.flatten()); mses.extend(mse.flatten())
+                print("loss", loss)
                 interval = 300
-                if (idx+1) % interval == 0: print(f'[Epoch{e+1}] Loss:{loss}')
+                if (idx+1) % interval == 0:
+                    print(f'[Epoch{e+1}] Loss:{loss}')
+                # xs.extend(torch.mean(x, axis=(1,2)).cpu().detach().numpy().flatten()); preds.extend(torch.mean(pred, axis=(1,2)).cpu().detach().numpy().flatten())
+                # maes.extend(mae.flatten()); mses.extend(mse.flatten())
 
+                loss.backward()
                 self.optimizer.step()
+                # losses.append(loss.item())
                 epoch_loss += loss
+
             
             torch.save(self.model.state_dict(), f'{self.args.save_path}model_{self.args.model}.pk')
-            print(f"{e}epoch / loss {loss}")
-
+            
             # wandb.log({"loss":loss})
+            print(">>>", loss)
             # score = self.validation(0.94)
             if self.scheduler is not None:
                 self.scheduler.step()
-            # iidx = list(range(len(xs)))
 
-            # plt.figure(figsize=(15,8))
-            # plt.ylim(0,0.5)
-            # plt.plot(iidx[:100], xs[:100], label="original")
-            # plt.plot(iidx[:100], preds[:100], label="predict")
-            # plt.fill_between(iidx[:100], xs[:100], preds[:100], color='green', alpha=0.5)
-            # plt.legend()
-            # plt.savefig(f'Fig/train_fill_between_AE_{e}.jpg')
-            
-            # plt.cla()
-            # plt.hist(mses, bins=100, density=True, alpha=0.5)
-            # plt.xlim(0,0.1)
-            # plt.savefig(f'Fig/train_distribution_AE_mse.jpg')
-            
-            # plt.cla()
-            # plt.hist(maes, bins=100, density=True, alpha=0.5)
-            # plt.xlim(0,0.2)
-            # plt.savefig(f'Fig/train_distribution_AE_mae.jpg')
-            
-
+            # if best_score < score:
+            #     print(f'Epoch : [{e}] Train loss : [{(epoch_loss/self.epoch)}] Val Score : [{score}])')
+            #     best_score = score
+            #     torch.save(self.model.module.state_dict(), f'./model_save/best_model_{1}.pth', _use_new_zipfile_serialization=False)
+  
+    
     def evaluation(self, test_loader, thr=0.95):
         cos = nn.CosineSimilarity(dim=1, eps=1e-6)
         self.model.eval()
@@ -138,177 +94,91 @@ class TrainMaker(base_trainer):
         true_list = []
         diffs = []
 
-        xs = []; preds = []; maes = []; mses = []; x_list = []; x_hat_list = []; errors = []
-        train_dataset = self.get_trainset(self.args)
-        train_dataset = torch.tensor(train_dataset).float().to(device = self.device)
-        channel_idx = 0
-        mean, cov = self.fit_norm_distribution_param(self.args, self.model, train_dataset, channel_idx=channel_idx)
-        
-        test_dataset = torch.tensor(test_loader.dataset.data_x).float().to(device = self.device)
-        score, sorted_prediction, sorted_error, _, predicted_score = self.anomalyScore(self.args, self.model, test_dataset, mean, cov,
-                                                                                  channel_idx=channel_idx)
-        label_data = torch.tensor(test_loader.dataset.data_y).to(self.device)
-        precision, recall, f_beta = self.get_precision_recall(self.args, score, num_samples=1000,
-                                                         label=label_data)
-        # precision, recall, f_beta = self.get_precision_recall(self.args, score, num_samples=1000,
-        #                                                  label=TimeseriesData.testLabel.to(self.device))
-    
-        # return f1, precision, recall
-        print("score!!!", torch.mean(precision), torch.mean(recall), torch.mean(f_beta))
-        
-        return torch.mean(f_beta), torch.mean(precision), torch.mean(recall)
-
-    def get_batch(self, idx, train_loader):
-        next_idx = idx + 1
-        next_seq = train_loader.dataset.data_x[next_idx]
-        next_seq = next_seq.reshape(next_seq.shape[1], next_seq.shape[0], -1)
-        next_seq = torch.tensor(next_seq).float().to(device = self.device)
-        return next_seq
-    
-    def get_trainset(self, args):
-        _args = args
-        _args.mode = "train"
-        from DataLoader.data_provider import get_dataloader
-        dl = get_dataloader(_args)
-        return dl.data_loaders['train'].dataset.data_x
-
-    def fit_norm_distribution_param(self, args, model, train_dataset, channel_idx=0):
-        predictions = []
-        organized = []
+        xs = []; preds = []; maes = []; mses = []; x_list = []; x_hat_list = []
         errors = []
-        train_dataset = train_dataset.reshape(train_dataset.shape[1], train_dataset.shape[0], -1)
         with torch.no_grad():
-            # Turn on evaluation mode which disables dropout.
-            model.eval()
-            pasthidden = model.init_hidden(train_dataset.shape[1])
-            args.prediction_window_size=3
-            for t in range(len(train_dataset)):
-                out, hidden = model.forward(train_dataset[t].unsqueeze(0), pasthidden)
-                predictions.append([])
-                organized.append([])
-                errors.append([])
-                predictions[t].append(out.data.cpu()[0][0][channel_idx])
+            for idx, (x, y) in enumerate(test_loader):
+                x = x.float().to(device = self.device)
+                self.optimizer.zero_grad()
                 
-                pasthidden = model.repackage_hidden(hidden)
-                for prediction_step in range(1,args.prediction_window_size):
-                    out, hidden = model.forward(out, hidden)
-                    predictions[t].append(out.data.cpu()[0][0][channel_idx])
- 
-                if t >= args.prediction_window_size:
-                    for step in range(args.prediction_window_size):
-                        organized[t].append(predictions[step+t-args.prediction_window_size][args.prediction_window_size-1-step])
-                    organized[t]= torch.FloatTensor(organized[t]).to(args.device)
-                    errors[t] = organized[t] - train_dataset[t][0][channel_idx]
-                    errors[t] = errors[t].unsqueeze(0)
+                pred, mu, log_var = self.model(x)
+                x_hat_list.append(pred)
+                
+                error = torch.sum(abs(x - pred), axis=(1,2))
+                errors.extend(error)
+              
+                x_list.append(x); x_hat_list.append(pred)
+                
+                x = x.reshape(x.shape[0], -1)
+                pred = pred.reshape(pred.shape[0], -1)
 
-        errors_tensor = torch.cat(errors[args.prediction_window_size:],dim=0)
-        mean = errors_tensor.mean(dim=0)
-        cov = errors_tensor.t().mm(errors_tensor)/errors_tensor.size(0) - mean.unsqueeze(1).mm(mean.unsqueeze(0))
-        # cov: positive-semidefinite and symmetric.
-        print("mean, cov", mean, cov)
-        return mean, cov
-
-    def anomalyScore(self, args, model, dataset, mean, cov, channel_idx=0, score_predictor=None):
-        predictions = []
-        rearranged = []
-        errors = []
-        hiddens = []
-        predicted_scores = []
-
-        dataset = dataset.reshape(dataset.shape[1], dataset.shape[0], -1)
-        with torch.no_grad():
-            # Turn on evaluation mode which disables dropout.
-            model.eval()
-            pasthidden = model.init_hidden(dataset.shape[1])
-            for t in range(len(dataset)):
-                out, hidden = model.forward(dataset[t].unsqueeze(0), pasthidden)
-                predictions.append([])
-                rearranged.append([])
-                errors.append([])
-                hiddens.append(model.extract_hidden(hidden))
-                if score_predictor is not None:
-                    predicted_scores.append(score_predictor.predict(model.extract_hidden(hidden).numpy()))
-
-                predictions[t].append(out.data.cpu()[0][0][channel_idx])
-                pasthidden = model.repackage_hidden(hidden)
-                for prediction_step in range(1, args.prediction_window_size):
-                    out, hidden = model.forward(out, hidden)
-                    predictions[t].append(out.data.cpu()[0][0][channel_idx])
-
-                if t >= args.prediction_window_size:
-                    for step in range(args.prediction_window_size):
-                        rearranged[t].append(
-                            predictions[step + t - args.prediction_window_size][args.prediction_window_size - 1 - step])
-                    rearranged[t] =torch.FloatTensor(rearranged[t]).to(args.device).unsqueeze(0)
-                    errors[t] = rearranged[t] - dataset[t][0][channel_idx]
-                else:
-                    rearranged[t] = torch.zeros(1,args.prediction_window_size).to(args.device)
-                    errors[t] = torch.zeros(1, args.prediction_window_size).to(args.device)
-
-        predicted_scores = np.array(predicted_scores)
-        scores = []
-        for error in errors:
-            mult1 = error-mean.unsqueeze(0) # [ 1 * prediction_window_size ]
-            mult2 = torch.inverse(cov) # [ prediction_window_size * prediction_window_size ]
-            mult3 = mult1.t() # [ prediction_window_size * 1 ]
-            score = torch.mm(mult1,torch.mm(mult2,mult3))
-            scores.append(score[0][0])
-
-        scores = torch.stack(scores)
-        rearranged = torch.cat(rearranged,dim=0)
-        errors = torch.cat(errors,dim=0)
-
-        return scores, rearranged, errors, hiddens, predicted_scores
-    
-    def get_precision_recall(self, args, score, label, num_samples, beta=1.0, sampling='log', predicted_score=None):
-        '''
-        :param args:
-        :param score: anomaly scores
-        :param label: anomaly labels
-        :param num_samples: the number of threshold samples
-        :param beta:
-        :param scale:
-        :return:
-        '''
-        if predicted_score is not None:
-            score = score - torch.FloatTensor(predicted_score).squeeze().to(args.device)
-
-        maximum = score.max()
-        if sampling=='log':
-            # Sample thresholds logarithmically
-            # The sampled thresholds are logarithmically spaced between: math:`10 ^ {start}` and: math:`10 ^ {end}`.
-            th = torch.logspace(0, torch.log10(torch.tensor(maximum)), num_samples).to(args.device)
-        else:
-            # Sample thresholds equally
-            # The sampled thresholds are equally spaced points between: attr:`start` and: attr:`end`
-            th = torch.linspace(0, maximum, num_samples).to(args.device)
-
-        precision = []
-        recall = []
-
-        for i in range(len(th)):
-            anomaly = (score > th[i]).float()
-            idx = anomaly * 2 + label
-            tn = (idx == 0.0).sum().item()  # tn
-            fn = (idx == 1.0).sum().item()  # fn
-            fp = (idx == 2.0).sum().item()  # fp
-            tp = (idx == 3.0).sum().item()  # tp
-
-            p = tp / (tp + fp + 1e-7)
-            r = tp / (tp + fn + 1e-7)
-
-            if p != 0 and r != 0:
-                precision.append(p)
-                recall.append(r)
-
-        precision = torch.FloatTensor(precision)
-        recall = torch.FloatTensor(recall)
+                y = y.reshape(y.shape[0], -1)
+                y = y.mean(axis=1).numpy()
+                y = np.where(y>0, 1, 0)
+                true_list.extend(y.reshape(-1))
+                
+        errors = torch.tensor(errors, device = 'cpu').numpy()
+        # errors_each = torch.tensor(errors_each, device='cpu').numpy()
+        # x_real = torch.cat(x_list)
+        # x_hat = torch.cat(x_hat_list)
+        # x_real = x_real.cpu().detach().numpy()
+        # x_hat = x_hat.cpu().detach().numpy()
+        f1, precision, recall = self.get_metric(self.args.calc, self.args, true_list, 
+                                                errors)
 
 
-        f1 = (1 + beta ** 2) * (precision * recall).div(beta ** 2 * precision + recall + 1e-7)
+        # plt.cla()
+        # plt.hist(diffs, bins=50, density=True, alpha=0.5) # histtype='stepfilled'
+        # plt.title("Cosine similarity")
+        # plt.savefig('Fig/cosine_similarity_difference.jpg')
+        
+        
+        # plt.cla()
+        # plt.figure(figsize=(15,8))
+        # plt.ylim(0,0.5)
+        # iidx = list(range(len(xs)))
+        # plt.plot(iidx[:100], xs[:100], label="original")
+        # plt.plot(iidx[:100], preds[:100], label="predict")
+        # plt.fill_between(iidx[:100], xs[:100], preds[:100], color='green', alpha=0.5)
+        # plt.title("Normal")
+        # plt.legend()
+        # plt.savefig(f'Fig/test_fill_between_AE_Normal.jpg')
+        
+        # plt.cla()
+        # anomaly_idx = np.where(np.array(true_list) == 1)
+        # anomaly_idx_bundle = find_bundle(anomaly_idx[0].tolist())
+        # iidx = list(range(len(anomaly_idx_bundle[0])))
+        # plt.plot(iidx[:-1], xs[anomaly_idx_bundle[0][0]:anomaly_idx_bundle[0][-1]], label="original")
+        # plt.plot(iidx[:-1], preds[anomaly_idx_bundle[0][0]:anomaly_idx_bundle[0][-1]], label="predict")
+        # plt.fill_between(iidx[:-1], xs[anomaly_idx_bundle[0][0]:anomaly_idx_bundle[0][-1]], preds[anomaly_idx_bundle[0][0]:anomaly_idx_bundle[0][-1]], color='green', alpha=0.5)
+        # plt.title("Abnormal")
+        # plt.legend()
+        # plt.savefig(f'Fig/test_fill_between_LSTMAE_Anomaly.jpg')
 
-        return precision, recall, f1
+        # plt.cla()
+        # plt.hist(mses, density=True, bins=100, alpha=0.5)
+        # plt.xlim(0,0.1)
+        # plt.savefig(f'Fig/test_distribution_LSTMAE_mse.jpg')
 
+        # plt.cla()
+        # plt.hist(maes, density=True, bins=100, alpha=0.5)
+        # plt.xlim(0,0.2)
+        # plt.savefig(f'Fig/test_distribution_LSTMAE_mae.jpg')
+
+        # thres = np.percentile(np.array(maes), 99)
+        # pred_list = np.where(np.array(maes)>thres, 1, 0)
+        # f1 = f1_score(true_list, pred_list, average='macro')
+        # precision = precision_score(true_list, pred_list, average="macro")
+        # recall = recall_score(true_list, pred_list, average="macro")
+        # print(f"f1 score {f1}")
+
+        # print(confusion_matrix(true_list, pred_list))
+        return f1, precision, recall
+
+    def loss_fn(self, recon_x, x, mu, log_var):
+        BCE = nn.functional.mse_loss(recon_x, x, reduction='sum')
+        KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
+        return BCE + KLD
 
     def set_criterion(self, criterion):
         if criterion == "MSE":
@@ -344,3 +214,29 @@ class TrainMaker(base_trainer):
         else:
             raise ValueError(f"Not supported {args.scheduler}.")
         return scheduler
+
+    def get_score(self, method, true_list, errors):
+        from Score import make_pred
+        score_func = make_pred.Pred_making()
+
+        if method == 'quantile':
+            true_list, pred_list = score_func.quantile_score(true_list, errors)
+        return true_list, pred_list
+    
+    def get_metric(self, method, args, true_list, errors, 
+                   true_list_each=None, errors_each=None):
+        from Score import make_pred
+        from Score.calculate_score import Calculate_score
+        score_func = make_pred.Pred_making()
+        metric_func = Calculate_score(args)
+        
+        if method == 'default':
+            true_list, pred_list = score_func.quantile_score(true_list, errors)
+            f1, precision, recall = metric_func.score(true_list, pred_list)
+        elif method == 'fix':
+            true_list, pred_list = score_func.fix_threshold(true_list, errors)
+            f1, precision, recall = metric_func.score(true_list, pred_list)
+        elif method == 'back':
+            true_list, pred_list = score_func.quantile_score(true_list_each, errors_each)
+            f1, precision, recall = metric_func.back_score(true_list, pred_list)
+        return f1, precision, recall

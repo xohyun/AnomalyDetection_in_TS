@@ -1,7 +1,7 @@
 from utils.utils import gpu_checking
 import os
 import pickle
-from Model import AE, DAGMM, Boosting_aug, OmniAnomaly, USAD, TadGAN, LSTMAE, LSTMVAE, AE_decom, LSTM_decom, Boosting
+from Model import AE, DAGMM, Boosting_aug, LSTMVAE, OmniAnomaly, USAD, TadGAN, LSTMAE, AE_decom, LSTM_decom, Boosting
 from utils.utils import create_folder
 import torch
 
@@ -58,8 +58,10 @@ class ModelMaker:
                                                 self.data_info['num_features'],
                                                 device=self.device).to(self.device)
         elif self.args.model == 'LSTMVAE':
-            model = LSTMVAE.RNNPredictor('LSTM', self.data_info['seq_len'] * self.data_info['num_features'],
-                                         50).to(self.device)
+            # model = LSTMVAE_bad.RNNPredictor('LSTM', self.data_info['seq_len'] * self.data_info['num_features'],
+            #                              50).to(self.device)
+            feature_size = self.data_info['num_features'] # *self.data_info['seq_len']
+            model = LSTMVAE.LSTMVAE(feature_size, self.data_info['seq_len'], int(feature_size/2), int(feature_size/4)).to(self.device)
         elif self.args.model == 'TadGAN':
             encoder = TadGAN.Encoder(
                 self.data_info['num_features']*self.data_info['seq_len']).to(self.device)
