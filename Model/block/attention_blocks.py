@@ -13,7 +13,7 @@ class attention_blocks(nn.Module):
         factor = 5
         dropout = 0.0
         output_attention = False
-        d_model = 38  # 512
+        d_model = feature_num  # 512
         n_heads = 1
 
         # self.blocks = blocks
