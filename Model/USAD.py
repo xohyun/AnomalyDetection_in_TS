@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch
 
 # https://github.com/manigalati/usad/blob/master/usad.py
-class Encoder(nn.Module):
+'''class Encoder(nn.Module):
   def __init__(self, in_size, latent_size):
     super().__init__()
     self.linear1 = nn.Linear(in_size, int(in_size/2))
@@ -44,6 +44,14 @@ class UsadModel(nn.Module):
     self.decoder1 = Decoder(z_size, w_size)
     self.decoder2 = Decoder(z_size, w_size)
   
+  def forward(self, x):
+    z = self.encoder(x)
+    w1 = self.decoder1(z)
+    w2 = self.decoder2(z)
+    w3 = self.decoder2(self.encoder(w1))
+
+    return z, w1, w2, w3
+
   def training_step(self, batch, n):
     z = self.encoder(batch)
     w1 = self.decoder1(z)
@@ -71,8 +79,9 @@ class UsadModel(nn.Module):
     
   def epoch_end(self, epoch, result):
     print("Epoch [{}], val_loss1: {:.4f}, val_loss2: {:.4f}".format(epoch, result['val_loss1'], result['val_loss2']))
-    
-def evaluate(model, val_loader, n):
+'''    
+
+'''def evaluate(model, val_loader, n):
     outputs = [model.validation_step(to_device(batch,device), n) for [batch] in val_loader]
     return model.validation_epoch_end(outputs)
 
@@ -110,7 +119,8 @@ def testing(model, test_loader, alpha=.5, beta=.5):
         w1=model.decoder1(model.encoder(batch))
         w2=model.decoder2(model.encoder(w1))
         results.append(alpha*torch.mean((batch-w1)**2,axis=1)+beta*torch.mean((batch-w2)**2,axis=1))
-    return results
+    return results'''
+
 
 # USAD (KDD 2020)
 class USAD(nn.Module):
