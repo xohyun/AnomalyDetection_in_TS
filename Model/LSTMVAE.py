@@ -29,6 +29,8 @@ class LSTMVAE(nn.Module):
     def encode(self, x):
         x, _ = self.encoder_lstm(x)
         x = x[:, -1, :]  # get only last hidden state
+        x = self.relu(x)
+        # print("encoder lstm lyr out >>>> activation func :: ", x)
         if self.batch_norm:
             x = self.batchnorm1d_encoder(x)  # apply batch normalization
         mu = self.encoder_fc_mu(x)
@@ -43,27 +45,18 @@ class LSTMVAE(nn.Module):
 
     def decode(self, z):
         z = self.decoder_fc(z)
-        print("here1", z)
-        z = self.relu(z)
-        print("here2", z)
         if self.batch_norm:
             z = self.batchnorm1d_decoder(z)  # apply batch normalization
-        print("here3", z)
         z = z.unsqueeze(1).repeat(1, self.seq_len, 1)  # repeat along sequence length
-        print("here4", z)
-        z, _ = self.decoder_lstm(z)
-        print("here5", z)
-        z = self.output_fc(z)
-        print("here6", z)
         
+        z, _ = self.decoder_lstm(z)
+        z = self.relu(z)
+        z = self.output_fc(z)
         return z
 
     def forward(self, x):
         mu, logvar = self.encode(x)
-        print("here7", mu)
-        print("hrer7.5", logvar)
         z = self.reparameterize(mu, logvar)
-        print("here8", z)
         output = self.decode(z)
         return output, mu, logvar
 

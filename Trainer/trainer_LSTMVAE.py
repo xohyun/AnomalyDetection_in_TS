@@ -60,15 +60,13 @@ class TrainMaker(base_trainer):
 
                 # mae = mean_absolute_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
                 # mse = mean_squared_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
-                print("loss", loss)
+                
                 interval = 300
                 if (idx+1) % interval == 0:
                     print(f'[Epoch{e+1}] Loss:{loss}')
                 # xs.extend(torch.mean(x, axis=(1,2)).cpu().detach().numpy().flatten()); preds.extend(torch.mean(pred, axis=(1,2)).cpu().detach().numpy().flatten())
                 # maes.extend(mae.flatten()); mses.extend(mse.flatten())
                 
-                if idx == 10:
-                    raise
                 loss.backward()
                 self.optimizer.step()
                 # losses.append(loss.item())
