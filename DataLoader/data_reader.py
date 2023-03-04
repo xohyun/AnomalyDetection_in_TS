@@ -34,7 +34,8 @@ class Dataset_load(Dataset):
             for f in range(len(train_list)):
                 load_file = np.load(os.path.join(data_folder, train_list[f]), allow_pickle=True)
                 load_file = np.delete(load_file, (0,1), axis=1)
-                train_data.append(load_file)
+                train_data.append(load_file) 
+
         else:
             for f in range(len(train_list)):
                 load_file = np.load(os.path.join(data_folder, train_list[f]))
@@ -113,6 +114,8 @@ class Dataset_load(Dataset):
     def __getitem__(self, idx):
         if self.mode == 'test':
             return self.data_x[idx], self.data_y[idx]
+        # elif self.args.model == 'LSTMVAE':
+        #     return self.data_x[idx], idx
         else:
             return self.data_x[idx]
 

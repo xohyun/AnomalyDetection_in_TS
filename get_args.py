@@ -23,7 +23,7 @@ class Args:
         parser.add_argument("--fig_path", default='./Fig/')
 
         #---# Dataset #---#
-        parser.add_argument("--dataset", default='SMD', choices=['MSL', 'NAB', 'SMAP', 'SMD', 'WADI'])
+        parser.add_argument("--dataset", default='SMD', choices=['MSL', 'NAB', 'SMAP', 'SMD', 'WADI', 'synthetic'])
         if parser.parse_known_args()[0].dataset == 'SMD':
             smd_list = ['1-1.', '1-2.', '1-7.', '2-4.', '2-6.', '2-7.', '2-9.', 
                         '3-1.', '3-3.', '3-4.', '3-6.', '3-7.', '3-9.']
@@ -52,7 +52,8 @@ class Args:
         parser.add_argument("--conv1d", type=bool, default=True)
 
         #---# Model #---#
-        parser.add_argument("--model", type=str, default="LSTM_decom", 
+        parser.add_argument("--pretrained", type=bool, default=False)
+        parser.add_argument("--model", type=str, default="LSTMVAE", 
                              choices=["AE", "DAGMM", "TadGAN", "OmniAnomaly", "USAD", 
                                     "LSTMAE", "LSTMVAE", "AE_decom", "LSTM_decom",
                                     "Boosting", "Boosting_aug"])
@@ -86,7 +87,7 @@ class Args:
         parser.add_argument("--optimizer", type=str, default="SGD")   # AdamW, SGD
         
         #---# Score #---#
-        parser.add_argument("--score", type=str, default="quantile", choices=["quantile"])
+        parser.add_argument("--score", type=str, default="quantile", choices=["quantile", "fix"])
         parser.add_argument("--calc", type=str, default="default", choices=['default', 'back'])
         args = parser.parse_args()
         return args

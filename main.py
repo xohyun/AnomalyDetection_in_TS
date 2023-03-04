@@ -4,7 +4,7 @@ from utils.utils import fix_random_seed, create_folder
 import pandas as pd
 from DataLoader.data_provider import get_dataloader
 from Model.model_maker import ModelMaker
-from utils.utils import load_module_func
+from utils.utils import load_module_func, make_csv
 
 def main():
     args_class = Args()
@@ -56,14 +56,11 @@ def main():
         trainer = mod.TrainMaker(args, model, data_loaders, data_info)
         f1, precision, recall = trainer.evaluation(data_loaders['test'])
 
+        
         df.loc[idx] = [args.dataset, f1, precision, recall, 
                        args.seq_len, args.step_len, args.lr, args.wd, 
                        args.batch_size, args.epoch, args.score, args.calc]
-        if args.dataset == 'NAB':
-            df.to_csv(f'{args.csv_path}{args.model}_{args.dataset}_{args.choice_data}_lr{args.lr}_wd{args.wd}_seq{args.seq_len}_step{args.step_len}_batch{args.batch_size}_epoch{args.epoch}_score{args.score}_calc{args.calc}.csv', header = True, index = False)
-        else:
-            df.to_csv(f'{args.csv_path}{args.model}_{args.dataset}_lr{args.lr}_wd{args.wd}_seq{args.seq_len}_step{args.step_len}_batch{args.batch_size}_epoch{args.epoch}_score{args.score}_calc{args.calc}.csv', 
-                        header = True, index = False)
+        make_csv(df, args)
 
 if __name__ == "__main__":
     main()

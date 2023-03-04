@@ -26,6 +26,28 @@ class Pred_making():
         pred_list = np.array(pred_list)
 
         return true_list, pred_list
+    
+    def _fixed_threshold(errors, k=3):
+        """Calculate the threshold.
+        The fixed threshold is defined as k standard deviations away from the mean.
+        Args:
+            errors (ndarray):
+                Array of errors.
+        Returns:
+            float:
+                Calculated threshold value.
+        """
+        mean = errors.mean()
+        std = errors.std()
+
+        return mean + k * std
+    
+    def fix_threshold(self, true_list, errors):
+        threshold = self._fixed_threshold(errors)
+        pred_list = np.zeros(len(errors))
+        above_idx = np.where(np.array(errors) > threshold)
+        pred_list[above_idx] = 1
+        return true_list, pred_list
 
     def distance_var_calc_score(self, true_list, dist_list):
         # # target-feature 만의 variace를 계산해야 할 것인가 전체-feature를 할 것인가?
@@ -35,9 +57,21 @@ class Pred_making():
         forecast_variances = torch.var(dist_list[:, 0], dim=1).numpy()
         # # numpy array 라면 가로축(시간축)에 따라 각 feature 표준편차 계산
         # # forecast_variances = np.var(dist_list[:,0], axis=-1, ddof=1)
+<<<<<<< HEAD
         dist = np.sqrt((dist_list[:, 1] - forecast_variances)**2)
         pred_list = [n if n > threshold else 0 for n in dist]
         return true_list, pred_list
+=======
+        # dist = np.sqrt((dist_list[:, 1] - forecast_variances)**2)
+
+        #  ** pred_list = [n for n in dist if n > threshold else 0]
+
+        # # return true_list, pred_list
+        pass
+
+    
+
+>>>>>>> 82089ad396467f91cdfcf35e6776589f2ccf32f8
 
 # TadGAN
 # errors, predictions_vs = reconstruction_errors(x_real, x_hat, score_window=self.args.seq_len, step_size=1) #score_window=config.window_size
