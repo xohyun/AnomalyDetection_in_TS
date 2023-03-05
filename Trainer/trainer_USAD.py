@@ -85,34 +85,39 @@ class TrainMaker(base_trainer):
         true_list = []
         diffs = []
 
+        xs = []; preds = []; maes = []; mses = []; x_list = []; x_hat_list = []
+        errors = []
         with torch.no_grad():
             for idx, (x, y) in enumerate(test_loader):
-                x = x.float().to(self.device)
-                ae1, ae2, ae2ae1 = self.model(x.to(device=self.device))
+                x = x.float().to(device = self.device)
+                self.optimizer.zero_grad()
+                
+                pred, mu, log_var = self.model(x)
+                x_hat_list.append(pred)
+                
+                error = torch.sum(abs(x - pred), axis=(1,2))
+                errors.extend(error)
+              
+                x_list.append(x); x_hat_list.append(pred)
+                
                 x = x.reshape(x.shape[0], -1)
+                pred = pred.reshape(pred.shape[0], -1)
 
-                pred = ae1.reshape(-1, self.seq_len, self.features)
-                pred = pred.reshape(x.shape[0], -1)
                 y = y.reshape(y.shape[0], -1)
                 y = y.mean(axis=1).numpy()
                 y = np.where(y>0, 1, 0)
-                diff = cos(x, pred).cpu().tolist()
-                batch_pred = np.where(abs(np.array(diff))<0.01, 1, 0)
-                diffs.extend(diff)
-                pred_list.extend(batch_pred)
-                true_list.extend(y)
+                true_list.extend(y.reshape(-1))
+                
+        errors = torch.tensor(errors, device = 'cpu').numpy()
+        # errors_each = torch.tensor(errors_each, device='cpu').numpy()
+        # x_real = torch.cat(x_list)
+        # x_hat = torch.cat(x_hat_list)
+        # x_real = x_real.cpu().detach().numpy()
+        # x_hat = x_hat.cpu().detach().numpy()
+        f1, precision, recall = self.get_metric(self.args.calc, self.args, true_list, 
+                                                errors)
 
-
-        import matplotlib.pyplot as plt
-        from sklearn.metrics import confusion_matrix
-        plt.hist(diffs, bins=50, density=True, alpha=0.5, histtype='stepfilled')
-        plt.savefig(f'Fig/cosine_similarity_difference_{self.args.model}.jpg')
-        f1 = f1_score(true_list, pred_list, average='macro')
-        # wandb.log({"f1":f1})
-        print(f"f1 score {f1}")
-        print(confusion_matrix(true_list, pred_list))
-
-        return f1
+        return f1, precision, recall
 
 
     def set_criterion(self, criterion):
@@ -149,3 +154,29 @@ class TrainMaker(base_trainer):
         else:
             raise ValueError(f"Not supported {args.scheduler}.")
         return scheduler
+
+    def get_score(self, method, true_list, errors):
+        from Score import make_pred
+        score_func = make_pred.Pred_making()
+
+        if method == 'quantile':
+            true_list, pred_list = score_func.quantile_score(true_list, errors)
+        return true_list, pred_list
+    
+    def get_metric(self, method, args, true_list, errors, 
+                   true_list_each=None, errors_each=None):
+        from Score import make_pred
+        from Score.calculate_score import Calculate_score
+        score_func = make_pred.Pred_making()
+        metric_func = Calculate_score(args)
+        
+        if method == 'default':
+            true_list, pred_list = score_func.quantile_score(true_list, errors)
+            f1, precision, recall = metric_func.score(true_list, pred_list)
+        elif method == 'fix':
+            true_list, pred_list = score_func.fix_threshold(true_list, errors)
+            f1, precision, recall = metric_func.score(true_list, pred_list)
+        elif method == 'back':
+            true_list, pred_list = score_func.quantile_score(true_list_each, errors_each)
+            f1, precision, recall = metric_func.back_score(true_list, pred_list)
+        return f1, precision, recall
