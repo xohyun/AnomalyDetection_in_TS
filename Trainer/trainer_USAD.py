@@ -68,7 +68,8 @@ class TrainMaker(base_trainer):
                 self.optimizer.step()
                 
             # wandb.log({"l1":np.mean(l1s), "l2":np.mean(l2s), "loss":loss})
-
+            torch.save(self.model.state_dict(), f'{self.args.save_path}model_{self.args.model}.pk')
+            
             if self.scheduler is not None:
                 self.scheduler.step()
 
