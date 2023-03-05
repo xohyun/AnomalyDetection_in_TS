@@ -104,13 +104,17 @@ class Dataset_load(Dataset):
                 test_data.append(np.load(os.path.join(data_folder, test_list[f])))
         
         self.data_x_2d = np.concatenate(test_data)
+        # import matplotlib.pyplot as plt
+        # plt.figure(figsize=(15,7))
+        # plt.plot(self.data_x_2d[:,0])
+        # plt.savefig("ttttttt.jpg")
         self.label_2d = np.concatenate(label_data)
         self.num_features = test_data[0].shape[1]
         self.data_x = self.cut_data(test_data)
         self.data_y = self.cut_data(label_data)
         
         print(f"test data shape : {self.data_x.shape} / label data shape : {self.data_y.shape}")
-        
+       
     def __getitem__(self, idx):
         if self.mode == 'test':
             return self.data_x[idx], self.data_y[idx]
