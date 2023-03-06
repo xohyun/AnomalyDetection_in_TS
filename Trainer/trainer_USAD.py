@@ -116,7 +116,7 @@ class TrainMaker(base_trainer):
         x = torch.stack(xs)
         y_pred = ae1s[:, x.shape[1]-self.features:x.shape[1]].view(-1, self.features)
 
-                
+        errors = torch.sum(abs(x - y_pred), axis=(1,2))
         errors = torch.tensor(errors, device = 'cpu').numpy()
         # errors_each = torch.tensor(errors_each, device='cpu').numpy()
         # x_real = torch.cat(x_list)
