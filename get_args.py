@@ -32,7 +32,9 @@ class Args:
         elif parser.parse_known_args()[0].dataset == 'SMAP':
             smap_list = ['P-1']
             parser.add_argument("--choice_data", default=smap_list)
-
+        elif parser.parse_known_args()[0].dataset == 'MSL':
+            msl_list = ['D-14']
+            parser.add_argument("--choice_data", default=msl_list) 
         elif parser.parse_known_args()[0].dataset == 'NAB':
             nab_list = ['cpu'] ############# test
             parser.add_argument("--choice_data", default=nab_list)
