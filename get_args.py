@@ -35,9 +35,7 @@ class Args:
         elif parser.parse_known_args()[0].dataset == 'MSL':
             msl_list = ['D-14']
             parser.add_argument("--choice_data", default=msl_list)
-        elif parser.parse_known_args()[0].dataset == 'SMD':
-            smd_list = ['1-1']
-            parser.add_argument("--choice_data", default=smd_list) 
+
         elif parser.parse_known_args()[0].dataset == 'NAB':
             nab_list = ['cpu'] ############# test
             parser.add_argument("--choice_data", default=nab_list)
