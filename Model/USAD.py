@@ -163,5 +163,4 @@ class USAD(nn.Module):
 
         ## Encode-Decode (Phase 2)
         ae2ae1 = self.decoder2(self.encoder(ae1))
-        
         return ae1.view(-1), ae2.view(-1), ae2ae1.view(-1)

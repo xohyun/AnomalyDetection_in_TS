@@ -8,8 +8,8 @@ class Pred_making():
     '''
 
     def quantile_score(self, true_list, errors):
-        l_quantile = np.quantile(np.array(errors), 0.025)
-        u_quantile = np.quantile(np.array(errors), 0.975)
+        l_quantile = np.quantile(np.array(errors), 0.0) # 0.025
+        u_quantile = np.quantile(np.array(errors), 0.95) # 0.975
         in_range = np.logical_and(
             np.array(errors) >= l_quantile, np.array(errors) <= u_quantile)
         # pred_list = [0 for i in errors if i in in_range]

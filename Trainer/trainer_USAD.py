@@ -96,6 +96,8 @@ class TrainMaker(base_trainer):
                 self.optimizer.zero_grad()
                 
                 ae1, ae2, ae2ae1 = self.model(x)
+                ae1, ae2, ae2ae1 = ae1.reshape(x.shape), ae2.reshape(x.shape), ae2ae1.reshape(x.shape)
+
                 ae1s.append(ae1); ae2s.append(ae2); ae2ae1s.append(ae2ae1)
                 # x_hat_list.append(pred)
                 
@@ -105,19 +107,26 @@ class TrainMaker(base_trainer):
                 # x_list.append(x); x_hat_list.append(pred)
                 xs.append(x)
                 x = x.reshape(x.shape[0], -1)
-                pred = pred.reshape(pred.shape[0], -1)
+                # pred = pred.reshape(pred.shape[0], -1)
 
                 y = y.reshape(y.shape[0], -1)
                 y = y.mean(axis=1).numpy()
                 y = np.where(y>0, 1, 0)
                 true_list.extend(y.reshape(-1))
-            
-        ae1s, ae2s, ae2ae1s = torch.stack(ae1s), torch.stack(ae2s), torch.stack(ae2ae1s)
-        x = torch.stack(xs)
-        y_pred = ae1s[:, x.shape[1]-self.features:x.shape[1]].view(-1, self.features)
+
+        # ae1s.pop(), ae2s.pop(), ae2ae1s.pop(), xs.pop()
+        # ae1s, ae2s, ae2ae1s = torch.stack(ae1s), torch.stack(ae2s), torch.stack(ae2ae1s)
+        # x = torch.stack(xs)
+        # shape [length, feature*seq_len]
+        y_pred = torch.cat(ae1s, dim=0)
+        x = torch.cat(xs, dim=0)
+
+        # y_pred = ae1s[:, x.shape[1]-self.features:x.shape[1]].view(-1, self.features)
+        # x = x[:, x.shape[1]-self.features:x.shape[1]].view(-1, self.features)
 
         errors = torch.sum(abs(x - y_pred), axis=(1,2))
         errors = torch.tensor(errors, device = 'cpu').numpy()
+
         # errors_each = torch.tensor(errors_each, device='cpu').numpy()
         # x_real = torch.cat(x_list)
         # x_hat = torch.cat(x_hat_list)
