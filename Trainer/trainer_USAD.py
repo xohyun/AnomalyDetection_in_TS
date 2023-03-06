@@ -60,9 +60,10 @@ class TrainMaker(base_trainer):
                 l1s.append(torch.mean(l1).item())
                 l2s.append(torch.mean(l2).item())
                 loss = torch.mean(l1 + l2)
-                # if (idx+1) % 1000 == 0:
-                #     print("1000th")
-                    # print(f"[Epoch{e+1}, Step({idx+1}/{len(self.data_loader.dataset)}), Loss:{:/4f}")
+
+                interval = 300
+                if (idx+1) % interval == 0:
+                    print(f'[Epoch{e+1}] Loss:{loss}')
 
                 loss.backward()
                 self.optimizer.step()
