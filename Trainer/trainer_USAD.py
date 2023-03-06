@@ -126,8 +126,8 @@ class TrainMaker(base_trainer):
         # x = x[:, x.shape[1]-self.features:x.shape[1]].view(-1, self.features)
 
         errors = torch.sum(abs(x - y_pred), axis=(1,2))
-        errors = torch.tensor(errors, device = 'cpu').numpy()
-
+        errors = errors.clone().detach().cpu()
+        
         # errors_each = torch.tensor(errors_each, device='cpu').numpy()
         # x_real = torch.cat(x_list)
         # x_hat = torch.cat(x_hat_list)
