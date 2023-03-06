@@ -89,18 +89,21 @@ class TrainMaker(base_trainer):
         xs = []; preds = []; maes = []; mses = []; x_list = []; x_hat_list = []
         errors = []
         with torch.no_grad():
+            ae1s, ae2s, ae2ae1s = [], [], []
+
             for idx, (x, y) in enumerate(test_loader):
                 x = x.float().to(device = self.device)
                 self.optimizer.zero_grad()
                 
-                pred, mu, log_var = self.model(x)
-                x_hat_list.append(pred)
+                ae1, ae2, ae2ae1 = self.model(x)
+                ae1s.append(ae1); ae2s.append(ae2); ae2ae1s.append(ae2ae1)
+                # x_hat_list.append(pred)
                 
-                error = torch.sum(abs(x - pred), axis=(1,2))
-                errors.extend(error)
+                # error = torch.sum(abs(x - pred), axis=(1,2))
+                # errors.extend(error)
               
-                x_list.append(x); x_hat_list.append(pred)
-                
+                # x_list.append(x); x_hat_list.append(pred)
+                xs.append(x)
                 x = x.reshape(x.shape[0], -1)
                 pred = pred.reshape(pred.shape[0], -1)
 
@@ -108,6 +111,11 @@ class TrainMaker(base_trainer):
                 y = y.mean(axis=1).numpy()
                 y = np.where(y>0, 1, 0)
                 true_list.extend(y.reshape(-1))
+            
+        ae1s, ae2s, ae2ae1s = torch.stack(ae1s), torch.stack(ae2s), torch.stack(ae2ae1s)
+        x = torch.stack(xs)
+        y_pred = ae1s[:, x.shape[1]-self.features:x.shape[1]].view(-1, self.features)
+
                 
         errors = torch.tensor(errors, device = 'cpu').numpy()
         # errors_each = torch.tensor(errors_each, device='cpu').numpy()
