@@ -28,14 +28,12 @@ class Args:
             smd_list = ['1-1.', '1-2.', '1-7.', '2-4.', '2-6.', '2-7.', '2-9.', 
                         '3-1.', '3-3.', '3-4.', '3-6.', '3-7.', '3-9.']
             parser.add_argument("--choice_data", default=smd_list)
-        
         elif parser.parse_known_args()[0].dataset == 'SMAP':
             smap_list = ['P-1']
             parser.add_argument("--choice_data", default=smap_list)
         elif parser.parse_known_args()[0].dataset == 'MSL':
             msl_list = ['D-14']
             parser.add_argument("--choice_data", default=msl_list)
-
         elif parser.parse_known_args()[0].dataset == 'NAB':
             nab_list = ['cpu'] ############# test
             parser.add_argument("--choice_data", default=nab_list)
