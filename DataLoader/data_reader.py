@@ -83,7 +83,8 @@ class Dataset_load(Dataset):
         data_list = os.listdir(data_folder)
     
         if self.dataset_choice:
-            data_list = [i for i in data_list if any(key in i for key in self.dataset_choice)]
+            data_list = [i for i in data_list if self.dataset_choice in i]
+            # data_list = [i for i in data_list if any(key in i for key in self.dataset_choice)]
         
         label_list = [i for i in data_list if ('label' in i and 'interpret' not in i)]; label_list.sort()
         test_list = [i for i in data_list if 'test' in i]; test_list.sort()
