@@ -26,7 +26,8 @@ class Dataset_load(Dataset):
         data_folder = self.data_path + self.dataset
         data_list = os.listdir(data_folder)
         if self.dataset_choice:
-            data_list = [i for i in data_list if any(key in i for key in self.dataset_choice)]
+            data_list = [i for i in data_list if self.dataset_choice in i]
+            # data_list = [i for i in data_list if any(key in i for key in self.dataset_choice)]
         train_list = [i for i in data_list if 'train' in i]; train_list.sort()
         train_data = []
             
