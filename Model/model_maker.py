@@ -60,8 +60,13 @@ class ModelMaker:
         elif self.args.model == 'LSTMVAE':
             # model = LSTMVAE_bad.RNNPredictor('LSTM', self.data_info['seq_len'] * self.data_info['num_features'],
             #                              50).to(self.device)
-            feature_size = self.data_info['num_features'] # *self.data_info['seq_len']
-            model = LSTMVAE.LSTMVAE(feature_size, self.data_info['seq_len'], int(feature_size/2), int(feature_size/4)).to(self.device)
+            
+            if self.args.dataset == 'NAB':
+                feature_size = self.data_info['num_features'] * self.data_info['seq_len']
+                model = LSTMVAE.LSTMVAE(feature_size, 1, int(feature_size/2), int(feature_size/4)).to(self.device)
+            else:
+                feature_size = self.data_info['num_features'] # *self.data_info['seq_len']
+                model = LSTMVAE.LSTMVAE(feature_size, self.data_info['seq_len'], int(feature_size/2), int(feature_size/4)).to(self.device)
         elif self.args.model == 'TadGAN':
             encoder = TadGAN.Encoder(
                 self.data_info['num_features']*self.data_info['seq_len']).to(self.device)

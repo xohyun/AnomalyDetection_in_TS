@@ -52,9 +52,14 @@ class TrainMaker(base_trainer):
 
             for idx, x in enumerate(self.data_loader):
                 x = x.float().to(device = self.device)
+                if self.args.dataset == 'NAB':
+                    x = x.reshape(x.shape[0], 1, -1)
                 self.optimizer.zero_grad()
                 
                 recon_data, mu, log_var = self.model(x)
+                # if self.args.dataset == 'NAB':
+                #     x = x.reshape(x.shape[0], self.seq_len, -1)
+
                 # print("x", x, "recon_data", recon_data)
                 # loss = self.loss_fn(recon_data, x, mu, log_var)
                 loss = self.criterion(x, recon_data) # reconstruction loss
