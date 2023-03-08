@@ -126,7 +126,7 @@ class TrainMaker(base_trainer):
 
                 # diffs.extend(diff)
                 # pred_list.extend(batch_pred)
-                true_list.extend(y)
+                true_list.extend(y.reshape(-1))
         
         errors = torch.tensor(errors, device = 'cpu').numpy()
         errors_each = torch.tensor(errors_each, device='cpu').numpy()
