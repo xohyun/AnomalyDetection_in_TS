@@ -114,7 +114,7 @@ class TrainMaker(base_trainer):
                 x_hat_list.append(pred)
                 
                 if self.args.dataset == 'NAB':
-                    x = x.reshape(X_.shape)
+                    x = x.reshape(x_.shape)
                 error = torch.sum(abs(x_ - pred), axis=(1,2))
                 errors.extend(error)
               
