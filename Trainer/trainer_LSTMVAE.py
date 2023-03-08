@@ -105,7 +105,7 @@ class TrainMaker(base_trainer):
         with torch.no_grad():
             for idx, (x, y) in enumerate(test_loader):
                 x = x.float().to(device = self.device)
-                x_ = x.copy()
+                x_ = x
                 if self.args.dataset == 'NAB':
                     x = x.reshape(x.shape[0], 1, -1)
                 self.optimizer.zero_grad()
