@@ -105,12 +105,17 @@ class TrainMaker(base_trainer):
         with torch.no_grad():
             for idx, (x, y) in enumerate(test_loader):
                 x = x.float().to(device = self.device)
+                x_ = x.copy()
+                if self.args.dataset == 'NAB':
+                    x = x.reshape(x.shape[0], 1, -1)
                 self.optimizer.zero_grad()
                 
                 pred, mu, log_var = self.model(x)
                 x_hat_list.append(pred)
                 
-                error = torch.sum(abs(x - pred), axis=(1,2))
+                if self.args.dataset == 'NAB':
+                    x = x.reshape(X_.shape)
+                error = torch.sum(abs(x_ - pred), axis=(1,2))
                 errors.extend(error)
               
                 x_list.append(x); x_hat_list.append(pred)
