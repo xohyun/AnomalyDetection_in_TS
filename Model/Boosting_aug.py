@@ -58,16 +58,17 @@ class Model(torch.nn.Module):
             # ---# AutoEncoder block #---#
             latent, reconstruct_ae, forecast_ae, var_ae = self.AE_block(
                 residual, reconstruct_part)
+            residual = residual - reconstruct_ae
 
             # ---# Attention block #---#
-            residual = residual - reconstruct_ae
             out, reconstruct_att, forecast_att, var_att = self.attention_block(
                 residual, reconstruct_part)
+            residual = residual - reconstruct_att
 
             # ---# RNN block #---#
-            residual = residual - reconstruct_att
             hidden_cell, reconstruct_rnn, forecast_rnn, var_rnn = self.rnn_block(
                 residual, reconstruct_part)
+            residual = residual - reconstruct_rnn
 
             # ---# Concat forecast #---#
             forecasts = forecast_ae + forecast_att + \
