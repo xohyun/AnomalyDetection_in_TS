@@ -148,10 +148,8 @@ class TrainMaker(base_trainer):
 
         # true_list, pred_list = scoring.score(true_list_each, errors_each)
         # true_list, pred_list = self.get_score(self.args.score, true_list, errors, true_list_each, errors_each)
-        recon_anomaly = 
-        var_anomaly = 
         # 합집합
-        
+
         f1, precision, recall = self.get_metric(self.args.calc, self.args, dist_list, true_list,
                                                 errors,  true_list_each, errors_each)
         # scoring = self.get_score(self.args.score)

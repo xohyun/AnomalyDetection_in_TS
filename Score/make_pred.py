@@ -64,8 +64,10 @@ class Pred_making():
         # # return true_list, pred_list
         pass
 
-    def variance_score(self, true_list, dist_list):
+    def variance_score(self, true_list, errors):
+        true_list, pred_list = self.quantile_score(true_list, errors)
         print(dist_list.shape)
+
         raise
         forecast_variances = torch.var(dist_list[:, 0], dim=1).numpy()
         # # forecast_variances = np.var(dist_list[:,0], axis=-1, ddof=1)
