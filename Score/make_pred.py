@@ -64,6 +64,8 @@ class Pred_making():
         # # return true_list, pred_list
         pass
 
+    def variance_score(self, true_list, dist_list):
+        pass
     
 
 
