@@ -65,9 +65,30 @@ class Pred_making():
         pass
 
     def variance_score(self, true_list, errors):
-        true_list, pred_list = self.quantile_score(true_list, errors)
-        print(dist_list.shape)
+        _, pred_list_recon = self.quantile_score(true_list, errors)
+        
+        # reconstruct의 variance랑 
+        # forecast의 variance의 
+        # 차이가 적어야 함. -> 큰 애들을 score크게 
+        # recon_var = torch.var(output["reconstructs"], dim=1)
+        # fore_var = torch.var(output["forecasts"], dim=1)
+        # diff_var = recon_var - fore_var
 
+        # u_quantile = np.quantile(np.array(errors), 0.95) # 0.975
+        # in_range = np.array(errors) <= u_quantile
+        # pred_list = [0 for i in errors if i in in_range]
+        # np_errors = np.array(errors)
+        # pred_list = np.zeros(len(errors))
+        # for i in range(len(np_errors)):
+        #     if errors[i] >= l_quantile and errors[i] <= u_quantile:
+        #         pred_list[i] = 0
+        #     else:
+        #         pred_list[i] = 1
+
+        # true_list = np.array(true_list)
+        # pred_list = np.array(pred_list)
+        
+        # pred_list_recon U pred_list_fore
         raise
         forecast_variances = torch.var(dist_list[:, 0], dim=1).numpy()
         # # forecast_variances = np.var(dist_list[:,0], axis=-1, ddof=1)
