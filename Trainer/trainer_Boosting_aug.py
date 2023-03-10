@@ -51,7 +51,6 @@ class TrainMaker(base_trainer):
             epoch_loss = 0
             self.model.train()
             
-            dist_list = []
 
             for idx, x in enumerate(self.data_loader):
                 x = x.float().to(device=self.device)
@@ -68,17 +67,7 @@ class TrainMaker(base_trainer):
                 loss = self.criterion(x, pred)
                 loss_var = self.criterion(variances, output["variances"])
 
-                loss = loss + loss_var
-                # mae = mean_absolute_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
-                # mse = mean_squared_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
-
-                # xs.extend(torch.mean(x, axis=(1, 2)
-                #                      ).cpu().detach().numpy().flatten())
-                # preds.extend(torch.mean(pred, axis=(1, 2)
-                #                         ).cpu().detach().numpy().flatten())
-
-                # xs.extend(torch.mean(x, axis=(1, 2)))
-                # preds.extend(torch.mean(pred, axis=(1, 2)))
+                loss = 0.8*loss + 0.2*loss_var ## 
 
                 interval = 300
                 if (idx+1) % interval == 0:
@@ -93,7 +82,7 @@ class TrainMaker(base_trainer):
             print(f"{e}epoch / loss {loss}")
 
             # wandb.log({"loss":loss})
-            # score = self.validation(0.94)
+
             if self.scheduler is not None:
                 self.scheduler.step()
 
@@ -157,15 +146,12 @@ class TrainMaker(base_trainer):
         errors = torch.tensor(errors, device='cpu').numpy()
         errors_each = torch.tensor(errors_each, device='cpu').numpy()
 
-        # x_real = torch.cat(x_list)
-        # x_hat = torch.cat(x_hat_list)
-        # x_real = x_real.cpu().detach().numpy()
-        # x_hat = x_hat.cpu().detach().numpy()
-        # x_real = x_real.flatten()
-        # x_hat = x_hat.flatten()
-
         # true_list, pred_list = scoring.score(true_list_each, errors_each)
         # true_list, pred_list = self.get_score(self.args.score, true_list, errors, true_list_each, errors_each)
+        recon_anomaly = 
+        var_anomaly = 
+        # 합집합
+        
         f1, precision, recall = self.get_metric(self.args.calc, self.args, dist_list, true_list,
                                                 errors,  true_list_each, errors_each)
         # scoring = self.get_score(self.args.score)
@@ -216,6 +202,8 @@ class TrainMaker(base_trainer):
 
         if method == 'quantile':
             true_list, pred_list = score_func.quantile_score(true_list, errors)
+        elif method == 'variance':
+            true_list, pred_list = score_func.variance_score(true_list, errors)
         return true_list, pred_list
 
     def get_metric(self, method, args, dist_list, true_list, errors, 

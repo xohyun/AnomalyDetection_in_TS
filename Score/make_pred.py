@@ -65,7 +65,15 @@ class Pred_making():
         pass
 
     def variance_score(self, true_list, dist_list):
-        pass
+        print(dist_list.shape)
+        raise
+        forecast_variances = torch.var(dist_list[:, 0], dim=1).numpy()
+        # # forecast_variances = np.var(dist_list[:,0], axis=-1, ddof=1)
+        dist = np.sqrt((dist_list[:, 1] - forecast_variances)**2)
+
+        # pred_list = [n for n in dist if n > threshold else 0]
+
+        return true_list, pred_list
     
 
 
