@@ -109,7 +109,7 @@ class TrainMaker(base_trainer):
         errors = []
         errors_each = []
 
-        reconstructs_list = []; forecasts_list = []; 
+        recon_var_list = []; fore_var_list = []; 
         with torch.no_grad():
             for idx, (x, y) in enumerate(test_loader):
                 x = x.float().to(device=self.device)
@@ -124,8 +124,12 @@ class TrainMaker(base_trainer):
                     (output["reconstructs"], output["forecasts"]), dim=1)
 
                 # var_dist
-                dist = [output["forecasts"], output["variances"]]
-                dist_list.append(dist)
+                pred_var = torch.var(pred, dim=1)
+                recon_var_list.append(output["variances"])
+                fore_var_list.append(pred_var)
+                
+                # dist = [pred_var, output["variances"]]
+                # dist_list.append(dist)
 
                 error = torch.sum(abs(x - pred), axis=(1, 2))
                 errors.extend(error)
@@ -144,13 +148,14 @@ class TrainMaker(base_trainer):
                 y = np.where(y > 0, 1, 0)
                 true_list.extend(y)
 
+        dist_list = {"recon_var_list":recon_var_list, "fore_var_list":fore_var_list}
         errors = torch.tensor(errors, device='cpu').numpy()
         errors_each = torch.tensor(errors_each, device='cpu').numpy()
 
         # true_list, pred_list = scoring.score(true_list_each, errors_each)
         # true_list, pred_list = self.get_score(self.args.score, true_list, errors, true_list_each, errors_each)
         # 합집합
-        true_list, pred_list = self.get_score(selfa.args.score, true_list, errors, dist_list)
+        true_list, pred_list = self.get_score(self.args.score, true_list, errors, dist_list)
         f1, precision, recall = self.get_metric(self.args.calc, self.args, true_list, 
                                                 pred_list, true_list_each, errors_each)
 
@@ -208,21 +213,16 @@ class TrainMaker(base_trainer):
 
     def get_metric(self, method, args, true_list, pred_list,
                    true_list_each=None, errors_each=None):
+        # from Score import make_pred
         from Score.calculate_score import Calculate_score
-        score_func = make_pred.Pred_making()
+        # score_func = make_pred.Pred_making()
         metric_func = Calculate_score(args)
 
         if method == 'default':
-
             f1, precision, recall = metric_func.score(true_list, pred_list)
         elif method == 'back':
-            true_list, pred_list = score_func.quantile_score(
-                true_list_each, errors_each)
-            f1, precision, recall = metric_func.back_score(
-                true_list, pred_list)
+            f1, precision, recall = metric_func.back_score(true_list, pred_list)
         # var calc not ready
-        elif method == 'variance':
-            true_list, pred_list = score_func.distance_var_calc_score(true_list,
-                                                                      dist_list)
-            f1, precision, recall = metric_func.score(true_list, errors, pred_list)
+        # elif method == 'variance':
+        #     f1, precision, recall = metric_func.score(true_list, errors, pred_list)
         return f1, precision, recall
