@@ -67,39 +67,28 @@ class Pred_making():
     def variance_score(self, true_list, errors, dist_list):
         _, pred_list_recon = self.quantile_score(true_list, errors)
         
-        fore_var = torch.var(dist_list[:, 0], dim=1).numpy()
-        recon_var = dist_list[:,1]
-        diff_var = recon_var - fore_var
+        recon_var = dist_list['recon_var_list']
+        fore_var = dist_list['fore_var_list']
+        recon_var = torch.cat(recon_var)
+        fore_var = torch.cat(fore_var)
+        recon_var = torch.tensor(recon_var, device='cpu').numpy()
+        fore_var = torch.tensor(recon_var, device='cpu').numpy()
 
-        # reconstruct의 variance랑 
-        # forecast의 variance의 
-        # 차이가 적어야 함. -> 큰 애들을 score크게 
-        # recon_var = torch.var(output["reconstructs"], dim=1)
-        # fore_var = torch.var(output["forecasts"], dim=1)
-        # diff_var = recon_var - fore_var
-
-        u_quantile = np.quantile(np.array(errors), 0.95) # 0.975
-        in_range = np.array(errors) <= u_quantile
-        pred_list = [0 for i in errors if i in in_range]
-        np_errors = np.array(errors)
-        pred_list = np.zeros(len(errors))
-        for i in range(len(np_errors)):
-            if errors[i] <= u_quantile:
-                pred_list[i] = 0
-            else:
+        diff_var = abs(recon_var - fore_var)
+        pred_list = np.zeros(fore_var.shape[0])
+        for i in range(fore_var.shape[1]): # for feature num
+            d = diff_var[:,i]
+            u_quantile = np.quantile(np.array(d), 0.95) # 0.975
+            if d[i] >= u_quantile:
                 pred_list[i] = 1
 
-        true_list = np.array(true_list)
-        pred_list_fore = np.array(pred_list)
-        
-        # pred_list_recon U pred_list_fore
-        raise
-        forecast_variances = torch.var(dist_list[:, 0], dim=1).numpy()
-        # # forecast_variances = np.var(dist_list[:,0], axis=-1, ddof=1)
-        dist = np.sqrt((dist_list[:, 1] - forecast_variances)**2)
+        print("--",sum(pred_list), len(pred_list))
+        print("##", sum(pred_list_recon), len(pred_list_recon))
 
-        # pred_list = [n for n in dist if n > threshold else 0]
+        sum_pred = [pred_list[i] + pred_list_recon[i] for i in range(len(pred_list))]
+        sum_pred = [1 if i > 0 else 0 for i in sum_pred]
 
+        pred_list = sum_pred
         return true_list, pred_list
     
 
