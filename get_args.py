@@ -42,7 +42,7 @@ class Args:
         #     parser.add_argument("--choice_data", default=None)
         
         #---# Dataset setting #---#
-        parser.add_argument("--seq_len", default=50, type=int)
+        parser.add_argument("--seq_len", default=63, type=int)
         parser.add_argument("--pred_len", default=1, type=int)
         parser.add_argument("--step_len", default=5, type=int)
 
@@ -94,7 +94,7 @@ class Args:
         parser.add_argument("--optimizer", type=str, default="SGD")   # AdamW, SGD
         
         #---# Score #---#
-        parser.add_argument("--score", type=str, default="quantile", choices=["quantile", "fix"])
+        parser.add_argument("--score", type=str, default="quantile", choices=["quantile", "fix", "variance"])
         parser.add_argument("--calc", type=str, default="default", choices=['default', 'back'])
         args = parser.parse_args()
         return args
