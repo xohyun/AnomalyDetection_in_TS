@@ -64,9 +64,11 @@ class Pred_making():
         # # return true_list, pred_list
         pass
 
-    def variance_score(self, true_list, errors):
+    def variance_score(self, true_list, errors, dist_list):
         _, pred_list_recon = self.quantile_score(true_list, errors)
         
+        fore_var = torch.var(dist_list[:, 0], dim=1).numpy()
+        recon_var = dist_list[:,1]
         # reconstruct의 variance랑 
         # forecast의 variance의 
         # 차이가 적어야 함. -> 큰 애들을 score크게 

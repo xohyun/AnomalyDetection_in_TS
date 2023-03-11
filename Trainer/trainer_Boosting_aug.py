@@ -152,7 +152,7 @@ class TrainMaker(base_trainer):
         # 합집합
 
         f1, precision, recall = self.get_metric(self.args.calc, self.args, dist_list, true_list,
-                                                errors,  true_list_each, errors_each)
+                                                errors, true_list_each, errors_each)
         # scoring = self.get_score(self.args.score)
         # f1, precision, recall = scoring.score(true_list, errors)
 
@@ -221,8 +221,8 @@ class TrainMaker(base_trainer):
             f1, precision, recall = metric_func.back_score(
                 true_list, pred_list)
         # var calc not ready
-        # elif method == 'var_dist':
-        #     true_list, pred_list = score_func.distance_var_calc_score(true_list,
-        #                                                               dist_list)
-        #     f1, precision, recall = metric_func.score(true_list, pred_list)
+        elif method == 'var_dist':
+            true_list, pred_list = score_func.distance_var_calc_score(true_list,
+                                                                      dist_list)
+            f1, precision, recall = metric_func.score(true_list, errors, pred_list)
         return f1, precision, recall

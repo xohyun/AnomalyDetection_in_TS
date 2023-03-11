@@ -6,10 +6,11 @@ class forecast_lyr(nn.Module):
         self.seq_len = seq_len
         self.feature_num = feature_num
 
-        self.n = int(self.feature_num * self.seq_len * 0.8)
+        self.n = int(self.seq_len * 0.8) * self.feature_num
         self.hidden1 = int(self.n / 2)
         self.hidden2 = int(self.n / 8)
-        self.forecast = int(self.feature_num * self.seq_len * 0.2)
+        # self.forecast = int(self.feature_num * self.seq_len * 0.2)
+        self.forecast = self.seq_len * self.feature_num - self.n
 
         self.fc_forecast_latent = nn.Sequential(
             nn.Linear(self.hidden2, self.hidden1),
