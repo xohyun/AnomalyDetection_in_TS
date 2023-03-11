@@ -109,6 +109,7 @@ class TrainMaker(base_trainer):
         errors = []
         errors_each = []
 
+        reconstructs_list = []; forecasts_list = []; 
         with torch.no_grad():
             for idx, (x, y) in enumerate(test_loader):
                 x = x.float().to(device=self.device)
