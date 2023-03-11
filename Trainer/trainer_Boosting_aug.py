@@ -150,9 +150,10 @@ class TrainMaker(base_trainer):
         # true_list, pred_list = scoring.score(true_list_each, errors_each)
         # true_list, pred_list = self.get_score(self.args.score, true_list, errors, true_list_each, errors_each)
         # 합집합
+        true_list, pred_list = self.get_score(selfa.args.score, true_list, errors, dist_list)
+        f1, precision, recall = self.get_metric(self.args.calc, self.args, true_list, 
+                                                pred_list, true_list_each, errors_each)
 
-        f1, precision, recall = self.get_metric(self.args.calc, self.args, dist_list, true_list,
-                                                errors, true_list_each, errors_each)
         # scoring = self.get_score(self.args.score)
         # f1, precision, recall = scoring.score(true_list, errors)
 
@@ -195,17 +196,17 @@ class TrainMaker(base_trainer):
             raise ValueError(f"Not supported {args.scheduler}.")
         return scheduler
 
-    def get_score(self, method, true_list, errors):
+    def get_score(self, method, true_list, errors, dist_list=None):
         from Score import make_pred
         score_func = make_pred.Pred_making()
 
         if method == 'quantile':
             true_list, pred_list = score_func.quantile_score(true_list, errors)
         elif method == 'variance':
-            true_list, pred_list = score_func.variance_score(true_list, errors)
+            true_list, pred_list = score_func.variance_score(true_list, errors, dist_list)
         return true_list, pred_list
 
-    def get_metric(self, method, args, dist_list, true_list, errors, 
+    def get_metric(self, method, args, true_list, pred_list,
                    true_list_each=None, errors_each=None):
         from Score import make_pred
         from Score.calculate_score import Calculate_score
@@ -213,7 +214,7 @@ class TrainMaker(base_trainer):
         metric_func = Calculate_score(args)
 
         if method == 'default':
-            true_list, pred_list = score_func.quantile_score(true_list, errors)
+
             f1, precision, recall = metric_func.score(true_list, pred_list)
         elif method == 'back':
             true_list, pred_list = score_func.quantile_score(
@@ -221,7 +222,7 @@ class TrainMaker(base_trainer):
             f1, precision, recall = metric_func.back_score(
                 true_list, pred_list)
         # var calc not ready
-        elif method == 'var_dist':
+        elif method == 'variance':
             true_list, pred_list = score_func.distance_var_calc_score(true_list,
                                                                       dist_list)
             f1, precision, recall = metric_func.score(true_list, errors, pred_list)
