@@ -10,7 +10,7 @@ class Forecast(nn.Module):
         super(Forecast, self).__init__()
         self.num_features = num_features
         self.seq_len = seq_len
-        self.n = int(self.num_features * self.seq_len * 0.8)
+        self.n = int(self.seq_len * 0.8) * self.num_features
         self.hidden1 = int(self.n / 2)
         self.hidden2 = int(self.n / 8)
 
