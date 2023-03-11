@@ -11,7 +11,7 @@ class AE_blocks(nn.Module):
         self.seq_len = seq_len
         self.feature_num = feature_num
 
-        self.ae = AutoEncoder(seq_len, feature_num).to(device=device)
+        self.ae = AutoEncoder(feature_num, seq_len).to(device=device)
         self.fc_forecast = forecast_lyr(
             seq_len, feature_num).to(device=device)
 
