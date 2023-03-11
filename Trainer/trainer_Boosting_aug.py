@@ -208,7 +208,6 @@ class TrainMaker(base_trainer):
 
     def get_metric(self, method, args, true_list, pred_list,
                    true_list_each=None, errors_each=None):
-        from Score import make_pred
         from Score.calculate_score import Calculate_score
         score_func = make_pred.Pred_making()
         metric_func = Calculate_score(args)
