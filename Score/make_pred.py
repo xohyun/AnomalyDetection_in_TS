@@ -91,7 +91,36 @@ class Pred_making():
         pred_list = sum_pred
         return true_list, pred_list
     
+    def variance_score_online(self, true_list, errors, dist_list):
+        train_output = np.load(f'{self.args.save_path}train_output.npy')
+        #---# train #---#
+        # train output의 distribution??을 이용해서 online detection에 이용
 
+        _, pred_list_recon = self.quantile_score(true_list, errors)
+        
+        recon_var = dist_list['recon_var_list']
+        fore_var = dist_list['fore_var_list']
+        recon_var = torch.cat(recon_var)
+        fore_var = torch.cat(fore_var)
+        recon_var = torch.tensor(recon_var, device='cpu').numpy()
+        fore_var = torch.tensor(recon_var, device='cpu').numpy()
+
+        diff_var = abs(recon_var - fore_var)
+        pred_list = np.zeros(fore_var.shape[0])
+        for i in range(fore_var.shape[1]): # for feature num
+            d = diff_var[:,i]
+            u_quantile = np.quantile(np.array(d), 0.95) # 0.975
+            if d[i] >= u_quantile:
+                pred_list[i] = 1
+
+        print("--",sum(pred_list), len(pred_list))
+        print("##", sum(pred_list_recon), len(pred_list_recon))
+
+        sum_pred = [pred_list[i] + pred_list_recon[i] for i in range(len(pred_list))]
+        sum_pred = [1 if i > 0 else 0 for i in sum_pred]
+
+        pred_list = sum_pred
+        return true_list, pred_list
 
 # TadGAN
 # errors, predictions_vs = reconstruction_errors(x_real, x_hat, score_window=self.args.seq_len, step_size=1) #score_window=config.window_size
