@@ -1,7 +1,7 @@
 from utils.utils import gpu_checking
 import os
 import pickle
-from Model import AE, DAGMM, Boosting_aug, OmniAnomaly, USAD, TadGAN, LSTMAE, LSTMVAE, AE_decom, LSTM_decom, Boosting
+from Model import AE, DAGMM, Boosting_aug, LSTMVAE, OmniAnomaly, USAD, TadGAN, LSTMAE, AE_decom, LSTM_decom, Boosting
 from utils.utils import create_folder
 import torch
 
@@ -17,6 +17,9 @@ class ModelMaker:
         self.save_path = self.args.save_path
 
         self.model = self.__build_model(self.args)
+        if self.args.mode == "pretrained":
+            self.model.load_state_dict(torch.load(
+                    f"{self.save_path}model_{self.args.model}.pk"))
         if self.args.mode == "test":
             # self.model = pretrained_model(self.args.save_path, self.args.model)
             if self.args.model == "TadGAN":
@@ -55,8 +58,15 @@ class ModelMaker:
                                                 self.data_info['num_features'],
                                                 device=self.device).to(self.device)
         elif self.args.model == 'LSTMVAE':
-            model = LSTMVAE.RNNPredictor('LSTM', self.data_info['seq_len'] * self.data_info['num_features'],
-                                         50)
+            # model = LSTMVAE_bad.RNNPredictor('LSTM', self.data_info['seq_len'] * self.data_info['num_features'],
+            #                              50).to(self.device)
+            
+            if self.args.dataset == 'NAB':
+                feature_size = self.data_info['num_features'] * self.data_info['seq_len']
+                model = LSTMVAE.LSTMVAE(feature_size, 1, int(feature_size/2), int(feature_size/4)).to(self.device)
+            else:
+                feature_size = self.data_info['num_features'] # *self.data_info['seq_len']
+                model = LSTMVAE.LSTMVAE(feature_size, self.data_info['seq_len'], int(feature_size/2), int(feature_size/4)).to(self.device)
         elif self.args.model == 'TadGAN':
             encoder = TadGAN.Encoder(
                 self.data_info['num_features']*self.data_info['seq_len']).to(self.device)

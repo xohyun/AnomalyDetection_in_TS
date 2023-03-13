@@ -11,7 +11,7 @@ class AE_blocks(nn.Module):
         self.seq_len = seq_len
         self.feature_num = feature_num
 
-        self.ae = AutoEncoder(seq_len, feature_num).to(device=device)
+        self.ae = AutoEncoder(feature_num, seq_len).to(device=device)
         self.fc_forecast = forecast_lyr(
             seq_len, feature_num).to(device=device)
 
@@ -25,5 +25,5 @@ class AE_blocks(nn.Module):
         forecast = self.fc_forecast(latent, latent=True)
         forecast = forecast.reshape(batch, -1, self.feature_num)
         reconstruct = reconstruct_x.reshape(x.shape)
-        var = self.v_inference(x + original_data)
+        var = self.v_inference(reconstruct + original_data)
         return latent, reconstruct, forecast, var

@@ -50,7 +50,11 @@ class TrainMaker(base_trainer):
         for e in tqdm(range(self.epoch)):
             epoch_loss = 0
             self.model.train()
+<<<<<<< HEAD
             dist_list = []
+=======
+            
+>>>>>>> b5eadb8ed175ade6257ed288b37443bbe636b84a
 
             for idx, x in enumerate(self.data_loader):
                 x = x.float().to(device=self.device)
@@ -67,17 +71,7 @@ class TrainMaker(base_trainer):
                 loss = self.criterion(x, pred)
                 loss_var = self.criterion(variances, output["variances"])
 
-                loss = loss + loss_var
-                # mae = mean_absolute_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
-                # mse = mean_squared_error(x.flatten().cpu().detach().numpy(), pred.flatten().cpu().detach().numpy())
-
-                # xs.extend(torch.mean(x, axis=(1, 2)
-                #                      ).cpu().detach().numpy().flatten())
-                # preds.extend(torch.mean(pred, axis=(1, 2)
-                #                         ).cpu().detach().numpy().flatten())
-
-                # xs.extend(torch.mean(x, axis=(1, 2)))
-                # preds.extend(torch.mean(pred, axis=(1, 2)))
+                loss = 0.8*loss + 0.2*loss_var ## 
 
                 interval = 300
                 if (idx+1) % interval == 0:
@@ -92,7 +86,7 @@ class TrainMaker(base_trainer):
             print(f"{e}epoch / loss {loss}")
 
             # wandb.log({"loss":loss})
-            # score = self.validation(0.94)
+
             if self.scheduler is not None:
                 self.scheduler.step()
 
@@ -125,6 +119,7 @@ class TrainMaker(base_trainer):
         errors = []
         errors_each = []
 
+        recon_var_list = []; fore_var_list = []; 
         with torch.no_grad():
             for idx, (x, y) in enumerate(test_loader):
                 x = x.float().to(device=self.device)
@@ -139,8 +134,12 @@ class TrainMaker(base_trainer):
                     (output["reconstructs"], output["forecasts"]), dim=1)
 
                 # var_dist
-                dist = [output["forecasts"], output["variances"]]
-                dist_list.append(dist)
+                pred_var = torch.var(pred, dim=1)
+                recon_var_list.append(output["variances"])
+                fore_var_list.append(pred_var)
+                
+                # dist = [pred_var, output["variances"]]
+                # dist_list.append(dist)
 
                 error = torch.sum(abs(x - pred), axis=(1, 2))
                 errors.extend(error)
@@ -159,20 +158,17 @@ class TrainMaker(base_trainer):
                 y = np.where(y > 0, 1, 0)
                 true_list.extend(y)
 
+        dist_list = {"recon_var_list":recon_var_list, "fore_var_list":fore_var_list}
         errors = torch.tensor(errors, device='cpu').numpy()
         errors_each = torch.tensor(errors_each, device='cpu').numpy()
 
-        # x_real = torch.cat(x_list)
-        # x_hat = torch.cat(x_hat_list)
-        # x_real = x_real.cpu().detach().numpy()
-        # x_hat = x_hat.cpu().detach().numpy()
-        # x_real = x_real.flatten()
-        # x_hat = x_hat.flatten()
-
         # true_list, pred_list = scoring.score(true_list_each, errors_each)
         # true_list, pred_list = self.get_score(self.args.score, true_list, errors, true_list_each, errors_each)
-        f1, precision, recall = self.get_metric(self.args.calc, self.args, dist_list, true_list,
-                                                errors,  true_list_each, errors_each)
+        # 합집합
+        true_list, pred_list = self.get_score(self.args.score, true_list, errors, dist_list)
+        f1, precision, recall = self.get_metric(self.args.calc, self.args, true_list, 
+                                                pred_list, true_list_each, errors_each)
+
         # scoring = self.get_score(self.args.score)
         # f1, precision, recall = scoring.score(true_list, errors)
 
@@ -215,32 +211,28 @@ class TrainMaker(base_trainer):
             raise ValueError(f"Not supported {args.scheduler}.")
         return scheduler
 
-    def get_score(self, method, true_list, errors):
+    def get_score(self, method, true_list, errors, dist_list=None):
         from Score import make_pred
         score_func = make_pred.Pred_making()
 
         if method == 'quantile':
             true_list, pred_list = score_func.quantile_score(true_list, errors)
+        elif method == 'variance':
+            true_list, pred_list = score_func.variance_score(true_list, errors, dist_list)
         return true_list, pred_list
 
-    def get_metric(self, method, args, dist_list, true_list, errors, 
+    def get_metric(self, method, args, true_list, pred_list,
                    true_list_each=None, errors_each=None):
-        from Score import make_pred
+        # from Score import make_pred
         from Score.calculate_score import Calculate_score
-        score_func = make_pred.Pred_making()
+        # score_func = make_pred.Pred_making()
         metric_func = Calculate_score(args)
 
         if method == 'default':
-            true_list, pred_list = score_func.quantile_score(true_list, errors)
             f1, precision, recall = metric_func.score(true_list, pred_list)
         elif method == 'back':
-            true_list, pred_list = score_func.quantile_score(
-                true_list_each, errors_each)
-            f1, precision, recall = metric_func.back_score(
-                true_list, pred_list)
+            f1, precision, recall = metric_func.back_score(true_list, pred_list)
         # var calc not ready
-        # elif method == 'var_dist':
-        #     true_list, pred_list = score_func.distance_var_calc_score(true_list,
-        #                                                               dist_list)
-        #     f1, precision, recall = metric_func.score(true_list, pred_list)
+        # elif method == 'variance':
+        #     f1, precision, recall = metric_func.score(true_list, errors, pred_list)
         return f1, precision, recall

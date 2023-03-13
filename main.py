@@ -23,7 +23,7 @@ def main():
     fix_random_seed(args)
 
     #---# Save a file #---#
-    df = pd.DataFrame(columns = ['dataset', 'f1', 'precision', 'recall', 
+    df = pd.DataFrame(columns = ['dataset', 'choice_data', 'f1', 'precision', 'recall', 
                                 'seq_len', 'step_len', 'lr', 'wd', 
                                 'batch', 'epoch', 'score', 'calc']); idx=0
 
@@ -57,7 +57,7 @@ def main():
         f1, precision, recall = trainer.evaluation(data_loaders['test'])
 
         
-        df.loc[idx] = [args.dataset, f1, precision, recall, 
+        df.loc[idx] = [args.dataset, args.choice_data, f1, precision, recall, 
                        args.seq_len, args.step_len, args.lr, args.wd, 
                        args.batch_size, args.epoch, args.score, args.calc]
         make_csv(df, args)

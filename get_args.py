@@ -24,18 +24,25 @@ class Args:
 
         #---# Dataset #---#
         parser.add_argument("--dataset", default='SMD', choices=['MSL', 'NAB', 'SMAP', 'SMD', 'WADI', 'synthetic'])
-        if parser.parse_known_args()[0].dataset == 'SMD':
-            smd_list = ['1-1.', '1-2.', '1-7.', '2-4.', '2-6.', '2-7.', '2-9.', 
-                        '3-1.', '3-3.', '3-4.', '3-6.', '3-7.', '3-9.']
-            parser.add_argument("--choice_data", default=smd_list)
-        elif parser.parse_known_args()[0].dataset == 'NAB':
-            nab_list = ['cpu'] ############# test
-            parser.add_argument("--choice_data", default=nab_list)
-        else:
-            parser.add_argument("--choice_data", default=None)
+        parser.add_argument("--choice_data", default=None, type=str)
+        # if parser.parse_known_args()[0].dataset == 'SMD':
+        #     smd_list = ['1-1.', '1-2.', '1-7.', '2-4.', '2-6.', '2-7.', '2-9.', 
+        #                 '3-1.', '3-3.', '3-4.', '3-6.', '3-7.', '3-9.']
+        #     parser.add_argument("--choice_data", default=smd_list)
+        # elif parser.parse_known_args()[0].dataset == 'SMAP':
+        #     smap_list = ['P-1']
+        #     parser.add_argument("--choice_data", default=smap_list)
+        # elif parser.parse_known_args()[0].dataset == 'MSL':
+        #     msl_list = ['D-14']
+        #     parser.add_argument("--choice_data", default=msl_list)
+        # elif parser.parse_known_args()[0].dataset == 'NAB':
+        #     nab_list = ['cpu'] ############# test
+        #     parser.add_argument("--choice_data", default=nab_list)
+        # else:
+        #     parser.add_argument("--choice_data", default=None)
         
         #---# Dataset setting #---#
-        parser.add_argument("--seq_len", default=50, type=int)
+        parser.add_argument("--seq_len", default=63, type=int)
         parser.add_argument("--pred_len", default=1, type=int)
         parser.add_argument("--step_len", default=5, type=int)
 
@@ -52,7 +59,8 @@ class Args:
         parser.add_argument("--conv1d", type=bool, default=True)
 
         #---# Model #---#
-        parser.add_argument("--model", type=str, default="LSTM_decom", 
+        parser.add_argument("--pretrained", type=bool, default=False)
+        parser.add_argument("--model", type=str, default="LSTMVAE", 
                              choices=["AE", "DAGMM", "TadGAN", "OmniAnomaly", "USAD", 
                                     "LSTMAE", "LSTMVAE", "AE_decom", "LSTM_decom",
                                     "Boosting", "Boosting_aug"])
@@ -86,7 +94,7 @@ class Args:
         parser.add_argument("--optimizer", type=str, default="SGD")   # AdamW, SGD
         
         #---# Score #---#
-        parser.add_argument("--score", type=str, default="quantile", choices=["quantile", "fix"])
+        parser.add_argument("--score", type=str, default="quantile", choices=["quantile", "fix", "variance"])
         parser.add_argument("--calc", type=str, default="default", choices=['default', 'back'])
         args = parser.parse_args()
         return args

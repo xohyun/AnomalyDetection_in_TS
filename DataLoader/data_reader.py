@@ -26,7 +26,8 @@ class Dataset_load(Dataset):
         data_folder = self.data_path + self.dataset
         data_list = os.listdir(data_folder)
         if self.dataset_choice:
-            data_list = [i for i in data_list if any(key in i for key in self.dataset_choice)]
+            data_list = [i for i in data_list if self.dataset_choice in i]
+            # data_list = [i for i in data_list if any(key in i for key in self.dataset_choice)]
         train_list = [i for i in data_list if 'train' in i]; train_list.sort()
         train_data = []
             
@@ -82,7 +83,8 @@ class Dataset_load(Dataset):
         data_list = os.listdir(data_folder)
     
         if self.dataset_choice:
-            data_list = [i for i in data_list if any(key in i for key in self.dataset_choice)]
+            data_list = [i for i in data_list if self.dataset_choice in i]
+            # data_list = [i for i in data_list if any(key in i for key in self.dataset_choice)]
         
         label_list = [i for i in data_list if ('label' in i and 'interpret' not in i)]; label_list.sort()
         test_list = [i for i in data_list if 'test' in i]; test_list.sort()
@@ -104,16 +106,22 @@ class Dataset_load(Dataset):
                 test_data.append(np.load(os.path.join(data_folder, test_list[f])))
         
         self.data_x_2d = np.concatenate(test_data)
+        # import matplotlib.pyplot as plt
+        # plt.figure(figsize=(15,7))
+        # plt.plot(self.data_x_2d[:,0])
+        # plt.savefig("ttttttt.jpg")
         self.label_2d = np.concatenate(label_data)
         self.num_features = test_data[0].shape[1]
         self.data_x = self.cut_data(test_data)
         self.data_y = self.cut_data(label_data)
         
         print(f"test data shape : {self.data_x.shape} / label data shape : {self.data_y.shape}")
-        
+       
     def __getitem__(self, idx):
         if self.mode == 'test':
             return self.data_x[idx], self.data_y[idx]
+        # elif self.args.model == 'LSTMVAE':
+        #     return self.data_x[idx], idx
         else:
             return self.data_x[idx]
 

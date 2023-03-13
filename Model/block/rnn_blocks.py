@@ -23,5 +23,5 @@ class rnn_blocks(nn.Module):
         reconstruct = context_vector.reshape(x.shape)
         forecast = self.fc_forecast(context_vector)
         forecast = forecast.reshape(batch, -1, self.feature_num)
-        var = self.v_inference(x + original_data)
+        var = self.v_inference(reconstruct + original_data)
         return hidden_cell, reconstruct, forecast, var

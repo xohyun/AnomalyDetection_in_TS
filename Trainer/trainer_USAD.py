@@ -60,15 +60,17 @@ class TrainMaker(base_trainer):
                 l1s.append(torch.mean(l1).item())
                 l2s.append(torch.mean(l2).item())
                 loss = torch.mean(l1 + l2)
-                # if (idx+1) % 1000 == 0:
-                #     print("1000th")
-                    # print(f"[Epoch{e+1}, Step({idx+1}/{len(self.data_loader.dataset)}), Loss:{:/4f}")
+
+                interval = 300
+                if (idx+1) % interval == 0:
+                    print(f'[Epoch{e+1}] Loss:{loss}')
 
                 loss.backward()
                 self.optimizer.step()
                 
             # wandb.log({"l1":np.mean(l1s), "l2":np.mean(l2s), "loss":loss})
-
+            torch.save(self.model.state_dict(), f'{self.args.save_path}model_{self.args.model}.pk')
+            
             if self.scheduler is not None:
                 self.scheduler.step()
 
@@ -85,34 +87,56 @@ class TrainMaker(base_trainer):
         true_list = []
         diffs = []
 
+        xs = []; preds = []; maes = []; mses = []; x_list = []; x_hat_list = []
+        errors = []
         with torch.no_grad():
-            for idx, (x, y) in enumerate(test_loader):
-                x = x.float().to(self.device)
-                ae1, ae2, ae2ae1 = self.model(x.to(device=self.device))
-                x = x.reshape(x.shape[0], -1)
+            ae1s, ae2s, ae2ae1s = [], [], []
 
-                pred = ae1.reshape(-1, self.seq_len, self.features)
-                pred = pred.reshape(x.shape[0], -1)
+            for idx, (x, y) in enumerate(test_loader):
+                x = x.float().to(device = self.device)
+                self.optimizer.zero_grad()
+                
+                ae1, ae2, ae2ae1 = self.model(x)
+                ae1, ae2, ae2ae1 = ae1.reshape(x.shape), ae2.reshape(x.shape), ae2ae1.reshape(x.shape)
+
+                ae1s.append(ae1); ae2s.append(ae2); ae2ae1s.append(ae2ae1)
+                # x_hat_list.append(pred)
+                
+                # error = torch.sum(abs(x - pred), axis=(1,2))
+                # errors.extend(error)
+              
+                # x_list.append(x); x_hat_list.append(pred)
+                xs.append(x)
+                x = x.reshape(x.shape[0], -1)
+                # pred = pred.reshape(pred.shape[0], -1)
+
                 y = y.reshape(y.shape[0], -1)
                 y = y.mean(axis=1).numpy()
                 y = np.where(y>0, 1, 0)
-                diff = cos(x, pred).cpu().tolist()
-                batch_pred = np.where(abs(np.array(diff))<0.01, 1, 0)
-                diffs.extend(diff)
-                pred_list.extend(batch_pred)
-                true_list.extend(y)
+                true_list.extend(y.reshape(-1))
 
+        # ae1s.pop(), ae2s.pop(), ae2ae1s.pop(), xs.pop()
+        # ae1s, ae2s, ae2ae1s = torch.stack(ae1s), torch.stack(ae2s), torch.stack(ae2ae1s)
+        # x = torch.stack(xs)
+        # shape [length, feature*seq_len]
+        y_pred = torch.cat(ae1s, dim=0)
+        x = torch.cat(xs, dim=0)
 
-        import matplotlib.pyplot as plt
-        from sklearn.metrics import confusion_matrix
-        plt.hist(diffs, bins=50, density=True, alpha=0.5, histtype='stepfilled')
-        plt.savefig(f'Fig/cosine_similarity_difference_{self.args.model}.jpg')
-        f1 = f1_score(true_list, pred_list, average='macro')
-        # wandb.log({"f1":f1})
-        print(f"f1 score {f1}")
-        print(confusion_matrix(true_list, pred_list))
+        # y_pred = ae1s[:, x.shape[1]-self.features:x.shape[1]].view(-1, self.features)
+        # x = x[:, x.shape[1]-self.features:x.shape[1]].view(-1, self.features)
 
-        return f1
+        errors = torch.sum(abs(x - y_pred), axis=(1,2))
+        errors = errors.clone().detach().cpu()
+        
+        # errors_each = torch.tensor(errors_each, device='cpu').numpy()
+        # x_real = torch.cat(x_list)
+        # x_hat = torch.cat(x_hat_list)
+        # x_real = x_real.cpu().detach().numpy()
+        # x_hat = x_hat.cpu().detach().numpy()
+        f1, precision, recall = self.get_metric(self.args.calc, self.args, true_list, 
+                                                errors)
+
+        return f1, precision, recall
 
 
     def set_criterion(self, criterion):
@@ -149,3 +173,29 @@ class TrainMaker(base_trainer):
         else:
             raise ValueError(f"Not supported {args.scheduler}.")
         return scheduler
+
+    def get_score(self, method, true_list, errors):
+        from Score import make_pred
+        score_func = make_pred.Pred_making()
+
+        if method == 'quantile':
+            true_list, pred_list = score_func.quantile_score(true_list, errors)
+        return true_list, pred_list
+    
+    def get_metric(self, method, args, true_list, errors, 
+                   true_list_each=None, errors_each=None):
+        from Score import make_pred
+        from Score.calculate_score import Calculate_score
+        score_func = make_pred.Pred_making()
+        metric_func = Calculate_score(args)
+        
+        if method == 'default':
+            true_list, pred_list = score_func.quantile_score(true_list, errors)
+            f1, precision, recall = metric_func.score(true_list, pred_list)
+        elif method == 'fix':
+            true_list, pred_list = score_func.fix_threshold(true_list, errors)
+            f1, precision, recall = metric_func.score(true_list, pred_list)
+        elif method == 'back':
+            true_list, pred_list = score_func.quantile_score(true_list_each, errors_each)
+            f1, precision, recall = metric_func.back_score(true_list, pred_list)
+        return f1, precision, recall
