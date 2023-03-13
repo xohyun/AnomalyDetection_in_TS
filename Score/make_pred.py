@@ -93,6 +93,11 @@ class Pred_making():
     
     def variance_score_online(self, true_list, errors, dist_list):
         train_output = np.load(f'{self.args.save_path}train_output.npy')
+        train_recon = train_output['reconstruct']
+        train_variance = train_output['']
+
+        # 바로바로 output
+        
         #---# train #---#
         # train output의 distribution??을 이용해서 online detection에 이용
 
