@@ -91,6 +91,61 @@ class Pred_making():
         pred_list = sum_pred
         return true_list, pred_list
     
+    def variance_score_with_weighted_sum(self, true_list, errors, dist_list):
+        # _, pred_list_recon = self.quantile_score(true_list, errors)
+        error_sum = torch.sum(errors, dim=1)
+        
+        recon_var = dist_list['recon_var_list']
+        fore_var = dist_list['fore_var_list']
+        recon_var = torch.cat(recon_var)
+        fore_var = torch.cat(fore_var)
+        recon_var = torch.tensor(recon_var, device='cpu').numpy()
+        fore_var = torch.tensor(recon_var, device='cpu').numpy()
+
+        diff_var = abs(recon_var - fore_var)
+
+        new_error = 0.8*error_sum + 0.2*diff_var # weighted sum
+        pred_list = np.zeros(new_error.shape[0])
+        for i in range(fore_var.shape[1]): # for feature num
+            d = new_error[:,i]
+            u_quantile = np.quantile(np.array(d), 0.95) # 0.975
+            if d[i] >= u_quantile:
+                pred_list[i] = 1
+
+        print("--",sum(pred_list), len(pred_list))
+
+        return true_list, pred_list
+    
+    def variance_score_with_corr(self, true_list, errors, dist_list):
+        # _, pred_list_recon = self.quantile_score(true_list, errors)
+        error_sum = torch.sum(errors, dim=1)
+        
+        recon_var = dist_list['recon_var_list']
+        fore_var = dist_list['fore_var_list']
+        recon_var = torch.cat(recon_var)
+        fore_var = torch.cat(fore_var)
+        recon_var = torch.tensor(recon_var, device='cpu').numpy()
+        fore_var = torch.tensor(recon_var, device='cpu').numpy()
+
+        diff_var = abs(recon_var - fore_var)
+
+        new_error = 0.8*error_sum + 0.2*diff_var # weighted sum
+        
+        for i in range(len(new_error)):
+            value = new_error[i] * new_error[i].T
+            print(value)
+            raise
+        '''pred_list = np.zeros(new_error.shape[0])
+        for i in range(fore_var.shape[1]): # for feature num
+            d = new_error[:,i]
+            u_quantile = np.quantile(np.array(d), 0.95) # 0.975
+            if d[i] >= u_quantile:
+                pred_list[i] = 1'''
+        
+        raise
+        print("--",sum(pred_list), len(pred_list))
+
+        return true_list, pred_list
 
     def variance_score_online(self, true_list, errors, dist_list):
         train_output = np.load(f'{self.args.save_path}train_output.npy')

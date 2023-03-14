@@ -209,6 +209,10 @@ class TrainMaker(base_trainer):
             true_list, pred_list = score_func.quantile_score(true_list, errors)
         elif method == 'variance':
             true_list, pred_list = score_func.variance_score(true_list, errors, dist_list)
+        elif method == 'var_weight':
+            true_list, pred_list = score_func.variance_score_with_weighted_sum(true_list, errors, dist_list)
+        elif method == 'var_corr':
+            true_list, pred_list = score_func.variance_score_with_corr(true_list, errors, dist_list)
         return true_list, pred_list
 
     def get_metric(self, method, args, true_list, pred_list,
