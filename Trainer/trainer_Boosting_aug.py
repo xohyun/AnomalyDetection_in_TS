@@ -133,8 +133,9 @@ class TrainMaker(base_trainer):
 
                 error = torch.sum(abs(x - pred), axis=(1, 2))
                 errors.extend(error)
-                errors_each.extend(
-                    torch.sum(abs(x - pred), axis=2).reshape(-1))
+                # errors_each.extend(
+                #     torch.sum(abs(x - pred), axis=2).reshape(-1))
+                errors_each.append(abs(x - pred))
 
                 x_list.append(x)
                 x_hat_list.append(pred)
@@ -150,12 +151,13 @@ class TrainMaker(base_trainer):
 
         dist_list = {"recon_var_list":recon_var_list, "fore_var_list":fore_var_list}
         errors = torch.tensor(errors, device='cpu').numpy()
+        errors_each = torch.cat(errors_each)
         errors_each = torch.tensor(errors_each, device='cpu').numpy()
 
         # true_list, pred_list = scoring.score(true_list_each, errors_each)
         # true_list, pred_list = self.get_score(self.args.score, true_list, errors, true_list_each, errors_each)
         # 합집합
-        true_list, pred_list = self.get_score(self.args.score, true_list, errors, dist_list)
+        true_list, pred_list = self.get_score(self.args.score, true_list, errors, dist_list, errors_each)
         f1, precision, recall = self.get_metric(self.args.calc, self.args, true_list, 
                                                 pred_list, true_list_each, errors_each)
 
@@ -201,7 +203,7 @@ class TrainMaker(base_trainer):
             raise ValueError(f"Not supported {args.scheduler}.")
         return scheduler
 
-    def get_score(self, method, true_list, errors, dist_list=None):
+    def get_score(self, method, true_list, errors, dist_list=None, errors_each=None):
         from Score import make_pred
         score_func = make_pred.Pred_making()
 
@@ -210,9 +212,9 @@ class TrainMaker(base_trainer):
         elif method == 'variance':
             true_list, pred_list = score_func.variance_score(true_list, errors, dist_list)
         elif method == 'var_weight':
-            true_list, pred_list = score_func.variance_score_with_weighted_sum(true_list, errors, dist_list)
+            true_list, pred_list = score_func.variance_score_with_weighted_sum(true_list, errors_each, dist_list)
         elif method == 'var_corr':
-            true_list, pred_list = score_func.variance_score_with_corr(true_list, errors, dist_list)
+            true_list, pred_list = score_func.variance_score_with_corr(true_list, errors_each, dist_list)
         return true_list, pred_list
 
     def get_metric(self, method, args, true_list, pred_list,

@@ -93,7 +93,8 @@ class Pred_making():
     
     def variance_score_with_weighted_sum(self, true_list, errors, dist_list):
         # _, pred_list_recon = self.quantile_score(true_list, errors)
-        error_sum = torch.sum(errors, dim=1)
+
+        error_sum = np.sum(errors, axis=1)
         
         recon_var = dist_list['recon_var_list']
         fore_var = dist_list['fore_var_list']
@@ -108,7 +109,7 @@ class Pred_making():
         pred_list = np.zeros(new_error.shape[0])
         for i in range(fore_var.shape[1]): # for feature num
             d = new_error[:,i]
-            u_quantile = np.quantile(np.array(d), 0.95) # 0.975
+            u_quantile = np.quantile(np.array(d), 0.80) # 0.975
             if d[i] >= u_quantile:
                 pred_list[i] = 1
 
@@ -118,8 +119,8 @@ class Pred_making():
     
     def variance_score_with_corr(self, true_list, errors, dist_list):
         # _, pred_list_recon = self.quantile_score(true_list, errors)
-        error_sum = torch.sum(errors, dim=1)
-        
+        # error_sum = np.sum(errors, axis=1)
+
         recon_var = dist_list['recon_var_list']
         fore_var = dist_list['fore_var_list']
         recon_var = torch.cat(recon_var)
@@ -129,19 +130,21 @@ class Pred_making():
 
         diff_var = abs(recon_var - fore_var)
 
-        new_error = 0.8*error_sum + 0.2*diff_var # weighted sum
-        
+        # new_error = 0.8*error_sum + 0.2*diff_var # weighted sum
+        new_error = errors
+        seq_len = errors.shape[1] # seq_len
+        values = np.zeros((seq_len, seq_len))
         for i in range(len(new_error)):
-            value = new_error[i] * new_error[i].T
-            print(value)
-            raise
+            value = new_error[i] @ new_error[i].T
+            values =  values + value
+            
         '''pred_list = np.zeros(new_error.shape[0])
         for i in range(fore_var.shape[1]): # for feature num
             d = new_error[:,i]
             u_quantile = np.quantile(np.array(d), 0.95) # 0.975
             if d[i] >= u_quantile:
                 pred_list[i] = 1'''
-        
+        print(values)
         raise
         print("--",sum(pred_list), len(pred_list))
 
