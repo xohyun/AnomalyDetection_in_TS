@@ -72,10 +72,7 @@ def main():
     print(f'F1 Score : {f1}, Precision : {precision}, Recall : {recall}')
     # print(classification_report(val_y, val_pred))
     df.loc[idx] = [args.dataset, f1, precision, recall]
-    if args.dataset == 'NAB':
-        df.to_csv(f'./csvs/IF_{args.dataset}_{args.choice_data}.csv', header = True, index = False)
-    else:
-        df.to_csv(f'./csvs/IF_{args.dataset}.csv', header = True, index = False)
+    df.to_csv(f'./csvs/IF_{args.dataset}_{args.choice_data}.csv', header = True, index = False)
     
 if __name__ == "__main__":
     main()
