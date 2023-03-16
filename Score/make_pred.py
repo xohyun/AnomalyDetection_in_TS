@@ -127,7 +127,8 @@ class Pred_making():
         fore_var = torch.cat(fore_var)
         recon_var = torch.tensor(recon_var, device='cpu').numpy()
         fore_var = torch.tensor(recon_var, device='cpu').numpy()
-
+        
+        #---# difference of variances #---#
         diff_var = abs(recon_var - fore_var)
 
         # new_error = 0.8*error_sum + 0.2*diff_var # weighted sum
