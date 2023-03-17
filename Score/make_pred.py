@@ -92,15 +92,13 @@ class Pred_making():
         return true_list, pred_list
     
     def variance_score_with_weighted_sum(self, true_list, errors, dist_list):
-        # _, pred_list_recon = self.quantile_score(true_list, errors)
-
         error_sum = np.sum(errors, axis=1)
         
-        recon_var = dist_list['recon_var_list']
-        fore_var = dist_list['fore_var_list']
+        recon_var = dist_list['recon_var_list'] # variance of reconstruct part
+        fore_var = dist_list['fore_var_list'] # variance of forecast part
         recon_var = torch.cat(recon_var)
         fore_var = torch.cat(fore_var)
-        recon_var = torch.tensor(recon_var, device='cpu').numpy()
+        recon_var = torch.tensor(recon_var, device='cpu').numpy() # numpy format
         fore_var = torch.tensor(recon_var, device='cpu').numpy()
 
         diff_var = abs(recon_var - fore_var)
@@ -118,9 +116,6 @@ class Pred_making():
         return true_list, pred_list
     
     def variance_score_with_corr(self, true_list, errors, dist_list):
-        # _, pred_list_recon = self.quantile_score(true_list, errors)
-        # error_sum = np.sum(errors, axis=1)
-
         recon_var = dist_list['recon_var_list']
         fore_var = dist_list['fore_var_list']
         recon_var = torch.cat(recon_var)
