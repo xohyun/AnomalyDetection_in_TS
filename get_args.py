@@ -65,6 +65,9 @@ class Args:
                                     "LSTMAE", "LSTMVAE", "AE_decom", "LSTM_decom",
                                     "Boosting", "Boosting_aug"])
 
+        if parser.parse_known_args()[0].model == 'Boosting_aug':
+            parser.add_argument("--stack_num", default=3)
+
         parser.add_argument("--lr", type=float, default=0.001)
         parser.add_argument("--wd", type=float, default=0.0001)
         parser.add_argument("--batch_size", type=int, default=16)

@@ -96,8 +96,9 @@ class ModelMaker:
             model = Boosting.Model(self.data_info['seq_len'], self.data_info['num_features'],
                                    stack_num=2, device=self.device).to(self.device)
         elif self.args.model == 'Boosting_aug':
+            stack_num = self.args.stack_num
             model = Boosting_aug.Model(self.data_info['seq_len'], self.data_info['num_features'],
-                                          stack_num=2, device=self.device).to(self.device)
+                                          stack_num=stack_num, device=self.device).to(self.device)
         create_folder(self.save_path)
 
         # write_pickle(os.path.join(self.save_path, f"model_{self.args.model}.pk"), model)
