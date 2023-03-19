@@ -66,7 +66,7 @@ class Args:
                                     "Boosting", "Boosting_aug"])
 
         if parser.parse_known_args()[0].model == 'Boosting_aug':
-            parser.add_argument("--stack_num", default=3)
+            parser.add_argument("--stack_num", default=3) # # of stacks
 
         parser.add_argument("--lr", type=float, default=0.001)
         parser.add_argument("--wd", type=float, default=0.0001)
