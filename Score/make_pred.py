@@ -61,7 +61,6 @@ class Pred_making():
         # dist = np.sqrt((dist_list[:, 1] - forecast_variances)**2)
 
         #  ** pred_list = [n for n in dist if n > threshold else 0]
-
         # # return true_list, pred_list
         pass
 
