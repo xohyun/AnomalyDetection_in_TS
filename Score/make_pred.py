@@ -116,9 +116,18 @@ class Pred_making():
         return true_list, pred_list
     
     def variance_score_with_corr(self, true_list, errors, dist_list):
-        '''
+        """
         consider correlation of score
-        '''
+        Args:
+            true_list:
+                Array of true answer
+            errors (ndarray):
+                Array of errors.
+            dist_list  : 
+                Array of distances.
+        Returns:
+            true_list, pred_list
+        """
         recon_var = dist_list['recon_var_list']
         fore_var = dist_list['fore_var_list']
         recon_var = torch.cat(recon_var)
