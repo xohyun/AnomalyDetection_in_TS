@@ -119,14 +119,14 @@ class TrainMaker(base_trainer):
                 forecast_part = x[:, int(self.args.seq_len*0.8):, :]
                 variances = torch.var(forecast_part, dim=1)
 
-                output = self.model(x)
+                output = self.model(x) # dictionary format
                 pred = torch.concat(
-                    (output["reconstructs"], output["forecasts"]), dim=1)
+                    (output["reconstructs"], output["forecasts"]), dim=1) # to make pred
 
                 # var_dist
                 pred_var = torch.var(pred, dim=1)
-                recon_var_list.append(output["variances"])
-                fore_var_list.append(pred_var)
+                recon_var_list.append(output["variances"]) # reconstruct variance
+                fore_var_list.append(pred_var) # forecast variance
                 
                 # dist = [pred_var, output["variances"]]
                 # dist_list.append(dist)
