@@ -131,7 +131,7 @@ class TrainMaker(base_trainer):
                 # dist = [pred_var, output["variances"]]
                 # dist_list.append(dist)
 
-                error = torch.sum(abs(x - pred), axis=(1, 2))
+                error = torch.sum(abs(x - pred), axis=(1, 2)) # for every batch
                 errors.extend(error)
                 # errors_each.extend(
                 #     torch.sum(abs(x - pred), axis=2).reshape(-1))
@@ -154,9 +154,6 @@ class TrainMaker(base_trainer):
         errors_each = torch.cat(errors_each)
         errors_each = torch.tensor(errors_each, device='cpu').numpy()
 
-        # true_list, pred_list = scoring.score(true_list_each, errors_each)
-        # true_list, pred_list = self.get_score(self.args.score, true_list, errors, true_list_each, errors_each)
-        # 합집합
         true_list, pred_list = self.get_score(self.args.score, true_list, errors, dist_list, errors_each)
         f1, precision, recall = self.get_metric(self.args.calc, self.args, true_list, 
                                                 pred_list, true_list_each, errors_each)
