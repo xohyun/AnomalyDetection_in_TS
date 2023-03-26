@@ -158,9 +158,6 @@ class TrainMaker(base_trainer):
         f1, precision, recall = self.get_metric(self.args.calc, self.args, true_list, 
                                                 pred_list, true_list_each, errors_each)
 
-        # scoring = self.get_score(self.args.score)
-        # f1, precision, recall = scoring.score(true_list, errors)
-
         return f1, precision, recall
 
     def set_criterion(self, criterion):
