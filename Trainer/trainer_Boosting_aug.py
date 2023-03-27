@@ -135,7 +135,7 @@ class TrainMaker(base_trainer):
                 errors.extend(error)
                 # errors_each.extend(
                 #     torch.sum(abs(x - pred), axis=2).reshape(-1))
-                errors_each.append(abs(x - pred))
+                errors_each.append(abs(x - pred)) # no sum
 
                 x_list.append(x)
                 x_hat_list.append(pred)
