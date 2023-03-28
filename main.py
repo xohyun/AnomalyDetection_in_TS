@@ -56,7 +56,7 @@ def main():
         trainer = mod.TrainMaker(args, model, data_loaders, data_info)
         f1, precision, recall = trainer.evaluation(data_loaders['test'])
 
-        
+        #---# To make csv file #---#
         df.loc[idx] = [args.dataset, args.choice_data, f1, precision, recall, 
                        args.seq_len, args.step_len, args.lr, args.wd, 
                        args.batch_size, args.epoch, args.score, args.calc]
