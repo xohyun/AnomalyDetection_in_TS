@@ -70,6 +70,7 @@ class TrainMaker(base_trainer):
                 #---# sum of variance loss and CEE #---#
                 loss = 0.8*loss + 0.2*loss_var
 
+                #---# Print loss #---#
                 interval = 300
                 if (idx+1) % interval == 0:
                     print(f'[Epoch{e+1}] Loss:{loss}')
