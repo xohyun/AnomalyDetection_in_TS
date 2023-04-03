@@ -79,6 +79,7 @@ class TrainMaker(base_trainer):
                 self.optimizer.step()
                 epoch_loss += loss
 
+            #---# Model save #---#
             torch.save(self.model.state_dict(),
                        f'{self.args.save_path}model_{self.args.model}.pk')
             print(f"{e}epoch / loss {loss}")
