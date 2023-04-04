@@ -25,5 +25,5 @@ class AE_blocks(nn.Module):
         forecast = self.fc_forecast(latent, latent=True)
         forecast = forecast.reshape(batch, -1, self.feature_num)
         reconstruct = reconstruct_x.reshape(x.shape)
-        var = self.v_inference(reconstruct + original_data)
+        var = self.v_inference(reconstruct + original_data) # calculate variance
         return latent, reconstruct, forecast, var
