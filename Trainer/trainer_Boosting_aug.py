@@ -95,6 +95,7 @@ class TrainMaker(base_trainer):
             for idx, x in enumerate(self.data_loader):
                 x = x.float().to(device=self.device)
                 output = self.model(x)
+                output['x'] = x
                 outputs.append(output)
             outputs = np.array(outputs)
             np.save(f'{self.args.save_path}train_output.npy', outputs)
@@ -157,7 +158,7 @@ class TrainMaker(base_trainer):
         errors_each = torch.cat(errors_each)
         errors_each = torch.tensor(errors_each, device='cpu').numpy()
 
-        true_list, pred_list = self.get_score(self.args.score, true_list, errors, dist_list, errors_each)
+        true_list, pred_list = self.get_score(self.args.score, true_list, errors, dist_list, errors_each, args=self.args)
         f1, precision, recall = self.get_metric(self.args.calc, self.args, true_list, 
                                                 pred_list, true_list_each, errors_each)
 
@@ -200,7 +201,7 @@ class TrainMaker(base_trainer):
             raise ValueError(f"Not supported {args.scheduler}.")
         return scheduler
 
-    def get_score(self, method, true_list, errors, dist_list=None, errors_each=None):
+    def get_score(self, method, true_list, errors, dist_list=None, errors_each=None, args=None):
         from Score import make_pred
         score_func = make_pred.Pred_making()
 
@@ -211,7 +212,7 @@ class TrainMaker(base_trainer):
         elif method == 'var_weight':
             true_list, pred_list = score_func.variance_score_with_weighted_sum(true_list, errors_each, dist_list)
         elif method == 'var_corr':
-            true_list, pred_list = score_func.variance_score_with_corr(true_list, errors_each, dist_list)
+            true_list, pred_list = score_func.variance_score_with_corr(args, true_list, errors_each, dist_list)
         return true_list, pred_list
 
     def get_metric(self, method, args, true_list, pred_list,

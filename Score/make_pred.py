@@ -115,7 +115,7 @@ class Pred_making():
 
         return true_list, pred_list
     
-    def variance_score_with_corr(self, true_list, errors, dist_list):
+    def variance_score_with_corr(self, args, true_list, errors, dist_list):
         """
         consider correlation of score
         Args:
@@ -128,6 +128,32 @@ class Pred_making():
         Returns:
             true_list, pred_list
         """
+        #---# train data #---#
+        train_info = np.load(f'{args.save_path}train_output.npy', allow_pickle=True)
+        train_recon = []; train_fore = []; train_var = []; train_x = []
+        for i in range(len(train_info)):
+            data = train_info[i]
+            recon = data['reconstructs']; train_recon.append(recon)
+            fore = data['forecasts']; train_fore.append(fore)
+            var = data['variances']; train_var.append(var)
+            xs = data['x']; train_x.append(xs) 
+            # print(recon.shape, fore.shape, var.shape) # [16,50,25] / [16,13,25] / [16, 25]
+        train_recon = torch.cat(train_recon)
+        train_fore = torch.cat(train_fore)
+        train_var = torch.cat(train_var)
+        train_x = torch.cat(train_x)
+        print(train_recon.shape, train_fore.shape, train_var.shape, train_x.shape, "-=======")
+
+        relations = []
+        for i in range(len(train_recon)):
+            recon = train_recon[i] # [50,25]
+            var = train_var[i] # [25]
+            relation = recon * var #?????
+            relations.append(relation)
+        relations = torch.stack(relations)
+        train_mm = torch.mean(relations, dim=0) # [50,25]
+        
+        #---# test data #---#
         recon_var = dist_list['recon_var_list']
         fore_var = dist_list['fore_var_list']
         recon_var = torch.cat(recon_var)
@@ -140,7 +166,10 @@ class Pred_making():
 
         # new_error = 0.8*error_sum + 0.2*diff_var # weighted sum
         new_error = errors
+        print(new_error.shape,"------")
+
         seq_len = errors.shape[1] # seq_len
+        
         values = np.zeros((seq_len, seq_len))
         for i in range(len(new_error)):
             value = new_error[i] @ new_error[i].T
@@ -153,6 +182,7 @@ class Pred_making():
             if d[i] >= u_quantile:
                 pred_list[i] = 1'''
         print(values)
+        print(values.shape)
         raise
         print("--",sum(pred_list), len(pred_list))
 

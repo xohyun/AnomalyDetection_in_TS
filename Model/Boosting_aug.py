@@ -78,7 +78,7 @@ class Model(torch.nn.Module):
 
         # x_hat = torch.concat((reconstructs, forecasts), dim=1)
         return {
-            'out': out,
+            'out': out, # None/
             'latent': latent,
             'hidden_cell': hidden_cell,
             'reconstructs': reconstructs,
