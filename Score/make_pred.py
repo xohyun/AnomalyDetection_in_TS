@@ -142,11 +142,12 @@ class Pred_making():
         train_fore = torch.cat(train_fore)
         train_var = torch.cat(train_var)
         train_x = torch.cat(train_x)
+        recon_error = abs(train_recon - train_x[:,:train_recon.shape[1],:]) # difference
         print(train_recon.shape, train_fore.shape, train_var.shape, train_x.shape, "-=======")
 
         relations = []
-        for i in range(len(train_recon)):
-            recon = train_recon[i] # [50,25]
+        for i in range(len(recon_error)):
+            recon = recon_error[i] # [50,25]
             var = train_var[i] # [25]
             relation = recon * var #?????
             relations.append(relation)
