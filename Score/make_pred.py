@@ -158,7 +158,7 @@ class Pred_making():
             relations.append(relation)
         relations = torch.stack(relations)
         train_mm = torch.mean(relations, dim=0) # [50,25] visualize
-        
+
         #---# test data #---#
         recon_var = dist_list['recon_var_list']
         fore_var = dist_list['fore_var_list']
@@ -167,6 +167,18 @@ class Pred_making():
         recon_var = torch.tensor(recon_var, device='cpu').numpy()
         fore_var = torch.tensor(recon_var, device='cpu').numpy()
         train_mm = torch.tensor(train_mm, device='cpu').numpy()
+
+        import matplotlib.pyplot as plt
+        import pandas as pd
+        df = pd.DataFrame(train_mm)
+        plt.pcolor(df)
+        plt.xticks(np.arange(0.5, len(df.columns), 1), df.columns)
+        plt.yticks(np.arange(0.5, len(df.index), 1), df.index)
+        plt.title('Heatmap by plt.pcolor()', fontsize=20)
+        # plt.xlabel('Year', fontsize=14)
+        # plt.ylabel('Month', fontsize=14)
+        plt.colorbar()
+        plt.savefig("---------------------------normal.png")
 
         #---# difference of variances #---#
         diff_var = abs(recon_var - fore_var)
