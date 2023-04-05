@@ -82,9 +82,6 @@ class Pred_making():
             if d[i] >= u_quantile:
                 pred_list[i] = 1
 
-        print("--",sum(pred_list), len(pred_list))
-        print("##", sum(pred_list_recon), len(pred_list_recon))
-
         sum_pred = [pred_list[i] + pred_list_recon[i] for i in range(len(pred_list))]
         sum_pred = [1 if i > 0 else 0 for i in sum_pred]
 
@@ -110,8 +107,6 @@ class Pred_making():
             u_quantile = np.quantile(np.array(d), 0.80) # 0.975
             if d[i] >= u_quantile:
                 pred_list[i] = 1
-
-        print("--",sum(pred_list), len(pred_list))
 
         return true_list, pred_list
     
