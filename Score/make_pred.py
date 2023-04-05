@@ -142,17 +142,22 @@ class Pred_making():
         train_fore = torch.cat(train_fore)
         train_var = torch.cat(train_var)
         train_x = torch.cat(train_x)
-        recon_error = abs(train_recon - train_x[:,:train_recon.shape[1],:]) # difference
-        print(train_recon.shape, train_fore.shape, train_var.shape, train_x.shape, "-=======")
+        recon_var = torch.var(train_recon, dim=1)
+        recon_error = abs(train_recon - train_x[:,:train_recon.shape[1],:]) # difference of recon
+        var_error = abs(train_var - recon_var) # difference of variance
+        print(train_recon.shape, train_fore.shape, train_var.shape, train_x.shape, recon_var.shape, "-=======")
+
+        train_recon_mean = torch.mean(train_recon, dim=0)
+        train_var_mean = torch.mean(train_var, dim=0)
 
         relations = []
-        for i in range(len(recon_error)):
-            recon = recon_error[i] # [50,25]
-            var = train_var[i] # [25]
-            relation = recon * var #?????
+        for i in range(len(train_recon)):
+            recon = train_recon[i] - train_recon_mean # [50,25]
+            var = var_error[i] - train_var_mean # [25]
+            relation = recon * var # covariance
             relations.append(relation)
         relations = torch.stack(relations)
-        train_mm = torch.mean(relations, dim=0) # [50,25]
+        train_mm = torch.mean(relations, dim=0) # [50,25] visualize
         
         #---# test data #---#
         recon_var = dist_list['recon_var_list']
@@ -161,31 +166,26 @@ class Pred_making():
         fore_var = torch.cat(fore_var)
         recon_var = torch.tensor(recon_var, device='cpu').numpy()
         fore_var = torch.tensor(recon_var, device='cpu').numpy()
-        
+        train_mm = torch.tensor(train_mm, device='cpu').numpy()
+
         #---# difference of variances #---#
         diff_var = abs(recon_var - fore_var)
 
         # new_error = 0.8*error_sum + 0.2*diff_var # weighted sum
-        new_error = errors
-        print(new_error.shape,"------")
-
-        seq_len = errors.shape[1] # seq_len
-        
-        values = np.zeros((seq_len, seq_len))
-        for i in range(len(new_error)):
-            value = new_error[i] @ new_error[i].T
-            values =  values + value
-            
-        '''pred_list = np.zeros(new_error.shape[0])
-        for i in range(fore_var.shape[1]): # for feature num
-            d = new_error[:,i]
-            u_quantile = np.quantile(np.array(d), 0.95) # 0.975
-            if d[i] >= u_quantile:
-                pred_list[i] = 1'''
-        print(values)
-        print(values.shape)
-        raise
-        print("--",sum(pred_list), len(pred_list))
+        new_error = errors[:,:train_mm.shape[0],:] * train_mm # [test개수, 50, 25]
+        # seq_len = errors.shape[1] # seq_len
+        # values = np.zeros((seq_len, seq_len))
+        # for i in range(len(new_error)):
+        #     value = new_error[i] @ new_error[i].T
+        #     values =  values + value
+        new_error = np.sum(new_error, axis=(1,2))
+        true_list, pred_list = self.quantile_score(true_list, new_error)
+        # pred_list = np.zeros(new_error.shape[0])
+        # for i in range(fore_var.shape[1]): # for feature num
+        #     d = new_error[:,i]
+        #     u_quantile = np.quantile(np.array(d), 0.95) # 0.975
+        #     if d[i] >= u_quantile:
+        #         pred_list[i] = 1
 
         return true_list, pred_list
 
