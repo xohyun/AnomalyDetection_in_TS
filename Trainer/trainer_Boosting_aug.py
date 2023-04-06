@@ -95,6 +95,7 @@ class TrainMaker(base_trainer):
             for idx, x in enumerate(self.data_loader):
                 x = x.float().to(device=self.device)
                 output = self.model(x)
+                output['x'] = x
                 outputs.append(output)
             outputs = np.array(outputs)
             np.save(f'{self.args.save_path}train_output.npy', outputs)
