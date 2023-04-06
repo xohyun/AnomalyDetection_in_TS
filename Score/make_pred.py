@@ -173,7 +173,7 @@ class Pred_making():
         # plt.xlabel('Year', fontsize=14)
         # plt.ylabel('Month', fontsize=14)
         plt.colorbar()
-        plt.savefig("---------------------------normal.png")
+        plt.savefig(f"{args.csv_path}{args.model}_{args.dataset}_{args.choice_data}_lr{args.lr}_wd{args.wd}_seq{args.seq_len}_step{args.step_len}_batch{args.batch_size}_epoch{args.epoch}_score{args.score}_calc{args.calc}---------------------normal.png")
 
         #---# difference of variances #---#
         diff_var = abs(recon_var - fore_var)
