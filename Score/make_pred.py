@@ -140,7 +140,6 @@ class Pred_making():
         recon_var = torch.var(train_recon, dim=1)
         recon_error = abs(train_recon - train_x[:,:train_recon.shape[1],:]) # difference of recon
         var_error = abs(train_var - recon_var) # difference of variance
-        print(train_recon.shape, train_fore.shape, train_var.shape, train_x.shape, recon_var.shape, "-=======")
 
         train_recon_mean = torch.mean(train_recon, dim=0)
         train_var_mean = torch.mean(train_var, dim=0)
@@ -159,9 +158,12 @@ class Pred_making():
         fore_var = dist_list['fore_var_list']
         recon_var = torch.cat(recon_var)
         fore_var = torch.cat(fore_var)
-        recon_var = torch.tensor(recon_var, device='cpu').numpy()
-        fore_var = torch.tensor(recon_var, device='cpu').numpy()
-        train_mm = torch.tensor(train_mm, device='cpu').numpy()
+        # recon_var = torch.tensor(recon_var, device='cpu').numpy()
+        # fore_var = torch.tensor(recon_var, device='cpu').numpy()
+        # train_mm = torch.tensor(train_mm, device='cpu').numpy()
+        recon_var = recon_var.clone().detach().cpu().numpy()
+        fore_var = fore_var.clone().detach().cpu().numpy()
+        train_mm = train_mm.clone().detach().cpu().numpy()
 
         import matplotlib.pyplot as plt
         import pandas as pd
