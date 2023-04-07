@@ -156,7 +156,8 @@ class TrainMaker(base_trainer):
         dist_list = {"recon_var_list":recon_var_list, "fore_var_list":fore_var_list}
         errors = torch.tensor(errors, device='cpu').numpy()
         errors_each = torch.cat(errors_each)
-        errors_each = torch.tensor(errors_each, device='cpu').numpy()
+        # errors_each = torch.tensor(errors_each, device='cpu').numpy()
+        errors_each = errors_each.clone().detach().cpu().numpy()
 
         true_list, pred_list = self.get_score(self.args, self.args.score, true_list, errors, dist_list, errors_each)
         f1, precision, recall = self.get_metric(self.args.calc, self.args, true_list, 
