@@ -10,7 +10,7 @@ class rnn_blocks(nn.Module):
         self.seq_len = seq_len
         self.feature_num = feature_num
 
-        self.LSTM = LSTM(feature_num, int(seq_len*0.8), 3).to(device=device)
+        self.LSTM = LSTM(feature_num, int(seq_len*0.8), 3).to(device=device) # 3layer
         self.fc_forecast = forecast_lyr(
             seq_len, feature_num).to(device=device)
 
