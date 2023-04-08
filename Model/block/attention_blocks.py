@@ -28,7 +28,7 @@ class attention_blocks(nn.Module):
         attention_feature, out = self.attention(x, x, x, False)
         attention_feature = attention_feature.reshape(batch, -1)
 
-        reconstruct = attention_feature.reshape(x.shape)
+        reconstruct = attention_feature.reshape(x.shape) # use reshape
         forecast = self.fc_forecast(attention_feature)
         forecast = forecast.reshape(batch, -1, self.feature_num)
         var = self.v_inference(reconstruct + original_data)
