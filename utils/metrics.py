@@ -29,10 +29,12 @@ def RMSE(pred, true):
 
 
 def MAPE(pred, true):
+    true = true + 0.00001
     return np.mean(np.abs((pred - true) / true))
 
 
 def MSPE(pred, true):
+    true = true + 0.00001
     return np.mean(np.square((pred - true) / true))
 
 
