@@ -113,7 +113,13 @@ class TrainMaker(base_trainer):
         errors = []
         errors_each = []
 
+        from utils.feature_extractor import FeatureExtractor
+        flag = list(self.model._modules)[-1] #################
+        final_layer = self.model._modules.get(flag)
+        activated_features = FeatureExtractor(final_layer) #############################
+
         recon_var_list = []; fore_var_list = []; 
+        test_embeds = None
         with torch.no_grad():
             for idx, (x, y) in enumerate(test_loader):
                 x = x.float().to(device=self.device)
@@ -153,6 +159,11 @@ class TrainMaker(base_trainer):
                 y = np.where(y > 0, 1, 0)
                 true_list.extend(y)
 
+                embeds = activated_features.features_before # [256, 200, 1, 4]; embeds =  embeds.squeeze(2) # [256, 200, 4]
+                if test_embeds == None: test_embeds = embeds
+                else : test_embeds = torch.cat((test_embeds, embeds), dim=0) # [103, 800]
+
+
         dist_list = {"recon_var_list":recon_var_list, "fore_var_list":fore_var_list}
         errors = torch.tensor(errors, device='cpu').numpy()
         errors_each = torch.cat(errors_each)
@@ -162,6 +173,7 @@ class TrainMaker(base_trainer):
         true_list, pred_list = self.get_score(self.args, self.args.score, true_list, errors, dist_list, errors_each)
         f1, precision, recall = self.get_metric(self.args.calc, self.args, true_list, 
                                                 pred_list, true_list_each, errors_each)
+        np.savez(f"./features/features_", test_embeds=test_embeds, true_list=true_list)
 
         return f1, precision, recall
 
