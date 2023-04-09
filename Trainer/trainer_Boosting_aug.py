@@ -124,6 +124,11 @@ class TrainMaker(base_trainer):
         with torch.no_grad():
             for idx, (x, y) in enumerate(test_loader):
                 x = x.float().to(device=self.device)
+             
+                # plt.figure(figsize=(30,8))
+                # plt.plot(x.reshape(-1,x.shape[2]).detach().cpu().numpy()[:,0])
+                # plt.savefig("ddddddd.png")
+                # raise
                 self.optimizer.zero_grad()
                 batch = x.shape[0]
 
@@ -176,23 +181,34 @@ class TrainMaker(base_trainer):
         xs_ = xs_.reshape(-1, xs_.shape[2])
         preds_ = torch.cat(preds).clone().detach().cpu().numpy()
         preds_ = preds_.reshape(-1, preds_.shape[2])
-        plt.plot(xs_[0])
+        plt.figure(figsize=(30,8))
+        plt.plot(xs_[21000:25000,0])
         plt.savefig('original.png')
         plt.clf()
-        print(xs_.shape, preds_.shape, "+-0+++++++hihihihi")
-        for i in range(len(xs)):
-            fig, ax = plt.subplots(figsize=(18, 8))
-            ax.plot(xs_[i:i+63, 0], label='origin data')
-            ax.plot(preds_[i+50:i+63, 0], label='pred')
-            plt.savefig(f'./forecast.png')
-            raise
-        
+        for i in range(23600,23900,50):
+            idx = i
+            show_len = 70
+            plt.figure(figsize=(20,8))
+            plt.ylim((-2,2))
+            temp = np.concatenate((xs_[idx:idx+show_len,0], preds_[idx+show_len:idx+show_len+13, 0]))
+            plt.plot(temp, label='Forecast', color='orange')
+            plt.plot(xs_[idx:idx+show_len+13, 0], label='Actual', color='tab:blue')
+            
+            # ax.plot(temp, label='Forecast')
+            # ax.plot(preds_[idx+50:idx+63, 0], label='Forecast')
+            plt.legend(fontsize=20)
+            plt.savefig(f'./forecast{idx}.png')
+
         true_list, pred_list = self.get_score(self.args, self.args.score, true_list, errors, dist_list, errors_each)
         f1, precision, recall = self.get_metric(self.args.calc, self.args, true_list, 
                                                 pred_list, true_list_each, errors_each)
+        mae, rmse, mape = self.get_score_forecast(self.args, xs, preds)
+        print(f"mae : {mae} / rmse : {rmse} / mape : {mape}")
+
+        #---# Save features #---#                                      
         np.savez(f"./features/features_", test_embeds=test_embeds, true_list=true_list)
 
-        return f1, precision, recall
+        return f1, precision, recall, mae, rmse, mape
 
     def set_criterion(self, criterion):
         if criterion == "MSE":
@@ -244,6 +260,26 @@ class TrainMaker(base_trainer):
         elif method == 'var_corr':
             true_list, pred_list = score_func.variance_score_with_corr(args, true_list, errors_each, dist_list)
         return true_list, pred_list
+    
+    def get_score_forecast(self, args, xs, preds):
+        from utils.metrics import MAE, RMSE, MAPE
+        preds = torch.cat(preds).clone().detach().cpu().numpy()
+        xs = torch.cat(xs).clone().detach().cpu().numpy()
+        
+        # for i in range(preds.shape[2]):
+        #     pred = preds.reshape(-1, preds.shape[2])[:,i]
+        #     true = xs.reshape(-1, xs.shape[2])[:,i]
+        #     mae = MAE(pred, true)
+        #     rmse = RMSE(pred, true)
+        #     mape = MAPE(pred, true)
+        #     print(f"mae : {mae} / rmse : {rmse} / mape : {mape}")
+
+        pred = preds.reshape(-1, preds.shape[2])[:,0]
+        true = xs.reshape(-1, xs.shape[2])[:,0]
+        mae = MAE(pred, true)
+        rmse = RMSE(pred, true)
+        mape = MAPE(pred, true)
+        return mae, rmse, mape
 
     def get_metric(self, method, args, true_list, pred_list,
                    true_list_each=None, errors_each=None):

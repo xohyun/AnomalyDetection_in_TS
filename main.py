@@ -26,7 +26,11 @@ def main():
     df = pd.DataFrame(columns = ['dataset', 'choice_data', 'f1', 'precision', 'recall', 
                                 'seq_len', 'step_len', 'lr', 'wd', 
                                 'batch', 'epoch', 'score', 'calc']); idx=0
-
+    if args.model == 'Boosting_aug':
+        df = pd.DataFrame(columns = ['dataset', 'choice_data', 'f1', 'precision', 'recall',
+                                'mae', 'rmse', 'mape', 
+                                'seq_len', 'step_len', 'lr', 'wd', 
+                                'batch', 'epoch', 'score', 'calc']); idx=0
     #---#  DataLoader #---#    
     dl = get_dataloader(args)
     data_info, data_loaders = dl.data_info, dl.data_loaders
@@ -54,11 +58,17 @@ def main():
 
         model = ModelMaker(args, data_info).model
         trainer = mod.TrainMaker(args, model, data_loaders, data_info)
-        f1, precision, recall = trainer.evaluation(data_loaders['test'])
+        f1, precision, recall, mae, rmse, mape = trainer.evaluation(data_loaders['test'])
 
     if args.mode != "train":
         #---# To make csv file #---#
-        df.loc[idx] = [args.dataset, args.choice_data, f1, precision, recall, 
+        if args.model == 'Boosting_aug':
+            df.loc[idx] = [args.dataset, args.choice_data, f1, precision, recall,
+                        mae, rmse, mape, 
+                        args.seq_len, args.step_len, args.lr, args.wd, 
+                        args.batch_size, args.epoch, args.score, args.calc]
+        else:
+            df.loc[idx] = [args.dataset, args.choice_data, f1, precision, recall,
                         args.seq_len, args.step_len, args.lr, args.wd, 
                         args.batch_size, args.epoch, args.score, args.calc]
         make_csv(df, args)
