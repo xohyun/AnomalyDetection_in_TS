@@ -2,6 +2,9 @@ import torch.nn as nn
 import torch
 
 class v_inference_lyr(nn.Module):
+    '''
+    For variance prediction
+    '''
     def __init__(self, seq_len, feature_num):
         super().__init__()
         self.seq_len = seq_len
