@@ -112,6 +112,7 @@ class TrainMaker(base_trainer):
         x_hat_list = []
         errors = []
         errors_each = []
+        xs = []; preds = []
 
         from utils.feature_extractor import FeatureExtractor
         flag = list(self.model._modules)[-1] #################
@@ -132,7 +133,7 @@ class TrainMaker(base_trainer):
                 output = self.model(x) # dictionary format
                 pred = torch.concat(
                     (output["reconstructs"], output["forecasts"]), dim=1) # to make pred
-
+                xs.append(x); preds.append(pred)
                 # var_dist
                 pred_var = torch.var(pred, dim=1)
                 recon_var_list.append(output["variances"]) # reconstruct variance
@@ -170,6 +171,22 @@ class TrainMaker(base_trainer):
         # errors_each = torch.tensor(errors_each, device='cpu').numpy()
         errors_each = errors_each.clone().detach().cpu().numpy() # to numpy
 
+        #---# forecast drawing #---#
+        xs_ = torch.cat(xs).clone().detach().cpu().numpy()
+        xs_ = xs_.reshape(-1, xs_.shape[2])
+        preds_ = torch.cat(preds).clone().detach().cpu().numpy()
+        preds_ = preds_.reshape(-1, preds_.shape[2])
+        plt.plot(xs_[0])
+        plt.savefig('original.png')
+        plt.clf()
+        print(xs_.shape, preds_.shape, "+-0+++++++hihihihi")
+        for i in range(len(xs)):
+            fig, ax = plt.subplots(figsize=(18, 8))
+            ax.plot(xs_[i:i+63, 0], label='origin data')
+            ax.plot(preds_[i+50:i+63, 0], label='pred')
+            plt.savefig(f'./forecast.png')
+            raise
+        
         true_list, pred_list = self.get_score(self.args, self.args.score, true_list, errors, dist_list, errors_each)
         f1, precision, recall = self.get_metric(self.args.calc, self.args, true_list, 
                                                 pred_list, true_list_each, errors_each)
