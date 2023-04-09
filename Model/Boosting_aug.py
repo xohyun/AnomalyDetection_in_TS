@@ -67,7 +67,7 @@ class Model(torch.nn.Module):
             residual = residual - reconstruct_att
 
             # ---# RNN block #---#
-            hidden_cell, reconstruct_rnn, forecast_rnn, var_rnn = self.rnn_block(
+            hidden_cell, context_vector, reconstruct_rnn, forecast_rnn, var_rnn = self.rnn_block(
                 residual, reconstruct_part)
             residual = residual - reconstruct_rnn
 
@@ -83,5 +83,6 @@ class Model(torch.nn.Module):
             'hidden_cell': hidden_cell,
             'reconstructs': reconstructs,
             'forecasts': forecasts,
-            'variances': variances
+            'variances': variances,
+            'context_vector': context_vector
         }
