@@ -206,7 +206,7 @@ class TrainMaker(base_trainer):
         print(f"mae : {mae} / rmse : {rmse} / mape : {mape}")
 
         #---# Save features #---#                                      
-        np.savez(f"./features/features_", test_embeds=test_embeds, true_list=true_list)
+        # np.savez(f"./features/features_", test_embeds=test_embeds, true_list=true_list)
 
         return f1, precision, recall, mae, rmse, mape
 
