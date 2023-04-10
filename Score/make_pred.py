@@ -172,9 +172,9 @@ class Pred_making():
         #---# difference of variances #---#
         diff_var = abs(recon_var - fore_var)
         
-        plt.clf()
-        plt.hist(np.sum(errors, axis=(1,2)))
-        plt.savefig("---before_error.png")
+        # plt.clf()
+        # plt.hist(np.sum(errors, axis=(1,2)))
+        # plt.savefig("---before_error.png")
         # new_error = 0.8*error_sum + 0.2*diff_var # weighted sum
         new_error = errors[:,:train_mm.shape[0],:] * train_mm # [test개수, 50, 25]
         # seq_len = errors.shape[1] # seq_len
@@ -183,9 +183,9 @@ class Pred_making():
         #     value = new_error[i] @ new_error[i].T
         #     values =  values + value
         new_error = np.sum(new_error, axis=(1,2))
-        plt.clf()
-        plt.hist(new_error)
-        plt.savefig("---new_error.png")
+        # plt.clf()
+        # plt.hist(new_error)
+        # plt.savefig("---new_error.png")
 
         # true_list, pred_list = self.quantile_score(true_list, new_error)/
         l_quantile = np.quantile(np.array(new_error), 0.01) # 0.025 change
