@@ -187,14 +187,13 @@ class Pred_making():
         # plt.hist(new_error)
         # plt.savefig("---new_error.png")
 
-        # true_list, pred_list = self.quantile_score(true_list, new_error)/
+
         l_quantile = np.quantile(np.array(new_error), 0.01) # 0.025 change
-        u_quantile = np.quantile(np.array(new_error), 0.99) # 0.975
+        u_quantile = np.quantile(np.array(new_error), 0.99) # 0.975 
         in_range = np.logical_and(
             np.array(new_error) >= l_quantile, np.array(new_error) <= u_quantile)
-        # pred_list = [0 for i in errors if i in in_range]
         np_errors = np.array(new_error)
-        # pred_list = [i for i in np_errors if i in np.where((i >= l_quantile and i <= u_quantile), 0, 1)]
+
         pred_list = np.zeros(len(errors))
         for i in range(len(np_errors)):
             if new_error[i] >= l_quantile and new_error[i] <= u_quantile:
