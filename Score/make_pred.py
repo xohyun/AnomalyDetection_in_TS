@@ -187,7 +187,6 @@ class Pred_making():
         # plt.hist(new_error)
         # plt.savefig("---new_error.png")
 
-
         l_quantile = np.quantile(np.array(new_error), 0.01) # 0.025 change
         u_quantile = np.quantile(np.array(new_error), 0.99) # 0.975 
         in_range = np.logical_and(
