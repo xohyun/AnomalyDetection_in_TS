@@ -158,9 +158,6 @@ class Pred_making():
         fore_var = dist_list['fore_var_list']
         recon_var = torch.cat(recon_var)
         fore_var = torch.cat(fore_var)
-        # recon_var = torch.tensor(recon_var, device='cpu').numpy()
-        # fore_var = torch.tensor(recon_var, device='cpu').numpy()
-        # train_mm = torch.tensor(train_mm, device='cpu').numpy()
         recon_var = recon_var.clone().detach().cpu().numpy()
         fore_var = fore_var.clone().detach().cpu().numpy()
         train_mm = train_mm.clone().detach().cpu().numpy()
