@@ -62,7 +62,7 @@ def main():
 
     if args.mode != "train":
         #---# To make csv file #---#
-        if args.model == 'Boosting_aug':
+        if args.model == 'Boosting_aug': # for save forecast performance
             df.loc[idx] = [args.dataset, args.choice_data, f1, precision, recall,
                         mae, rmse, mape, 
                         args.seq_len, args.step_len, args.lr, args.wd, 
