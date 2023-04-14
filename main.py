@@ -49,6 +49,7 @@ def main():
         print("end", f1)
 
     elif args.mode == "all":
+        # for train and test
         args.mode = "train"
         f1 = trainer.train() # fitting
 
