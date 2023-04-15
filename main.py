@@ -61,6 +61,7 @@ def main():
         trainer = mod.TrainMaker(args, model, data_loaders, data_info)
         f1, precision, recall, mae, rmse, mape = trainer.evaluation(data_loaders['test'])
 
+    #---# Save performance #---#
     if args.mode != "train":
         #---# To make csv file #---#
         if args.model == 'Boosting_aug': # for save forecast performance
