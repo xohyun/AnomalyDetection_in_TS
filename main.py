@@ -10,6 +10,7 @@ def main():
     args_class = Args()
     args = args_class.args
 
+    #---# make path #---#
     create_folder(args.fig_path); create_folder(args.csv_path)
 
     #---# import #---#
