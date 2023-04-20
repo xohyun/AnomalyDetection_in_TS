@@ -6,6 +6,9 @@ from Model.layer.v_inference_lyr import v_inference_lyr
 
 
 class AE_blocks(nn.Module):
+    '''
+    For Autoencoder Block
+    '''
     def __init__(self, seq_len, feature_num, device):
         super().__init__()
         self.seq_len = seq_len
