@@ -4,6 +4,9 @@ from Model.layer.forecast_lyr import forecast_lyr
 from Model.layer.v_inference_lyr import v_inference_lyr
 
 class attention_blocks(nn.Module):
+    '''
+    For Self-attention Block
+    '''
     def __init__(self, seq_len, feature_num, device):
         super().__init__()
         self.seq_len = seq_len
