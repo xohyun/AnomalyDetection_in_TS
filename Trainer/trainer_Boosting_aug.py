@@ -144,13 +144,10 @@ class TrainMaker(base_trainer):
                 recon_var_list.append(output["variances"]) # reconstruct variance
                 fore_var_list.append(pred_var) # forecast variance
                 
-                # dist = [pred_var, output["variances"]]
-                # dist_list.append(dist)
+       
 
                 error = torch.sum(abs(x - pred), axis=(1, 2)) # for every batch
                 errors.extend(error)
-                # errors_each.extend(
-                #     torch.sum(abs(x - pred), axis=2).reshape(-1))
                 errors_each.append(abs(x - pred)) # no sum
 
                 x_list.append(x)
