@@ -162,6 +162,7 @@ class TrainMaker(base_trainer):
                 y = np.where(y > 0, 1, 0)
                 true_list.extend(y)
 
+                #---# For t-SNE #---#
                 embeds = activated_features.features_before # [256, 200, 1, 4]; embeds =  embeds.squeeze(2) # [256, 200, 4]
                 if test_embeds == None: test_embeds = embeds
                 else : test_embeds = torch.cat((test_embeds, embeds), dim=0) # [103, 800]
@@ -170,7 +171,6 @@ class TrainMaker(base_trainer):
         dist_list = {"recon_var_list":recon_var_list, "fore_var_list":fore_var_list}
         errors = torch.tensor(errors, device='cpu').numpy()
         errors_each = torch.cat(errors_each)
-        # errors_each = torch.tensor(errors_each, device='cpu').numpy()
         errors_each = errors_each.clone().detach().cpu().numpy() # to numpy
 
         #---# forecast drawing #---#
