@@ -191,8 +191,6 @@ class TrainMaker(base_trainer):
             plt.plot(temp, label='Forecast', color='orange')
             plt.plot(xs_[idx:idx+show_len+13, 0], label='Actual', color='tab:blue')
             
-            # ax.plot(temp, label='Forecast')
-            # ax.plot(preds_[idx+50:idx+63, 0], label='Forecast')
             plt.legend(fontsize=20)
             plt.savefig(f'./forecast{idx}.png')
 
