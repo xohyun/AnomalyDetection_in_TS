@@ -200,7 +200,7 @@ class TrainMaker(base_trainer):
         mae, rmse, mape = self.get_score_forecast(self.args, xs, preds)
         print(f"mae : {mae} / rmse : {rmse} / mape : {mape}")
 
-        #---# Save features #---#                                      
+        #---# For save features #---#                                      
         # np.savez(f"./features/features_", test_embeds=test_embeds, true_list=true_list)
 
         return f1, precision, recall, mae, rmse, mape
