@@ -261,14 +261,6 @@ class TrainMaker(base_trainer):
         preds = torch.cat(preds).clone().detach().cpu().numpy()
         xs = torch.cat(xs).clone().detach().cpu().numpy()
         
-        # for i in range(preds.shape[2]):
-        #     pred = preds.reshape(-1, preds.shape[2])[:,i]
-        #     true = xs.reshape(-1, xs.shape[2])[:,i]
-        #     mae = MAE(pred, true)
-        #     rmse = RMSE(pred, true)
-        #     mape = MAPE(pred, true)
-        #     print(f"mae : {mae} / rmse : {rmse} / mape : {mape}")
-
         pred = preds.reshape(-1, preds.shape[2])[:,0]
         true = xs.reshape(-1, xs.shape[2])[:,0]
         mae = MAE(pred, true)
@@ -280,7 +272,6 @@ class TrainMaker(base_trainer):
                    true_list_each=None, errors_each=None):
         # from Score import make_pred
         from Score.calculate_score import Calculate_score
-        # score_func = make_pred.Pred_making()
         metric_func = Calculate_score(args)
 
         if method == 'default':
