@@ -278,7 +278,5 @@ class TrainMaker(base_trainer):
             f1, precision, recall = metric_func.score(true_list, pred_list)
         elif method == 'back':
             f1, precision, recall = metric_func.back_score(true_list, pred_list)
-        # var calc not ready
-        # elif method == 'variance':
-        #     f1, precision, recall = metric_func.score(true_list, errors, pred_list)
+       
         return f1, precision, recall
