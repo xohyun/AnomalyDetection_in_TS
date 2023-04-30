@@ -13,7 +13,6 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 
-
 class TrainMaker(base_trainer):
     def __init__(self, args, model, data_loaders, data_info):
         self.args = args
@@ -51,7 +50,6 @@ class TrainMaker(base_trainer):
             epoch_loss = 0
             self.model.train()
             
-
             for idx, x in enumerate(self.data_loader):
                 x = x.float().to(device=self.device)
                 self.optimizer.zero_grad()
