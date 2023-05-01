@@ -66,7 +66,7 @@ class TrainMaker(base_trainer):
                 loss_var = self.criterion(variances, output["variances"])
 
                 #---# sum of variance loss and CEE #---#
-                loss = 0.8*loss + 0.2*loss_var
+                loss = 0.8*loss + 0.2*loss_var # can change ratio
 
                 #---# Print loss #---#
                 interval = 300
