@@ -122,14 +122,12 @@ class TrainMaker(base_trainer):
         with torch.no_grad():
             for idx, (x, y) in enumerate(test_loader):
                 x = x.float().to(device=self.device)
-             
+                batch = x.shape[0]
                 # plt.figure(figsize=(30,8))
                 # plt.plot(x.reshape(-1,x.shape[2]).detach().cpu().numpy()[:,0])
                 # plt.savefig("ddddddd.png")
                 
                 self.optimizer.zero_grad()
-                batch = x.shape[0]
-
                 forecast_part = x[:, int(self.args.seq_len*0.8):, :]
                 variances = torch.var(forecast_part, dim=1)
 
@@ -142,8 +140,6 @@ class TrainMaker(base_trainer):
                 recon_var_list.append(output["variances"]) # reconstruct variance
                 fore_var_list.append(pred_var) # forecast variance
                 
-       
-
                 error = torch.sum(abs(x - pred), axis=(1, 2)) # for every batch
                 errors.extend(error)
                 errors_each.append(abs(x - pred)) # no sum
