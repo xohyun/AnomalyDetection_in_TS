@@ -126,7 +126,7 @@ class TrainMaker(base_trainer):
                 # plt.figure(figsize=(30,8))
                 # plt.plot(x.reshape(-1,x.shape[2]).detach().cpu().numpy()[:,0])
                 # plt.savefig("ddddddd.png")
-                # raise
+                
                 self.optimizer.zero_grad()
                 batch = x.shape[0]
 
