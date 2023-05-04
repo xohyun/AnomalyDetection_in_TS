@@ -112,6 +112,7 @@ class TrainMaker(base_trainer):
         errors_each = []
         xs = []; preds = []
 
+        #---# For feature extractor #---#
         from utils.feature_extractor import FeatureExtractor
         flag = list(self.model._modules)[-1] #################
         final_layer = self.model._modules.get(flag)
