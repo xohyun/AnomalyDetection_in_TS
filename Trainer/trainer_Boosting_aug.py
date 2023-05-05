@@ -81,7 +81,6 @@ class TrainMaker(base_trainer):
             torch.save(self.model.state_dict(),
                        f'{self.args.save_path}model_{self.args.model}.pk')
             print(f"{e}epoch / loss {loss}")
-
             # wandb.log({"loss":loss})
 
             if self.scheduler is not None:
@@ -104,12 +103,10 @@ class TrainMaker(base_trainer):
 
         dist_list = []
 
-        true_list = []
-        true_list_each = []
-        x_list = []
+        x_list = []; true_list = []; true_list_each = []
+        
         x_hat_list = []
-        errors = []
-        errors_each = []
+        errors = []; errors_each = []
         xs = []; preds = []
 
         #---# For feature extractor #---#
