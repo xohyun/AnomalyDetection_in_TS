@@ -102,9 +102,7 @@ class TrainMaker(base_trainer):
         self.model.eval()
 
         dist_list = []
-
         x_list = []; true_list = []; true_list_each = []
-        
         x_hat_list = []
         errors = []; errors_each = []
         xs = []; preds = []
@@ -133,6 +131,7 @@ class TrainMaker(base_trainer):
                 pred = torch.concat(
                     (output["reconstructs"], output["forecasts"]), dim=1) # to make pred
                 xs.append(x); preds.append(pred)
+                
                 # var_dist
                 pred_var = torch.var(pred, dim=1)
                 recon_var_list.append(output["variances"]) # reconstruct variance
