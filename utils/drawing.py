@@ -2,11 +2,14 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 def drawing_heatmap(args, train_mm):
+    '''
+    Plotting heatmap
+    '''
     df = pd.DataFrame(train_mm)
     plt.pcolor(df)
     plt.xticks(np.arange(0.5, len(df.columns), 1), df.columns)
     plt.yticks(np.arange(0.5, len(df.index), 1), df.index)
-    plt.title('Heatmap by plt.pcolor()', fontsize=20)
+    plt.title('Heatmap', fontsize=20)
     # plt.xlabel('Year', fontsize=14)
     # plt.ylabel('Month', fontsize=14)
     plt.colorbar()
