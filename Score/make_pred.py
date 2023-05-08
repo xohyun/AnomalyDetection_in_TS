@@ -210,24 +210,3 @@ class Pred_making():
         #---# train #---#
         # train output의 distribution??을 이용해서 online detection에 이용
         pass
-
-# TadGAN
-# errors, predictions_vs = reconstruction_errors(x_real, x_hat, score_window=self.args.seq_len, step_size=1) #score_window=config.window_size
-# error_range = find_anomalies(errors, index=range(len(errors)), anomaly_padding=5)
-# pred_list = np.zeros(len(true_list))
-# for i in error_range:
-#     start = int(i[0])
-#     end = int(i[1])
-#     pred_list[start:end] = 1
-
-# drawing(config, anomaly_value, pd.DataFrame(test_dataset.scaled_test))
-
-# batch 안에서 cosine similarity
-# diff = cos(x, pred).cpu().tolist()
-
-# batch_pred = np.where(((np.array(diff)<0) & (np.array(diff)>-0.1)), 1, 0)
-# batch_pred = np.where(np.array(diff)<0.7, 1, 0)
-# y = np.where(y>0.69, 1, 0)
-
-# diffs.extend(diff)
-# pred_list.extend(batch_pred)
