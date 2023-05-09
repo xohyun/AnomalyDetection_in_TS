@@ -158,9 +158,9 @@ class Pred_making():
         fore_var = dist_list['fore_var_list']
         recon_var = torch.cat(recon_var)
         fore_var = torch.cat(fore_var)
-        recon_var = recon_var.clone().detach().cpu().numpy()
-        fore_var = fore_var.clone().detach().cpu().numpy()
-        train_mm = train_mm.clone().detach().cpu().numpy()
+        recon_var = recon_var.clone().detach().cpu().numpy() # to numpy
+        fore_var = fore_var.clone().detach().cpu().numpy() # to numpy
+        train_mm = train_mm.clone().detach().cpu().numpy() # to numpy
 
         #---# Draw heatmap of weight #---#
         # from utils.drawing import drawing_heatmap
