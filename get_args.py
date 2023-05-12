@@ -38,6 +38,7 @@ class Args:
         parser.add_argument("--SR", type=bool, default=False)
 
         #---# RIN #---#
+        # rin is used in combination model
         parser.add_argument("--RIN", type=bool, default=True)
         parser.add_argument("--combination", type=bool, default=False)
         parser.add_argument("--moving_avg_list", type=list, default=[5,10,15])
