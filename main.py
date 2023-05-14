@@ -24,14 +24,16 @@ def main():
     fix_random_seed(args)
 
     #---# Save a file #---#
-    df = pd.DataFrame(columns = ['dataset', 'choice_data', 'f1', 'precision', 'recall', 
+    df = pd.DataFrame(columns = ['dataset', 'choice_data', 
+                                 'f1', 'precision', 'recall', 
                                 'seq_len', 'step_len', 'lr', 'wd', 
                                 'batch', 'epoch', 'score', 'calc']); idx=0
     if args.model == 'Boosting_aug':
-        df = pd.DataFrame(columns = ['dataset', 'choice_data', 'f1', 'precision', 'recall',
-                                'mae', 'rmse', 'mape', 
-                                'seq_len', 'step_len', 'lr', 'wd', 
-                                'batch', 'epoch', 'score', 'calc']); idx=0
+        df = pd.DataFrame(columns = ['dataset', 'choice_data', 
+                                    'f1', 'precision', 'recall',
+                                    'mae', 'rmse', 'mape', 
+                                    'seq_len', 'step_len', 'lr', 'wd', 
+                                    'batch', 'epoch', 'score', 'calc']); idx=0
     #---#  DataLoader #---#    
     dl = get_dataloader(args)
     data_info, data_loaders = dl.data_info, dl.data_loaders
