@@ -9,7 +9,7 @@ class Args:
         
         #---# Mode #---#
         parser.add_argument("--mode", default="all", choices=["train", "test", "all"])
-        parser.add_argument("--seed", default=1004, type=int)
+        parser.add_argument("--seed", default=1004, type=int) # fix
         parser.add_argument("--valid_setting", default=False, choices=[True, False])
 
         #---# device #---#
@@ -80,7 +80,7 @@ class Args:
             parser.add_argument('--cycle_epochs', type=int, default=10)
 
         parser.add_argument("--criterion", type=str, default="MSE") #triplet
-        parser.add_argument("--optimizer", type=str, default="SGD")   # AdamW, SGD
+        parser.add_argument("--optimizer", type=str, default="SGD") # AdamW, SGD
         
         #---# Score #---#
         parser.add_argument("--score", type=str, default="quantile", 
