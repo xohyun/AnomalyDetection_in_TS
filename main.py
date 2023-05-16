@@ -71,11 +71,11 @@ def main():
             df.loc[idx] = [args.dataset, args.choice_data, f1, precision, recall,
                         mae, rmse, mape, 
                         args.seq_len, args.step_len, args.lr, args.wd, 
-                        args.batch_size, args.epoch, args.score, args.calc]
+                        args.batch_size, args.epoch, args.score, args.calc, args.stack_num]
         else:
             df.loc[idx] = [args.dataset, args.choice_data, f1, precision, recall,
                         args.seq_len, args.step_len, args.lr, args.wd, 
-                        args.batch_size, args.epoch, args.score, args.calc, args.stack_num]
+                        args.batch_size, args.epoch, args.score, args.calc]
         make_csv(df, args)
 
 if __name__ == "__main__":
