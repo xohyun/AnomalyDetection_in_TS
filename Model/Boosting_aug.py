@@ -6,11 +6,12 @@ from Model.block.rnn_blocks import rnn_blocks
 
 
 class Forecast(nn.Module):
-    def __init__(self, seq_len, num_features):
+    def __init__(self, seq_len, num_features, ratio):
         super(Forecast, self).__init__()
         self.num_features = num_features
         self.seq_len = seq_len
-        self.n = int(self.seq_len * 0.8) * self.num_features
+        self.ratio = ratio
+        self.n = int(self.seq_len * ratio) * self.num_features
         self.hidden1 = int(self.n / 2)
         self.hidden2 = int(self.n / 8)
 
@@ -26,7 +27,7 @@ class Forecast(nn.Module):
     def forward(self, x):
         batch = x.shape[0]
         forecast = self.Decoder(x)
-        forecast = forecast.reshape(batch, int(self.seq_len*0.2), -1)
+        forecast = forecast.reshape(batch, int(self.seq_len*(1-self.ratio)), -1)
         return forecast
 
 ###########################################################################
@@ -34,19 +35,20 @@ class Forecast(nn.Module):
 
 
 class Model(torch.nn.Module):
-    def __init__(self, seq_len, feature_num, stack_num, device):
+    def __init__(self, seq_len, feature_num, stack_num, device, ratio):
         super().__init__()
         self.seq_len = seq_len
         self.feature_num = feature_num
         self.stack_num = stack_num
         self.device = device
 
-        self.AE_block = AE_blocks(seq_len, feature_num, device)
-        self.attention_block = attention_blocks(seq_len, feature_num, device)
-        self.rnn_block = rnn_blocks(seq_len, feature_num, device)
+        self.AE_block = AE_blocks(seq_len, feature_num, device, ratio)
+        self.attention_block = attention_blocks(seq_len, feature_num, device, ratio)
+        self.rnn_block = rnn_blocks(seq_len, feature_num, device, ratio)
+        self.ratio = ratio
 
     def forward(self, x):  # x shape [batch, seq_len, feature_num]
-        part_idx = int(self.seq_len * 0.8)
+        part_idx = int(self.seq_len * self.ratio)
         reconstruct_part = x[:, :part_idx, :]
         forecast_part = x[:, part_idx, :]
 

@@ -9,17 +9,17 @@ class AE_blocks(nn.Module):
     '''
     For Autoencoder Block
     '''
-    def __init__(self, seq_len, feature_num, device):
+    def __init__(self, seq_len, feature_num, device, ratio):
         super().__init__()
         self.seq_len = seq_len
         self.feature_num = feature_num
 
-        self.ae = AutoEncoder(feature_num, seq_len).to(device=device)
+        self.ae = AutoEncoder(feature_num, seq_len, ratio).to(device=device)
         self.fc_forecast = forecast_lyr(
-            seq_len, feature_num).to(device=device)
+            seq_len, feature_num, ratio).to(device=device)
 
         self.v_inference = v_inference_lyr(
-            seq_len, feature_num).to(device=device)
+            seq_len, feature_num, ratio).to(device=device)
 
     def forward(self, x, original_data):
         batch = x.shape[0]

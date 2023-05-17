@@ -137,6 +137,7 @@ class Pred_making():
         train_fore = torch.cat(train_fore)
         train_var = torch.cat(train_var)
         train_x = torch.cat(train_x)
+        
         recon_var = torch.var(train_recon, dim=1)
         recon_error = abs(train_recon - train_x[:,:train_recon.shape[1],:]) # difference of recon
         var_error = abs(train_var - recon_var) # difference of variance

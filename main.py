@@ -33,7 +33,8 @@ def main():
                                     'f1', 'precision', 'recall',
                                     'mae', 'rmse', 'mape', 
                                     'seq_len', 'step_len', 'lr', 'wd', 
-                                    'batch', 'epoch', 'score', 'calc', 'stack_num']); idx=0
+                                    'batch', 'epoch', 'score', 'calc', 
+                                    'stack_num', 'recon_ratio']); idx=0
     #---#  DataLoader #---#    
     dl = get_dataloader(args)
     data_info, data_loaders = dl.data_info, dl.data_loaders
@@ -71,7 +72,8 @@ def main():
             df.loc[idx] = [args.dataset, args.choice_data, f1, precision, recall,
                         mae, rmse, mape, 
                         args.seq_len, args.step_len, args.lr, args.wd, 
-                        args.batch_size, args.epoch, args.score, args.calc, args.stack_num]
+                        args.batch_size, args.epoch, args.score, args.calc, 
+                        args.stack_num, args.recon_ratio]
         else:
             df.loc[idx] = [args.dataset, args.choice_data, f1, precision, recall,
                         args.seq_len, args.step_len, args.lr, args.wd, 

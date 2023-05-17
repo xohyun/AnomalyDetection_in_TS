@@ -53,6 +53,7 @@ class Args:
 
         if parser.parse_known_args()[0].model == 'Boosting_aug':
             parser.add_argument("--stack_num", default=3, type=int) # # of stacks
+            parser.add_argument("--recon_ratio", default=0.8, type=float) # ratio of reconstruction part
 
         parser.add_argument("--lr", type=float, default=0.001)
         parser.add_argument("--wd", type=float, default=0.0001)

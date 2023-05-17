@@ -7,7 +7,7 @@ class attention_blocks(nn.Module):
     '''
     For Self-attention Block
     '''
-    def __init__(self, seq_len, feature_num, device):
+    def __init__(self, seq_len, feature_num, device, ratio):
         super().__init__()
         self.seq_len = seq_len
         self.feature_num = feature_num
@@ -23,8 +23,8 @@ class attention_blocks(nn.Module):
         self.attention = AttentionLayer(FullAttention(False, factor, attention_dropout=dropout, output_attention=output_attention),
                                         d_model, n_heads, mix=False).to(device=device)
 
-        self.fc_forecast = forecast_lyr(seq_len, feature_num).to(device=device)
-        self.v_inference = v_inference_lyr(seq_len, feature_num).to(device=device)
+        self.fc_forecast = forecast_lyr(seq_len, feature_num, ratio).to(device=device)
+        self.v_inference = v_inference_lyr(seq_len, feature_num, ratio).to(device=device)
 
     def forward(self, x, original_data):
         batch = x.shape[0]

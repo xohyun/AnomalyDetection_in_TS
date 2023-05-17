@@ -54,7 +54,7 @@ class TrainMaker(base_trainer):
                 x = x.float().to(device=self.device)
                 self.optimizer.zero_grad()
 
-                forecast_part = x[:, int(self.args.seq_len*0.8):, :]
+                forecast_part = x[:, int(self.args.seq_len*self.args.recon_ratio):, :]
                 variances = torch.var(forecast_part, dim=1)
 
                 output = self.model(x)
@@ -124,7 +124,7 @@ class TrainMaker(base_trainer):
                 # plt.savefig("ddddddd.png")
                 
                 self.optimizer.zero_grad()
-                forecast_part = x[:, int(self.args.seq_len*0.8):, :]
+                forecast_part = x[:, int(self.args.seq_len*self.args.recon_ratio):, :]
                 variances = torch.var(forecast_part, dim=1)
 
                 output = self.model(x) # dictionary format
