@@ -48,7 +48,7 @@ class Model(torch.nn.Module):
         self.ratio = ratio
 
     def forward(self, x):  # x shape [batch, seq_len, feature_num]
-        part_idx = int(self.seq_len * self.ratio)
+        part_idx = int(self.seq_len * self.ratio) # index of reconstruct part
         reconstruct_part = x[:, :part_idx, :]
         forecast_part = x[:, part_idx, :]
 
