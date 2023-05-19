@@ -73,7 +73,7 @@ class Model(torch.nn.Module):
                 residual, reconstruct_part)
             residual = residual - reconstruct_rnn
 
-            # ---# Concat forecast #---# #######한번더 확인해야할 필요!!!!
+            # ---# Concat forecast #---#
             forecasts = forecasts + forecast_ae + forecast_att + forecast_rnn               # forecasts +
             reconstructs = reconstructs + reconstruct_ae + reconstruct_att + reconstruct_rnn   # reconstructs +
             variances = variances + var_ae + var_att + var_rnn                              # variances +
