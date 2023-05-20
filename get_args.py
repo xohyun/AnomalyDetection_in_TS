@@ -28,7 +28,7 @@ class Args:
         
         #---# Dataset setting #---#
         parser.add_argument("--seq_len", default=63, type=int)
-        parser.add_argument("--pred_len", default=1, type=int)
+        parser.add_argument("--pred_len", default=1, type=int) # not use
         parser.add_argument("--step_len", default=5, type=int)
 
         #---# Decomposition #---#
