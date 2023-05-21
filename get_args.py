@@ -55,8 +55,8 @@ class Args:
             parser.add_argument("--stack_num", default=3, type=int) # # of stacks
             parser.add_argument("--recon_ratio", default=0.8, type=float) # ratio of reconstruction part
 
-        parser.add_argument("--lr", type=float, default=0.001)
-        parser.add_argument("--wd", type=float, default=0.0001)
+        parser.add_argument("--lr", type=float, default=0.001) # learning rate
+        parser.add_argument("--wd", type=float, default=0.0001) # weight decay
         parser.add_argument("--batch_size", type=int, default=16)
         parser.add_argument("--epoch", type=int, default=1)
 
