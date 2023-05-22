@@ -32,7 +32,7 @@ class Args:
         parser.add_argument("--step_len", default=5, type=int)
 
         #---# Decomposition #---#
-        parser.add_argument("--ma_window", type=int, default=500)
+        parser.add_argument("--ma_window", type=int, default=500) # moving average window
 
         #---# Spectral Residual(SR) #---#
         parser.add_argument("--SR", type=bool, default=False)
