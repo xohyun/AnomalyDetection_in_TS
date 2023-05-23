@@ -144,11 +144,13 @@ class Pred_making():
 
         train_recon_mean = torch.mean(train_recon, dim=0)
         train_var_mean = torch.mean(train_var, dim=0)
-
+        var_error_mean = torch.mean(var_error, dim=0)
         relations = []
         for i in range(len(train_recon)):
             recon = train_recon[i] - train_recon_mean # [50,25]
-            var = var_error[i] - train_var_mean # [25]
+            # var = var_error[i] - train_var_mean # [25]
+            # var = train_var[i] - train_var_mean
+            var = var_error[i] - var_error_mean
             relation = recon * var # covariance
             relations.append(relation)
         relations = torch.stack(relations)
