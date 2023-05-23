@@ -130,7 +130,7 @@ class Pred_making():
             data = train_info[i]
             recon = data['reconstructs']; train_recon.append(recon)
             fore = data['forecasts']; train_fore.append(fore)
-            var = data['variances']; train_var.append(var)
+            var = data['variances']; train_var.append(var) # variance of forecast part
             xs = data['x']; train_x.append(xs) 
             # print(recon.shape, fore.shape, var.shape) # [16,50,25] / [16,13,25] / [16, 25]
         train_recon = torch.cat(train_recon)
