@@ -117,7 +117,7 @@ class Pred_making():
             true_list:
                 Array of true answer
             errors (ndarray):
-                Array of errors.
+                Array of errors. (recon)
             dist_list  : 
                 Array of distances.
         Returns:
