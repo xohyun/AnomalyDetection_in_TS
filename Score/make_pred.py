@@ -96,12 +96,12 @@ class Pred_making():
         recon_var = torch.cat(recon_var)
         fore_var = torch.cat(fore_var)
         recon_var = torch.tensor(recon_var, device='cpu').numpy() # numpy format
-        fore_var = torch.tensor(recon_var, device='cpu').numpy()
+        fore_var = torch.tensor(recon_var, device='cpu').numpy() # numpy format
 
         diff_var = abs(recon_var - fore_var)
 
         new_error = 0.8*error_sum + 0.2*diff_var # weighted sum
-        pred_list = np.zeros(new_error.shape[0])
+        pred_list = np.zeros(new_error.shape[0]) # pred datas
         for i in range(fore_var.shape[1]): # for feature num
             d = new_error[:,i]
             u_quantile = np.quantile(np.array(d), 0.80) # 0.975
