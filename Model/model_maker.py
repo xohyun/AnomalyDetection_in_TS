@@ -101,8 +101,12 @@ class ModelMaker:
                                           stack_num=stack_num, device=self.device, 
                                           ratio=self.args.recon_ratio).to(self.device)
         create_folder(self.save_path)
-
-        # write_pickle(os.path.join(self.save_path, f"model_{self.args.model}.pk"), model)
+        
+        #---# Print trainable parameters #---#
+        from utils.utils import print_arch, num_params
+        print_arch(model)
+        for n, m in model.named_children():
+            num_params(m, model_name=f'gen.{n}')
         return model
 
 
