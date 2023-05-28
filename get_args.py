@@ -23,7 +23,8 @@ class Args:
         parser.add_argument("--fig_path", default='./Fig/') # to save figure
 
         #---# Dataset #---#
-        parser.add_argument("--dataset", default='SMD', choices=['MSL', 'NAB', 'SMAP', 'SMD', 'WADI', 'synthetic'])
+        parser.add_argument("--dataset", default='SMD', 
+                            choices=['MSL', 'NAB', 'SMAP', 'SMD', 'WADI', 'synthetic'])
         parser.add_argument("--choice_data", default=None, type=str)
         
         #---# Dataset setting #---#
