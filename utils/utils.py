@@ -74,12 +74,12 @@ def make_csv(df, args):
     #     df.to_csv(f'{args.csv_path}{args.model}_{args.dataset}_lr{args.lr}_wd{args.wd}_seq{args.seq_len}_step{args.step_len}_batch{args.batch_size}_epoch{args.epoch}_score{args.score}_calc{args.calc}.csv', 
     #                 header = True, index = False)
 
-# number of parameter
+#---# number of parameter function1 #---#
 def print_arch(model, model_name='model'):
     print(f"| {model_name} Arch: ", model)
     num_params(model, model_name=model_name)
 
-
+#---# number of parameter function2 #---#
 def num_params(model, print_out=True, model_name="model"):
     parameters = filter(lambda p: p.requires_grad, model.parameters())
     parameters = sum([np.prod(p.size()) for p in parameters]) / 1_000_000
