@@ -49,8 +49,8 @@ class Model(torch.nn.Module):
 
     def forward(self, x):  # x shape [batch, seq_len, feature_num]
         part_idx = int(self.seq_len * self.ratio) # index of reconstruct part
-        reconstruct_part = x[:, :part_idx, :]
-        forecast_part = x[:, part_idx, :]
+        reconstruct_part = x[:, :part_idx, :] # recon part
+        forecast_part = x[:, part_idx, :] # fore part
 
         forecasts = 0
         reconstructs = 0
@@ -74,7 +74,7 @@ class Model(torch.nn.Module):
             residual = residual - reconstruct_rnn
 
             # ---# Concat forecast #---#
-            forecasts = forecasts + forecast_ae + forecast_att + forecast_rnn               # forecasts +
+            forecasts = forecasts + forecast_ae + forecast_att + forecast_rnn               # forecasts + 
             reconstructs = reconstructs + reconstruct_ae + reconstruct_att + reconstruct_rnn   # reconstructs +
             variances = variances + var_ae + var_att + var_rnn                              # variances +
 
