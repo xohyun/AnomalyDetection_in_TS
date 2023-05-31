@@ -77,7 +77,6 @@ class Model(torch.nn.Module):
             forecasts = forecasts + forecast_ae + forecast_att + forecast_rnn               # forecasts + 
             reconstructs = reconstructs + reconstruct_ae + reconstruct_att + reconstruct_rnn   # reconstructs +
             variances = variances + var_ae + var_att + var_rnn                              # variances +
-
         # x_hat = torch.concat((reconstructs, forecasts), dim=1)
         return {
             'out': out, # None/ #able to delete

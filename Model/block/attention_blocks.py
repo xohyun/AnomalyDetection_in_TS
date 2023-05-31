@@ -1,5 +1,5 @@
 import torch.nn as nn
-from Model.layer.Attention_lyr import AttentionLayer, FullAttention
+from Model.layer.Attention_lyr import AttentionLayer, FullAttention, PositionalEmbedding
 from Model.layer.forecast_lyr import forecast_lyr
 from Model.layer.v_inference_lyr import v_inference_lyr
 
@@ -20,6 +20,7 @@ class attention_blocks(nn.Module):
         n_heads = 1
 
         # self.blocks = blocks
+        self.enc_embedding = PositionalEmbedding(seq_len=self.seq_len, d_model=d_model, n=20000, device=device).to(device=device)
         self.attention = AttentionLayer(FullAttention(False, factor, attention_dropout=dropout, output_attention=output_attention),
                                         d_model, n_heads, mix=False).to(device=device)
 
@@ -28,6 +29,12 @@ class attention_blocks(nn.Module):
 
     def forward(self, x, original_data):
         batch = x.shape[0]
+ 
+        #---# Positional encoding #---#
+        enc_out = self.enc_embedding(x) # [1,50,512]
+        x = enc_out + x ########
+        
+        #---# attention #---#
         attention_feature, out = self.attention(x, x, x, False)
         attention_feature = attention_feature.reshape(batch, -1)
 
