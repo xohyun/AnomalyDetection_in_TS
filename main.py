@@ -45,10 +45,10 @@ def main():
     #---# Model train #---#
     trainer = mod.TrainMaker(args, model, data_loaders, data_info)
 
-    if args.mode == "train":
+    if args.mode == "train": # only train
         f1 = trainer.train() # fitting
         
-    elif args.mode == "test":
+    elif args.mode == "test": # only test
         f1, precision, recall = trainer.evaluation(data_loaders['test'])
         print("end", f1)
 
