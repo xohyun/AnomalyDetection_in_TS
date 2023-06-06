@@ -50,7 +50,6 @@ def main():
         
     elif args.mode == "test": # only test
         f1, precision, recall = trainer.evaluation(data_loaders['test'])
-        print("end", f1)
 
     elif args.mode == "all":
         # for train and test
