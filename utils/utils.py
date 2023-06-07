@@ -67,6 +67,11 @@ def load_module_func(module_name):
     return mod
 
 def make_csv(df, args):
+    '''
+    make csv file
+    df : dataframe
+    args : arguments
+    '''
     df.to_csv(f'{args.csv_path}{args.model}_{args.dataset}_{args.choice_data}_lr{args.lr}_wd{args.wd}_seq{args.seq_len}_step{args.step_len}_batch{args.batch_size}_epoch{args.epoch}_score{args.score}_calc{args.calc}_num_stack_{args.stack_num}_ratio_{args.recon_ratio}.csv', header = True, index = False)
     # if args.dataset == 'NAB':
     #     df.to_csv(f'{args.csv_path}{args.model}_{args.dataset}_{args.choice_data}_lr{args.lr}_wd{args.wd}_seq{args.seq_len}_step{args.step_len}_batch{args.batch_size}_epoch{args.epoch}_score{args.score}_calc{args.calc}.csv', header = True, index = False)
