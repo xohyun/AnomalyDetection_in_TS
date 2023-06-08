@@ -62,6 +62,9 @@ def save_checkpoint(self, epoch):
     }, os.path.join(self.args.save_path, f"checkpoints/{epoch}.tar"))
 
 def load_module_func(module_name):
+    '''
+    Import different files depending on the module name
+    '''
     import importlib
     mod = importlib.import_module(module_name)
     return mod
