@@ -33,6 +33,9 @@ def fix_random_seed(args):
     print(f"[Control randomness]\nseed: {args.seed}")
 
 def find_bundle(queue):
+    '''
+    연속된 point는 묶어서 list로
+    '''
     packet = []
     tmp = []
     v = queue.pop(0)
@@ -53,6 +56,9 @@ def find_bundle(queue):
     return packet
 
 def save_checkpoint(self, epoch):
+    '''
+    save checkpoints
+    '''
     create_folder(os.path.join(self.args.save_path, "checkpoints"))
     torch.save({
         'epoch': epoch,
