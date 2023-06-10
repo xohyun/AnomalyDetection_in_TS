@@ -17,6 +17,10 @@ def gpu_checking(args) :
     return device
 
 def fix_random_seed(args):
+    '''
+    Fix random seed
+    using argumet's seed number
+    '''
     random.seed(args.seed)
     np.random.seed(args.seed)
     os.environ['PYTHONHASHSEED'] = str(args.seed)
