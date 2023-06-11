@@ -4,6 +4,9 @@ import torch
 import torch.backends.cudnn as cudnn
 import numpy as np
 def create_folder(directory):
+    '''
+    Create folder if not exist
+    '''
     try:
         if not os.path.exists(directory):
             os.makedirs(directory)
