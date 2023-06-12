@@ -1,4 +1,8 @@
 class FeatureExtractor() :
+    '''
+    Feature extractor
+    use in the trainer file
+    '''
     features =  None
     def __init__(self, m) :
         self.hook = m.register_forward_hook(self.hook_fn)
