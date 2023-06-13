@@ -4,6 +4,8 @@ import numpy as np
 def drawing_heatmap(args, train_mm):
     '''
     Plotting heatmap
+    args : argument
+    train_mm : weight of train datas
     '''
     df = pd.DataFrame(train_mm)
     plt.pcolor(df)
